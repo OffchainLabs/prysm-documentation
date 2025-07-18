@@ -290,6 +290,10 @@
         {
           "type": "doc",
           "id": "manage-validator/withdraw-validator"
+        },
+        {
+          "type": "doc",
+          "id": "manage-validator/fallbackbeaconnodes"
         }
       ]
     },
