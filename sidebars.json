@@ -97,6 +97,10 @@
         {
           "type": "doc",
           "id": "configure-prysm/checkpoint-sync"
+        },
+        {
+          "type": "doc",
+          "id": "configure-prysm/fallbackbeaconnodes"
         }
       ]
     },
