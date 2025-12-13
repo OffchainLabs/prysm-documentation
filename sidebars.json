@@ -341,6 +341,10 @@
         },
         {
           "type": "doc",
+          "id": "misc/mainnet-postmortems"
+        },
+        {
+          "type": "doc",
           "id": "misc/testnet-postmortems"
         }
       ]
