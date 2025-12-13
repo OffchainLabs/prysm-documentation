@@ -42,8 +42,8 @@ _Figure: Profiling a Prysm beacon node shows epoch processing and validator shuf
 | Deprecate and rename flag --disable-last-epoch-target. | Pull request | [PR 16094](https://github.com/OffchainLabs/prysm/pull/16094) |
 | Use the head state in cases where Prysm was replaying old states unnecessarily. | Pull request | [PR 16095](https://github.com/OffchainLabs/prysm/pull/16095) |
 | Move subnet peer log message from WARN level to DEBUG level | Pull request | [PR 16087](https://github.com/OffchainLabs/prysm/pull/16087) | 
-| Publish v7.1.0 minor release | Release | https://github.com/OffchainLabs/prysm/releases/tag/v7.1.0 |
-| Publish v7.0.1 minor release | Release | https://github.com/OffchainLabs/prysm/releases/tag/v7.0.1 |
+| Publish v7.1.0 minor release | Release | [Release v7.1.0](https://github.com/OffchainLabs/prysm/releases/tag/v7.1.0) |
+| Publish v7.0.1 minor release | Release | [Release v7.0.1](https://github.com/OffchainLabs/prysm/releases/tag/v7.0.1) |
 
 #### Lessons Learned
 
