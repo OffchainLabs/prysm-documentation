@@ -10,7 +10,7 @@ import {HeaderBadgesWidget} from '@site/src/components/HeaderBadgesWidget.js';
 
 ## Mainnet Incident Reports
 
-As part of our day to day job in building eth2 with our Prysm project, we are tasked with maintaining a high integrity cloud deployment that runs several nodes in our testnet. Additionally, we are always on call to determine problems which arise in the network and must be addressed by the team. This page outlines a collection of incident reports and their resolutions from catastrophic events in our testnet. We hope it will shed more light on our devops process and how we tackle the hard problems managing a distributed system such as eth2 entails.
+As part of our day to day job in building eth2 with our Prysm project, we are tasked with maintaining a high integrity cloud deployment that runs several nodes on Ethereum mainnet. Additionally, we are always on call to determine problems which arise in the network and must be addressed by the team. This page outlines a collection of incident reports and their resolutions from catastrophic events on mainnet. We hope it will shed more light on our devops process and how we tackle the hard problems managing a distributed system such as eth2 entails.
 
 ### Fusaka Mainnet Prysm Incident
 
