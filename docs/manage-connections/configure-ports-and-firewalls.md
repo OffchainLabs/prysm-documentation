@@ -142,6 +142,23 @@ Your beacon node will broadcast your **static, public IP address** to peer nodes
 
 Broadcasting your static IP can make your beacon node more discoverable, which benefits the Ethereum network by making consensus-layer blockchain data more available. Note that if you're using a dynamic IP address (this is usually the case by default), your node will lose its peers every time your ISP assigns your router/device a new IP address.
 
+:::tip Dynamic IP Users
+
+If you have a dynamic IP address, consider these options:
+
+1. **Use DNS (recommended)**: Set up a dynamic DNS service and use `--p2p-host-dns` instead. This automatically resolves to your current IP.
+
+2. **Wrapper script**: Create a script that fetches your IP and starts the beacon node:
+   ```bash
+   #!/bin/bash
+   PUBLIC_IP=$(curl -s v4.ident.me)
+   ./prysm.sh beacon-chain --p2p-host-ip="$PUBLIC_IP" [other flags]
+   ```
+
+Note: Using shell substitution directly in the command (e.g., `--p2p-host-ip=$(curl -s v4.ident.me)`) may not work reliably on all systems.
+
+:::
+
 ## Verify your node's discoverability
 
 Use the [MX Toolbox TCP Lookup tool](https://mxtoolbox.com/SuperTool.aspx?): 
