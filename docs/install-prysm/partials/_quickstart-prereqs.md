@@ -20,7 +20,7 @@
             <li><strong>CPU</strong>: 4+ cores @ 2.8+ GHz</li> 
             <li><strong>Memory</strong>: 16GB+ RAM</li> 
             <li><strong>Storage</strong>: SSD with at least 2TB free space</li> 
-            <li><strong>Network</strong>: 8 MBit/sec broadband</li> 
+            <li><strong>Network</strong>: See <a href='/learn/concepts/blobs'>Blobs</a> for current bandwidth requirements</li> 
           </ul> 
         </td>
       </tr> 

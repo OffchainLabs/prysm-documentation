@@ -41,18 +41,12 @@ Losing peers can be due to the following reasons:
 
 Memory management is an ongoing process for our team - we are constantly working on improving the experience of running a node itself. For now, these are the specs we recommend (these values will go down over time):
 
-Recommended Hardware
-Processor: Intel Core i7–4770 or AMD FX-8310 or better
-Memory: 16GB RAM
-Storage: 100GB available space SSD
-Internet: Broadband connection
-
-Minimum Hardware:
-Operating System: 64-bit Linux, Mac OS X, Windows
-Processor: Intel Core i5–760 or AMD FX-8100 or better
-Memory: 8GB RAM
-Storage: 20GB available space SSD
-Internet: Broadband connection
+Recommended Hardware:
+- Operating System: 64-bit Linux, Mac OS X 10.14+, Windows 10+ 64-bit
+- Processor: 4+ cores @ 2.8+ GHz
+- Memory: 16GB+ RAM
+- Storage: SSD with at least 2TB free space
+- Network: See [Blobs](/learn/concepts/blobs.md) for current bandwidth requirements (varies with blob count)
 
 If that still does not help, please file an issue with our team on Github [here](https://github.com/OffchainLabs/prysm/issues/new?template=bug_report.md).
 
