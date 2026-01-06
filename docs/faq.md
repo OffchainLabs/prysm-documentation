@@ -140,11 +140,11 @@ The Prysm beacon node and validator allow performing database backups in case yo
 When downloading the Prysm precompiled binaries such as with `prysm.sh` or `prysm.bat`, you might see the following output
 
 ```
-Latest Prysm version is v1.1.0.
+Latest Prysm version is v7.1.0.
 Beacon chain is up to date.
 Verifying binary integrity.
-beacon-chain-v1.1.0-linux-amd64: OK
-gpg: Signature made Mon Jan 18 13:03:57 2021 PST
+beacon-chain-v7.1.0-linux-amd64: OK
+gpg: Signature made ...
 gpg:                using RSA key 0AE0051D647BA3C1A917AF4072E33E4DF1A5036E
 gpg: Good signature from "Preston Van Loon <preston@OffchainLabs.com>" [unknown]
 gpg: WARNING: This key is not certified with a trusted signature!
