@@ -173,7 +173,7 @@ There are a few possibilities. (1) your deposit has not yet been processed by be
 
 #### How can I move my validator to a different computer without getting slashed?
 
-Prysm will soon implement the slashing protection [standard format](https://eips.ethereum.org/EIPS/eip-3076), meaning that you can export your slashing protection history and import it easily into another machine running any Ethereum consensus client, not just Prysm! In the meantime, however, migrating machines can be a little tricky and we prepared the following set of tips to help keep you safe.
+Prysm implements the slashing protection [EIP-3076 standard format](https://eips.ethereum.org/EIPS/eip-3076), meaning you can export your slashing protection history and import it into another machine running any Ethereum consensus client. See our [slashing protection guide](/backup-and-migration/slashing-protection.md) for details. Here are some additional tips to help keep you safe during migration:
 
 1. Turn off your beacon node and validator on machine 1, make sure it is not running as a system process. You can check this using the process monitor tools of your OS, or a command line tool such as top or htop and check for anything containing the name “prysm” “validator” or “beacon”
 2. Note the location of your wallet directory. If you used the default when you started Prysm, you can view its path at the top of the output of `validator accounts list`, which varies based on your operating system
