@@ -14,7 +14,7 @@ import { PrysmVersion } from '@site/src/components/version.js';
 <HeaderBadgesWidget commaDelimitedContributors="Raul,James" />
 
 :::caution DEPRECATION NOTICE: Ethereum is post merge, use our quickstart guide.
-   The contents of this document was to help validators using **pre-Merge configuration** to migrate post merge. This is no longer required as Etheruem is already post merge. see our [Quickstart](/install-prysm/install-with-script.md) going forward.
+   The contents of this document was to help validators using **pre-Merge configuration** to migrate post merge. This is no longer required as Ethereum is already post merge. See our [Quickstart](/install-prysm/install-with-script.md) going forward.
 :::
 
 ## Select a configuration
