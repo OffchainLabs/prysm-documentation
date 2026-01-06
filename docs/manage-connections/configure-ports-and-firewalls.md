@@ -65,6 +65,16 @@ Both consensus and execution clients allow you to customize many of these ports.
 
 :::
 
+:::tip Cloud Users
+
+If running on a cloud provider (AWS, GCP, Azure, etc.), consider blacklisting internal IP ranges to prevent connectivity issues. Add this flag to your beacon node:
+
+```
+--p2p-blacklist=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,169.254.0.0/16
+```
+
+:::
+
 When configuring `Allow inbound` rules, consider tying the rule to an IP address when possible. For example, if your beacon node on `Machine A` is connecting to a remote execution node on `Machine B`, `Machine B`'s `Allow inbound and outbound traffic over 8551` rule should be tied to `Machine A's` public IP address. More information about IP addresses and port forwarding is available below.
 
 <div className='port-guide'>
