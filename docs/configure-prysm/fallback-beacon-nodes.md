@@ -27,7 +27,7 @@ To configure a validator using Prysm with fallback beacon nodes, you can leverag
      - **Explanation**:
        - `--beacon-rpc-provider`: Lists the gRPC endpoints of your beacon nodes. The validator client will distribute requests across them and fall back if one fails (e.g., due to network issues or downtime).
        - Add more endpoints as needed for additional redundancy.
-       - If using HTTP-based beacon APIs (supported in newer Prysm versions or forks), you can instead use `--beacon-rest-api-provider` with comma-separated HTTP URLs (e.g., `http://localhost:3500,http://remote:3500`). 
+       - If using HTTP-based beacon APIs (supported in newer Prysm versions or forks), you can instead use `--beacon-rest-api-provider` with comma-separated HTTP URLs (e.g., `http://localhost:3500,http://remote:3500`). Note: When using `--beacon-rest-api-provider`, you must also enable `--enable-beacon-rest-api` on your beacon node(s).
        - **Other common flags**:
          - `--graffiti="YourCustomGraffiti"`: Optional, for [custom block graffiti](/manage-validator/add-graffiti.md).
          - `--wallet-password-file=/path/to/password.txt`: For non-interactive runs.
