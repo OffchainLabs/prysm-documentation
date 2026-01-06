@@ -112,4 +112,4 @@ Mining is a proof-of-work consensus mechanism. Ethereum's consensus is now drive
 Slashers, like validators, use specialized pieces of consensus-layer client software to fulfill a critical responsibility for the Ethereum network. Slashers attempt to detect and punish malicious validators. Learn more by reading our [Slasher documentation](/configure-prysm/run-a-slasher.md).
 
 #### How do I get testnet `ETH`?
-We recommend using [Paradigm's MultiFaucet](https://faucet.paradigm.xyz/). If that doesn't work, you can ask the community for testnet `ETH` on either the [Prysm Discord server](https://discord.gg/prysm) or on [r/ethstaker](https://www.reddit.com/r/ethstaker).
+You can request testnet `ETH` from public faucets. For Sepolia, try the [Sepolia PoW Faucet](https://sepolia-faucet.pk910.de/) or [Alchemy's Sepolia Faucet](https://sepoliafaucet.com/). For Hoodi, check the [Hoodi GitHub repository](https://github.com/eth-clients/hoodi) for available faucets. You can also ask the community for testnet `ETH` on either the [Prysm Discord server](https://discord.gg/prysm) or on [r/ethstaker](https://www.reddit.com/r/ethstaker).
