@@ -103,7 +103,7 @@ Every network's execution layer works with (and only with) its corresponding "pa
 ## Frequently asked questions
 
 #### Can I run an execution node without running a beacon node?
-No. Although this is possible pre-Merge, all Ethereum network participants will need to run both an execution node and a beacon node.
+No. All Ethereum network participants need to run both an execution node and a beacon node.
 
 #### What happened to miners?
 Mining is a proof-of-work consensus mechanism. Ethereum's consensus is now driven by a proof-of-stake mechanism, which replaces miners with validators.
