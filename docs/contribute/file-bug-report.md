@@ -12,7 +12,7 @@ Bug reports are critical to the rapid development of the Prysm client. In order 
 
 ## Checking if your issue exists
 
-Duplicate tickets are a hinderance to the development process and, as such, it is crucial to first check through Prysm's existing issues to see if what you are experiencing has already been indexed.
+Duplicate tickets are a hindrance to the development process and, as such, it is crucial to first check through Prysm's existing issues to see if what you are experiencing has already been indexed.
 
 To do so, head over to the [issue page](https://github.com/OffchainLabs/prysm/issues) and enter some related keywords into the search bar. This may include a sample from the output or specific components it affects. If this is unsuccessful, check the [issue labels index](https://github.com/OffchainLabs/prysm/labels) for related categories and review the tickets within.
 

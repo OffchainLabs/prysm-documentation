@@ -40,7 +40,7 @@ The consensus client, or Beacon Node, implements the proof-of-stake algorithm, a
 It works together with the [Execution layer](#execution-layer) to track the head of the Ethereum blockchain and allow user interaction with the network.
 
 #### ETH1
-The existing Ethereum 1.0 protocol.
+A deprecated term that historically referred to Ethereum's execution layer before The Merge.
 
 #### Ethereum execution address
 Referred to also as an Ethereum address, this is a standard address to an Ethereum account which you can view in block explorers such as Etherscan. Your validator’s balance, upon a full withdrawal, will be available at an Ethereum address of your choosing.

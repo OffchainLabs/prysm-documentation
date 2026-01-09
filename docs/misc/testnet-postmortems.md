@@ -93,7 +93,7 @@ Because the Holesky issue couldn’t happen on Sepolia, focus shifts to Sepolia 
 - 14:00:00 Attempts to point Prysm VCs to other beacon nodes fail due to different interpretations of the eth/v1/beacon/states/head/validators endpoint. The validators appear stuck under unknown status because Lighthouse nodes don’t return any validators when an empty list of validator statuses are provided. The performance still isn’t great because of getDuties design.
 - 15:10:00 We finally gather enough validator participation and avoid slashing to finalize the Holesky chain.
 
-#### what went wrong
+#### What went wrong
 - 3 execution clients had the wrong deposit contract for the Holesky testnet resulting in a wrong majority chain.
 - The wrong majority chain justified making it more difficult to recover.
 - Ran into disk space issues with pod allocations.

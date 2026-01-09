@@ -34,7 +34,7 @@ If your validator goes offline, you can lose some of your staked `ETH` [<a href=
  
 While it's possible to optimize your client instance architecture for high-availability and redundancy, we encourage validators to **keep it simple**. Complex validator architectures run the risk of accidentally engaging in slashable behavior. This can result in slashing [<a href='#footnote-4'>4</a>], which is a far steeper price to pay than the occasional downtime penalty.
 
- - **Essential**: Ensure that you have adequate disk space. [We recommend having 1-2 TB of SSD storage available](/install-prysm/install-with-script.md).
+ - **Essential**: Ensure that you have adequate disk space. The beacon node requires ~200GB with checkpoint sync or ~1TB when synced from genesis with pruning disabled. Consult your execution client's documentation for its storage requirements.
  - **Essential**: Use SSDs, not spinning disks.
  - **Essential**: Periodically check your disk space to ensure that it's not being consumed by another application.
  - **Essential**: Use a network monitoring service [<a href='#footnote-5'>5</a>] to configure alerts when something isn't right with your validator.
@@ -47,7 +47,7 @@ While it's possible to optimize your client instance architecture for high-avail
 
 Linux-specific best practices:
 
- - **Essential**: If you’re not using a 1-2 TB SSD, monitor your disk space using [Disk Usage Analyzer](https://help.ubuntu.com/stable/ubuntu-help/disk-capacity.html.en). Prysm won’t rapidly consume your disk space, but periodically checking your available capacity can reduce the risk of surprises.
+ - **Essential**: Monitor your disk space using [Disk Usage Analyzer](https://help.ubuntu.com/stable/ubuntu-help/disk-capacity.html.en). Prysm won't rapidly consume your disk space, but periodically checking your available capacity can reduce the risk of surprises.
  - **Advanced**: Ubuntu users can use the [Startup Applications](https://help.ubuntu.com/stable/ubuntu-help/startup-applications.html.en) utility to auto-start beacon and validator services on boot.
 
 

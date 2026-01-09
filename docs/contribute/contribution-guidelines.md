@@ -18,8 +18,8 @@ Once you are a bit more familiar with the concepts behind Ethereum and are ready
 
 To develop Prysm, you'll need the following:
 
-- A modern Windows, MacOS X, or Minux operating system
-- Go 1.24 version installed, download and install [here](https://golang.org/dl/)
+- A modern Windows, macOS, or Linux operating system
+- Go 1.25 version installed, download and install [here](https://golang.org/dl/)
 - The `git` package installed
 - A code editor such as [Visual Studio Code](https://code.visualstudio.com/download) or Jetbrains' [Goland IDE](https://www.jetbrains.com/go/) or your preferred one
 
@@ -42,7 +42,7 @@ go version
 
 Example output:
 ```sh
-go version go1.24.0 darwin/arm64
+go version go1.25.0 darwin/arm64
 ```
 
 ### Building and testing Prysm with Go
@@ -72,7 +72,7 @@ Please define the following environment variable when running tests:
 CGO_CFLAGS="-O2 -D__BLST_PORTABLE__"
 ```
 
-It is particulary useful when running tests / debug in your IDE without using Bazel.
+It is particularly useful when running tests / debug in your IDE without using Bazel.
 
 See the [next section](#building-and-testing-prysm-with-bazel) for instructions on testing with prysm.
 

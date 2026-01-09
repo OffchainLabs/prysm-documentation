@@ -53,7 +53,7 @@ When users stake 32 `ETH` to participate in Ethereum's proof-of-stake consensus 
       </tr>
       <tr>
         <td><strong>Validator</strong></td>
-        <td>Validator clients are specialized software that let people stake 32 `ETH` as collateral within Ethereum's <strong>consensus layer</strong>. Validators are responsible for proposing blocks within Ethereum's proof-of-stake consensus mechanism, and will fully replace proof-of-work miners after <a href='https://ethereum.org/en/upgrades/merge/'>The Merge</a>. <br /> <br />A validator will talk only to a local beacon node. A validator's beacon node tells the validator what work to do, and broadcasts the validator's work to the Ethereum network as the validator performs its duties.</td>
+        <td>Validator clients are specialized software that let people stake 32 `ETH` as collateral within Ethereum's <strong>consensus layer</strong>. Validators are responsible for proposing blocks within Ethereum's proof-of-stake consensus mechanism, having fully replaced proof-of-work miners after <a href='https://ethereum.org/en/upgrades/merge/'>The Merge</a>. <br /> <br />A validator will talk only to a local beacon node. A validator's beacon node tells the validator what work to do, and broadcasts the validator's work to the Ethereum network as the validator performs its duties.</td>
       </tr>
     </tbody>
 </table>
@@ -103,7 +103,7 @@ Every network's execution layer works with (and only with) its corresponding "pa
 ## Frequently asked questions
 
 #### Can I run an execution node without running a beacon node?
-No. Although this is possible pre-Merge, all Ethereum network participants will need to run both an execution node and a beacon node.
+No. All Ethereum network participants need to run both an execution node and a beacon node.
 
 #### What happened to miners?
 Mining is a proof-of-work consensus mechanism. Ethereum's consensus is now driven by a proof-of-stake mechanism, which replaces miners with validators.
@@ -112,4 +112,4 @@ Mining is a proof-of-work consensus mechanism. Ethereum's consensus is now drive
 Slashers, like validators, use specialized pieces of consensus-layer client software to fulfill a critical responsibility for the Ethereum network. Slashers attempt to detect and punish malicious validators. Learn more by reading our [Slasher documentation](/configure-prysm/run-a-slasher.md).
 
 #### How do I get testnet `ETH`?
-We recommend using [Paradigm's MultiFaucet](https://faucet.paradigm.xyz/). If that doesn't work, you can ask the community for testnet `ETH` on either the [Prysm Discord server](https://discord.gg/prysm) or on [r/ethstaker](https://www.reddit.com/r/ethstaker).
+You can request testnet `ETH` from public faucets. For Sepolia, try the [Sepolia PoW Faucet](https://sepolia-faucet.pk910.de/) or [Alchemy's Sepolia Faucet](https://sepoliafaucet.com/). For Hoodi, check the [Hoodi GitHub repository](https://github.com/eth-clients/hoodi) for available faucets. You can also ask the community for testnet `ETH` on either the [Prysm Discord server](https://discord.gg/prysm) or on [r/ethstaker](https://www.reddit.com/r/ethstaker).

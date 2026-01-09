@@ -33,7 +33,7 @@ A high level overview of the proposed design. This states the components of the 
 
 ### Transport
 
-For network transport we must be able to support TCP connections (UDP is not a requirement). We have to be able to manage inbound and outbound tcp connections. Although not a requirement for mainnet, for interoperability all clients will have to be able to support an IPv4 endpoint. Any listening endpoints must be publically communicable, so Circuit Relays, AutoNat, etc., are not applicable. 
+For network transport we must be able to support TCP connections (UDP is not a requirement). We have to be able to manage inbound and outbound tcp connections. Although not a requirement for mainnet, for interoperability all clients will have to be able to support an IPv4 endpoint. Any listening endpoints must be publicly communicable, so Circuit Relays, AutoNat, etc., are not applicable. 
 
 ### Current Status in Prysm
 
