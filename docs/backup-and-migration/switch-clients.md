@@ -49,7 +49,7 @@ We have a section dedicated to exporting and importing slashing protection histo
 
 ### Step 4: Update port forwarding
 
-This step is not required for nodes which are running on a virtual public cloud, but keep in mind - nodes will be required to run a an execution client locally post merge!  
+This step is not required for nodes which are running on a virtual public cloud, but keep in mind - nodes will be required to run an execution client locally post merge!  
 
 By default, Prysm uses TCP/13000 and UDP/12000. Remove those two rules and replace them with the appropriate port forwards for the client you are switching to. The process will be very similar to the steps laid out [here.](/manage-connections/configure-ports-and-firewalls.md#port-forwarding) 
 
