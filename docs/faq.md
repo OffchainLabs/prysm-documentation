@@ -45,7 +45,7 @@ Recommended Hardware:
 - Operating System: 64-bit Linux, Mac OS X 10.14+, Windows 10+ 64-bit
 - Processor: 4+ cores @ 2.8+ GHz
 - Memory: 16GB+ RAM
-- Storage: SSD with at least 2TB free space
+- Storage: SSD with sufficient free space. Beacon node requires ~200GB with checkpoint sync or ~1TB when synced from genesis with pruning disabled. Consult your execution client's documentation for its storage requirements.
 - Network: See [Blobs](/learn/concepts/blobs.md) for current bandwidth requirements (varies with blob count)
 
 If that still does not help, please file an issue with our team on Github [here](https://github.com/OffchainLabs/prysm/issues/new?template=bug_report.md).

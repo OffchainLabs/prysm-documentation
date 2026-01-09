@@ -19,7 +19,7 @@
             <li><strong>OS</strong>: 64-bit Linux, Mac OS X 10.14+, Windows 10+ 64-bit</li>   
             <li><strong>CPU</strong>: 4+ cores @ 2.8+ GHz</li> 
             <li><strong>Memory</strong>: 16GB+ RAM</li> 
-            <li><strong>Storage</strong>: SSD with at least 2TB free space</li> 
+            <li><strong>Storage</strong>: SSD with sufficient free space. Beacon node requires ~200GB with checkpoint sync or ~1TB when synced from genesis with pruning disabled. Consult your execution client's documentation for its storage requirements.</li>
             <li><strong>Network</strong>: See <a href='/learn/concepts/blobs'>Blobs</a> for current bandwidth requirements</li> 
           </ul> 
         </td>

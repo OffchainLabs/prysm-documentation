@@ -62,7 +62,7 @@ import MultidimensionalContentControlsPartial from '@site/docs/partials/_multidi
         <div className='input-container'><input id="cl-prereqs" type='checkbox'/><span className='done'></span></div>
         <div className='guidance-container'>
             <label htmlFor="cl-prereqs">Review system requirements</label>
-            <p>Review the <a href='#post-merge-system-requirements'>post-Merge system requirements</a> section below. Note that <strong>a 2TB+ SSD is highly recommended</strong>.</p>
+            <p>Review the <a href='#post-merge-system-requirements'>post-Merge system requirements</a> section below.</p>
         </div>
     </div>
     <div className='task'>
@@ -150,7 +150,7 @@ import MultidimensionalContentControlsPartial from '@site/docs/partials/_multidi
 | Beacon nodes connect to execution nodes on port `8545` by default when using HTTP.                             | Beacon nodes connect to execution nodes on port **`8551`** by default when using HTTP.                                                   |
 | Miners receive transaction fee tips.                                                                           | **Validators** receive transaction fee tips. The "fee" is now a base fee that's burned - block producers earn only transaction fee tips. |
 | A fee recipient address does not need to be specified.                                                         | A fee recipient address **does** need to be specified.                                                                                   |
-| A 1TB hard drive is enough.                                                                                    | A **2TB+ SSD** is highly recommended.                                                                                                    |
+| A 1TB hard drive is enough.                                                                                    | An **SSD** is highly recommended. Beacon node requires ~200GB with checkpoint sync or ~1TB when synced from genesis.                   |
 
 
 ## Post-Merge system requirements
