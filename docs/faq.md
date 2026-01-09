@@ -199,7 +199,7 @@ You can then confirm your validator was added by running `validator accounts lis
 ### Ethereum proof-of-stake specific questions
 
 #### How do I check my current validator balance?
-The easiest way to check your current validator account balance is to search for your validator public key in a blockchain explorer like [beaconchai.in](https://beaconcha.in/).
+The easiest way to check your current validator account balance is to search for your validator public key in a blockchain explorer like [beaconcha.in](https://beaconcha.in/).
 
 <!--todo: explain how -->
 If you have a fully synced beacon node, you can fetch your account balance via the beacon node API.
