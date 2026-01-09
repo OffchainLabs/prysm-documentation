@@ -353,7 +353,7 @@
       "type": "category",
       "collapsed": true,
       "collapsible": true,
-      "label": "Moitoring, alerts, and metrics",
+      "label": "Monitoring, alerts, and metrics",
       "items": [
         {
           "type": "doc",
