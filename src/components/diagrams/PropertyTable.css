@@ -1,0 +1,42 @@
+.property-table-wrap {
+	overflow-x: auto;
+	margin: 0.25rem 0 0;
+}
+.property-table-wrap .property-table {
+	display: table;
+	width: max-content;
+	margin: 0;
+	overflow: visible;
+}
+.property-table th {
+	vertical-align: bottom;
+	white-space: nowrap;
+	font-size: 0.9em;
+}
+.property-table th a {
+	color: inherit;
+}
+.property-table td:first-child {
+	white-space: nowrap;
+}
+.property-table .pt-mark {
+	text-align: center;
+}
+.property-table .pt-current {
+	background: color-mix(in srgb, var(--site-color-accent) 12%, transparent);
+}
+
+/* The property column stays in view while the steps scroll. */
+.property-table th:first-child,
+.property-table td:first-child {
+	position: sticky;
+	left: 0;
+	z-index: 1;
+	box-shadow: inset -1px 0 0 var(--site-color-gray-5);
+}
+.property-table td:first-child {
+	background: var(--ifm-alert-background-color, var(--site-color-bg));
+}
+.property-table th:first-child {
+	background: var(--site-color-gray-6);
+}

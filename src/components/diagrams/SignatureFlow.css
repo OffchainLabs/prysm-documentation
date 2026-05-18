@@ -1,0 +1,55 @@
+.sigflow {
+	margin: 1.5rem 0;
+	padding: 1rem;
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	background: var(--site-color-bg-nav);
+	overflow-x: auto;
+}
+.sigflow svg {
+	width: 100%;
+	min-width: 36rem;
+	height: auto;
+	display: block;
+}
+.sigflow text {
+	font-family: var(--site-font);
+	text-anchor: middle;
+	fill: var(--site-color-gray-2);
+}
+.sigflow .s-box rect {
+	fill: var(--site-color-bg);
+	stroke: var(--site-color-gray-4);
+	stroke-width: 1.5;
+}
+.sigflow .s-op rect {
+	stroke: var(--site-color-accent);
+	fill: color-mix(in srgb, var(--site-color-accent) 12%, var(--site-color-bg));
+}
+.sigflow .s-secret rect {
+	stroke-dasharray: 6 4;
+}
+.sigflow .s-title {
+	font-family: var(--prysm-display);
+	font-weight: 650;
+	font-size: 15px;
+	fill: var(--site-color-white);
+}
+.sigflow .s-sub {
+	font-size: 12px;
+}
+.sigflow .s-note {
+	font-size: 12px;
+	fill: var(--site-color-gray-3);
+}
+.sigflow .s-left {
+	text-anchor: start;
+}
+.sigflow .s-link line,
+.sigflow .s-link path {
+	stroke: var(--site-color-gray-3);
+	stroke-width: 1.5;
+}
+.sigflow .s-arrowhead {
+	fill: var(--site-color-gray-3);
+}

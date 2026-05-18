@@ -1,0 +1,87 @@
+.agg-flow {
+	margin: 1.5rem 0;
+	padding: 1rem;
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	background: var(--site-color-bg-nav);
+	overflow-x: auto;
+}
+.agg-flow svg {
+	width: 100%;
+	min-width: 36rem;
+	height: auto;
+	display: block;
+}
+.agg-flow text {
+	font-family: var(--site-font-mono);
+	font-size: 13px;
+	text-anchor: middle;
+	fill: var(--site-color-gray-2);
+}
+.agg-flow .af-label {
+	text-anchor: start;
+	fill: var(--site-color-gray-3);
+	font-size: 12px;
+}
+.agg-flow .af-note {
+	font-size: 11px;
+	fill: var(--site-color-gray-3);
+}
+.agg-flow .af-dots {
+	font-size: 12px;
+	fill: var(--site-color-gray-3);
+}
+.agg-flow .af-node rect {
+	fill: var(--site-color-bg);
+	stroke: var(--site-color-gray-4);
+	stroke-width: 1.5;
+}
+.agg-flow .af-secret rect {
+	stroke-dasharray: 5 3;
+}
+.agg-flow .af-end rect {
+	stroke: var(--site-color-accent);
+	fill: color-mix(in srgb, var(--site-color-accent) 12%, var(--site-color-bg));
+}
+.agg-flow .af-op rect {
+	stroke: var(--site-color-accent);
+	fill: color-mix(in srgb, var(--site-color-accent) 12%, var(--site-color-bg));
+}
+.agg-flow .af-op text {
+	font-family: var(--site-font-mono);
+	font-size: 13px;
+	font-weight: 600;
+	fill: var(--site-color-white);
+}
+.agg-flow .af-pk rect {
+	stroke: var(--site-color-accent);
+	stroke-width: 2;
+}
+.agg-flow .af-title {
+	font-family: var(--prysm-display);
+	font-weight: 650;
+	font-size: 15px;
+	fill: var(--site-color-white);
+}
+.agg-flow .af-sub {
+	font-size: 12px;
+}
+.agg-flow .af-link {
+	stroke: var(--site-color-gray-3);
+	stroke-width: 1.5;
+}
+.agg-flow .af-arrowhead {
+	fill: var(--site-color-gray-3);
+}
+.agg-flow .af-node .af-title {
+	font-family: var(--prysm-display);
+	font-weight: 650;
+	font-size: 15px;
+	fill: var(--site-color-white);
+}
+.agg-flow .af-node .af-sub {
+	font-family: var(--site-font-mono);
+	font-weight: 400;
+	font-size: 12px;
+	fill: var(--site-color-gray-2);
+}
