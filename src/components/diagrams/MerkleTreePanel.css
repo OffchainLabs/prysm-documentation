@@ -1,0 +1,69 @@
+/* Builds on LamportPanel.css and HashChainPanel.css. */
+.merkle-panel .mt-svg {
+	display: block;
+	width: 100%;
+	min-width: 40rem;
+	height: auto;
+}
+.merkle-panel .mt-svg text {
+	font-family: var(--site-font-mono);
+	font-size: 13px;
+	text-anchor: middle;
+	fill: var(--site-color-gray-2);
+	pointer-events: none;
+}
+.merkle-panel .mt-svg .mt-name {
+	font-weight: 600;
+	fill: var(--site-color-white);
+}
+.merkle-panel .mt-svg .mt-key {
+	font-size: 11px;
+	fill: var(--site-color-gray-3);
+}
+.merkle-panel .mt-edge {
+	stroke: var(--site-color-gray-4);
+	stroke-width: 1.5;
+}
+.merkle-panel .mt-edge.mt-up {
+	stroke: var(--site-color-accent);
+	stroke-width: 2.5;
+}
+.merkle-panel .mt-node rect {
+	fill: var(--site-color-bg);
+	stroke: var(--site-color-gray-5);
+	stroke-width: 1.5;
+}
+.merkle-panel .mt-click {
+	cursor: pointer;
+}
+.merkle-panel .mt-click:hover rect {
+	stroke: var(--site-color-gray-3);
+}
+.merkle-panel .mt-leaf rect {
+	fill: var(--site-color-accent);
+	stroke: var(--site-color-accent);
+}
+.merkle-panel .mt-leaf text,
+.merkle-panel .mt-leaf .mt-name {
+	fill: var(--site-color-black);
+}
+.merkle-panel .mt-calc rect {
+	fill: color-mix(in srgb, var(--site-color-accent) 22%, var(--site-color-bg));
+	stroke: var(--site-color-accent);
+}
+.merkle-panel .mt-sib rect {
+	stroke: var(--site-color-gray-2);
+	stroke-width: 2;
+	stroke-dasharray: 6 3;
+}
+.merkle-panel .mt-bad rect {
+	fill: color-mix(in srgb, var(--site-color-red) 25%, var(--site-color-bg));
+	stroke: var(--site-color-red);
+}
+.merkle-panel .mt-bad text,
+.merkle-panel .mt-bad .mt-name {
+	fill: var(--site-color-red);
+}
+.merkle-panel .k-sib {
+	border: 2px dashed var(--site-color-gray-2);
+}
