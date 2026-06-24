@@ -12,13 +12,13 @@
     "swizzle": "docusaurus swizzle"
   },
   "devDependencies": {
-    "@docusaurus/core": "^2.4.1",
-    "@docusaurus/preset-classic": "^2.4.1",
+    "@docusaurus/core": "^3.10.1",
+    "@docusaurus/preset-classic": "^3.10.1",
     "react": "16.13.1",
     "react-dom": "16.13.1"
   },
   "dependencies": {
-    "@docusaurus/theme-search-algolia": "^2.4.1",
+    "@docusaurus/theme-search-algolia": "^3.10.1",
     "classnames": "^2.3.1",
     "clsx": "1.1.1",
     "docusaurus-lunr-search": "^2.3.2"
