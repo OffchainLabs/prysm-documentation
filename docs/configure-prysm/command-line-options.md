@@ -56,7 +56,7 @@ beacon-chain OPTIONS:
    --postpone-shutdown-for-proposals                              On a graceful shutdown signal (SIGINT/SIGTERM, e.g. Ctrl-C on Linux), postpone shutdown if a connected validator client must propose a block in the next 2 epochs. Send the signal again to force the node to stop immediately. (default: false)
    --rpc-host value                                               Host on which the RPC server should listen (default: "127.0.0.1")
    --rpc-max-page-size value                                      Max number of items returned per page in RPC responses for paginated endpoints. (default: 0)
-   --rpc-port value                                               STALE TEST EDIT - workflow should revert this (default: 4000)
+   --rpc-port value                                               RPC port exposed by a beacon node (default: 4000)
    --state-diff-exponents value [ --state-diff-exponents value ]  A comma-separated list of exponents (of 2) in decreasing order, defining the state diff hierarchy levels. The last exponent must be greater than or equal to 5. (default: 21, 18, 16, 13, 11, 9, 5)
    --tls-cert value                                               Certificate for secure gRPC. Pass this and the tls-key flag in order to use gRPC securely.
    --tls-key value                                                Key for secure gRPC. Pass this and the tls-cert flag in order to use gRPC securely.
