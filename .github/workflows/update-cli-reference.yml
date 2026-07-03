@@ -8,6 +8,8 @@ on:
   schedule:
     - cron: '0 8 * * 1' # Mondays 08:00 UTC
   workflow_dispatch: {}
+  push:
+    branches: [feat/static-cli-ref] # TEMP: remove before merge, for testing only
 
 jobs:
   update:
