@@ -1,4 +1,4 @@
-var prysmVersion = "v7.1.5";
+var prysmVersion = "v7.1.6";
 const {themes} = require('prism-react-renderer');
 
 module.exports = {
