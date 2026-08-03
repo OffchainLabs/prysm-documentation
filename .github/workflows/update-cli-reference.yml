@@ -35,6 +35,8 @@ jobs:
         with:
           commit-message: 'chore: update CLI reference from Prysm ${{ steps.prysm.outputs.tag }}'
           title: 'chore: update CLI reference from Prysm ${{ steps.prysm.outputs.tag }}'
+          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           body: |
             Automated update of the command-line options reference from
             `cli.prylabs.network`, created by the `update-cli-reference` workflow.
