@@ -117,7 +117,7 @@ builder OPTIONS:
    --http-mev-relay value                        A MEV builder relay string http endpoint, this will be used to interact MEV builder network using API defined in: https://ethereum.github.io/builder-specs/#/Builder
    --local-block-value-boost value               A percentage boost for local block construction as a Uint64. This is used to prioritize local block construction over relay/builder block constructionBoost is an additional percentage to multiple local block value. Use builder block if: builder_bid_value * 100 > local_block_value * (local-block-value-boost + 100) (default: 10)
    --max-builder-consecutive-missed-slots value  Number of consecutive skip slot to fallback from using relay/builder to local execution engine for block construction (default: 3)
-   --max-builder-epoch-missed-slots value        Number of total skip slot to fallback from using relay/builder to local execution engine for block construction in last epoch rolling window. The values are on the basis of the networks and the default value for mainnet is 5. (default: 0)
+   --max-builder-epoch-missed-slots value        Number of total skip slot to fallback from using relay/builder to local execution engine for block construction in last epoch rolling window (default: 5)
    --min-builder-bid value                       An absolute value in Gwei that the builder bid has to have in order for this beacon node to use the builder's block. Anything less than this value and the beacon will revert to local building. (default: 0)
    --min-builder-to-local-difference value       An absolute value in Gwei that the builder bid has to have in order for this beacon node to use the builder's block. Anything less than this value and the beacon will revert to local building. (default: 0)
    --suggested-fee-recipient value               Post bellatrix, this address will receive the transaction fees produced by any blocks from this node. Default to junk whilst bellatrix is in development state. Validator client can override this value through the preparebeaconproposer api. (default: "0x0000000000000000000000000000000000000000")
@@ -137,7 +137,6 @@ execution layer OPTIONS:
    --eth1-header-req-limit value            Sets the maximum number of headers that a deposit log query can fetch. (default: 1000)
    --execution-endpoint value               An execution client http endpoint. Can contain auth header as well in the format (default: "http://localhost:8551")
    --execution-headers value                A comma separated list of key value pairs to pass as HTTP headers for all execution client calls. Example: --execution-headers=key1=value1,key2=value2
-   --interop-eth1data-votes                 Enable mocking of eth1 data votes for proposers to package into blocks (default: false)
    --jwt-id value                           JWT claims id. Could be used to identify the client
    --jwt-secret value                       REQUIRED if connecting to an execution node via HTTP. Provides a path to a file containing a hex-encoded string representing a 32 byte secret used for authentication with an execution node via HTTP. If this is not set, all requests to execution nodes via HTTP for consensus-related calls will fail, which will prevent your validators from performing their duties. This is not required if using an IPC connection.
    
@@ -189,7 +188,6 @@ features OPTIONS:
    --holesky                                            Runs Prysm configured for the Holesky test network. (default: false)
    --hoodi                                              Runs Prysm configured for the Hoodi test network. (default: false)
    --ignore-unviable-attestations                       Ignores attestations whose target state is not viable with respect to the current head (avoid expensive state replay from lagging attesters). (default: false)
-   --interop-write-ssz-state-transitions                Writes SSZ states to disk after attempted state transitio. (default: false)
    --mainnet                                            Runs on Ethereum main network. This is the default and can be omitted. (default: true)
    --prepare-all-payloads                               Informs the engine to prepare all local payloads. Useful for relayers and builders. (default: false)
    --save-full-execution-payloads                       Saves beacon blocks with full execution payloads instead of execution payload headers in the database. (default: false)
@@ -237,7 +235,7 @@ USAGE:
    validator [options] command [command options] [arguments...]
 
 VERSION:
-  Prysm/v7.1.7/8db5927c7d6bd321f9bb09423349447f2dcacb1e. Built at: 2026-07-10 15:28:56+00:00
+  Prysm/v7.1.8/51b5a75ebbadf05af22bd2601b5baf7a9e99b66d. Built at: 2026-07-23 16:40:44+00:00
 
 global OPTIONS:
    wallet                       Defines commands for interacting with Ethereum validator wallets.
@@ -292,8 +290,8 @@ rpc OPTIONS:
   --beacon-rest-api-headers value                            Comma-separated list of key value pairs to pass as headers for all HTTP calls to the beacon node. 
                                                                To provide multiple values for the same key, specify the same key for each value. 
                                                                Example: --grpc-headers=key1=value1,key1=value2,key2=value3
-  --beacon-rest-api-provider value                           Beacon node REST API provider endpoint. Use a comma-separated list for ordered failover; the first endpoint is primary, and failover wraps back to the first after the last. (default: "http://127.0.0.1:3500")
-  --beacon-rpc-provider value                                WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..
+  --beacon-rest-api-provider value, --beacon-rest value      Beacon node REST API provider endpoint. Setting this implicitly enables the beacon REST API (no need for --enable-beacon-rest-api). Use a comma-separated list for ordered failover; the first endpoint is primary, and failover wraps back to the first after the last. (default: "http://127.0.0.1:3500")
+  --beacon-rpc-provider value, --beacon-grpc value           WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..
                                                                Beacon node RPC provider endpoint. (default: "127.0.0.1:4000")
   --grpc-headers value                                       WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..
                                                                Comma separated list of key value pairs to pass as gRPC headers for all gRPC calls.
@@ -348,7 +346,7 @@ features OPTIONS:
   --disable-duties-v2                           Forces use of get duties endpoint instead of v2. (default: false)
   --dynamic-key-reload-debounce-interval value  (Advanced): Specifies the time duration the validator waits to reload new keys if they have changed on disk.
                                                 Can be any type of duration such as 1.5s, 1000ms, 1m. (default: 1s)
-  --enable-beacon-rest-api                      (Experimental): Enables of the beacon REST API when querying a beacon node. (default: false)
+  --enable-beacon-rest-api, --enable-rest       (Experimental): Enables the beacon REST API when querying a beacon node. Optional: also enabled implicitly when --beacon-rest-api-provider is set. (default: false)
   --enable-doppelganger                         Enables the validator to perform a doppelganger check. 
                                                   This is not a foolproof method to find duplicate instances in the network. 
                                                   Your validator will still be vulnerable if it is being run in unsafe configurations. (default: false)
@@ -361,12 +359,6 @@ features OPTIONS:
   --web                                         (Work in progress): Enables the web portal for the validator client. (default: false)
   --write-wallet-password-on-web-onboarding     (Danger): Writes the wallet password to the wallet directory on completing Prysm web onboarding.
                                                 We recommend against this flag unless you are an advanced user. (default: false)
-  
-interop OPTIONS:
-  --interop-num-validators value  Number of validators to deterministically generate.
-                                    Example: --interop-start-index=5 --interop-num-validators=3 would generate keys from index 5 to 7. (default: 0)
-  --interop-start-index value     Start index to deterministically generate validator keys when used in combination with --interop-num-validators.
-                                    Example: --interop-start-index=5 --interop-num-validators=3 would generate keys from index 5 to 7. (default: 0)
   
 deprecated OPTIONS:
 ```
@@ -381,10 +373,10 @@ Refer to the [Use `prysmctl`](prysmctl.md) for `prysmctl` download and installat
 
 ```
 NAME:
-   prysmctl-v7.1.7-linux-amd64 - A new cli application
+   prysmctl-v7.1.8-linux-amd64 - A new cli application
 
 USAGE:
-   prysmctl-v7.1.7-linux-amd64 [global options] command [command options]
+   prysmctl-v7.1.8-linux-amd64 [global options] command [command options]
 
 COMMANDS:
    checkpoint-sync, cpt-sync  commands for managing checkpoint sync
