@@ -38,7 +38,7 @@ gRPC will remain the default and fully supported through v8 (expected in 2026) b
 
 Use `--beacon-rest-api-provider` on the **validator client** with a comma-separated list of HTTP URLs. Also pass `--enable-beacon-rest-api` on the **validator client** to switch it from gRPC to REST when communicating with the beacon node. The beacon node's REST API is served on port **3500** by default (controlled on the beacon node side by `--http-port`, alias `--grpc-gateway-port`).
 
-Unlike gRPC, the order of the REST endpoints does not define a priority: all listed nodes are used simultaneously.
+Unlike gRPC, the order of the REST endpoints does not define a priority; all listed nodes are used simultaneously.
 
 ```
 ./prysm.sh validator \
@@ -124,7 +124,7 @@ With REST and several beacon nodes, the `url` field of these logs lists every co
 
 - Monitor logs for `Failed health check` and `Health status changed` messages.
 - Use [Prometheus and Grafana](/monitoring-alerts-metrics/grafana-dashboard.md) (enabled via `--monitoring-port=8081`) to track validator performance.
-- Test fallbacks by shutting down one beacon node and confirming the validator continues attesting and proposing via the remaining endpoints. With REST, shut down all but one node — whichever one you keep, the validator client should keep performing its duties.
+- Test fallbacks by shutting down one beacon node and confirming the validator continues attesting and proposing via the remaining endpoints. With REST, shut down all but one node—whichever one you keep, the validator client should keep performing its duties.
 
 ### Other common flags
 
