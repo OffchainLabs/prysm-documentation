@@ -70,19 +70,19 @@ The `--wallet-dir` flag will still be needed if using the Remote Keymanager API 
 
 The Remote Keymanager APIs allows Prysm users to list, update, and delete the public keys set on the validator for Web3Signer.
 
-To use the Remote keymanager API, one would need to run the validator with the `--web` and `--validators-external-signer-url` flags with `--validators-external-signer-public-keys` being optional. 
+To use the Remote keymanager API, one would need to run the validator with the `--rpc` and `--validators-external-signer-url` flags with `--validators-external-signer-public-keys` being optional. 
 if `--validators-external-signer-public-keys` is not defined the validator client would simply run in a loop waiting for keys to be set. 
 
 Example:
 
 ```sh
-validator --web --validators-external-signer-url=http://localhost:9000
+validator --rpc --validators-external-signer-url=http://localhost:9000
 ```
 
-The `--web` flag will enable validator client APIs as well as the web ui ( not supported for `web3signer` ). A JWT token (found in the contents of the single-line file `auth-token`, will be generated in the Prysm default wallet directory otherwise defined by `--wallet-dir` flag. The token will also be printed in the console:
+The `--rpc` flag will enable the validator client APIs. A bearer token (the contents of the single-line file `auth-token`) will be generated at the path set by the `--keymanager-token-file` flag. The path is printed in the console:
 
 ```sh
-[2022-04-15 14:07:39]  INFO rpc: http://127.0.0.1:7500/initialize?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.ck3J6tcvHcI74IiFjyJqcBH-MmNAq-fMr0ncyZkGvFM
+[2022-04-15 14:07:39]  INFO rpc: Validator Client auth token for API authentication set at /Users/johndoe/Library/Eth2Validators/prysm-wallet-v2/auth-token
 ```
 
 The token needs to be copied and set in the header of the API request:
@@ -92,13 +92,6 @@ Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.ck3J6tcvHcI74IiF
 ```
 
 For more information on Remote Keymanager API visit the [Keymanager APIs Github Repo](https://github.com/ethereum/keymanager-APIs).
-
-:::warning Prysm Web Interface not supported for Web3Signer
-
-Prysm Web Interface can only support local keys and will not support the Web3Signer keys.[eth2-keymanager-frontend](https://github.com/joaquim-verges/eth2-keymanager-frontend) is a front-end alternative to the Prysm UI for the Keymanager APIs.
-
-:::
-
 
 :::warning Only supports Web3Signer currently
 
