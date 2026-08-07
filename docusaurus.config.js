@@ -11,7 +11,11 @@ module.exports = {
             : 'http://localhost:3000',
     baseUrl: '/docs/',
     onBrokenLinks: 'throw',
-    onBrokenMarkdownLinks: 'throw',
+    markdown: {
+        hooks: {
+            onBrokenMarkdownLinks: 'throw',
+        },
+    },
     favicon: 'images/Prysm.svg',
     organizationName: 'Offchain Labs',
     projectName: 'prysm-docs',
