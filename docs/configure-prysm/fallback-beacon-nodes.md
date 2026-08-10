@@ -9,6 +9,12 @@ Prysm's validator client supports multiple beacon node endpoints for redundancy 
 - **gRPC (default)** uses an **active-passive** scheme: one endpoint is active at a time, and the validator client fails over to the next endpoint in the list when the active one becomes unresponsive or unsynced.
 - **REST** uses an **active-active** scheme: the validator client listens to the event stream of *every* configured beacon node and queries all of them, keeping the best-suited response.
 
+:::warning Active-active REST is not available yet
+
+The active-active REST behavior described below is not in a released Prysm version yet. Until it ships, the REST validator client uses the same active-passive failover scheme as gRPC.
+
+:::
+
 ### Prerequisites
 
 - Prysm installed (via official release binaries or built from source).
@@ -82,7 +88,7 @@ If a beacon node goes offline, its event stream and requests simply stop contrib
 
 :::note Active-active replaces active-passive for REST
 
-The REST validator client previously used the same active-passive failover scheme as gRPC. Because `--enable-beacon-rest-api` is still experimental, the active-passive scheme was replaced by active-active rather than being offered as an option. No configuration change is required: keep passing a comma-separated list to `--beacon-rest-api-provider`.
+The REST validator client currently uses the same active-passive failover scheme as gRPC. Because `--enable-beacon-rest-api` is still experimental, active-passive will be replaced by active-active rather than being offered as an option. No configuration change will be required: keep passing a comma-separated list to `--beacon-rest-api-provider`.
 
 :::
 
