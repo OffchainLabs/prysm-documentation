@@ -68,6 +68,10 @@
         },
         {
           "type": "doc",
+          "id": "configure-prysm/proposer-settings"
+        },
+        {
+          "type": "doc",
           "id": "configure-prysm/authentication"
         },
         {

@@ -15,6 +15,16 @@ There are risks to using a builder which may result in missed rewards, missed pr
 
 :::
 
+:::info The Gloas fork changes how builders work
+
+Everything in the first half of this page — relays, MEV-Boost, validator registration, `--http-mev-relay` — describes external block building **before the Gloas fork**, and keeps working until your network reaches the fork epoch. At the fork, this flow retires and is replaced by in-protocol builders configured through [version 2 proposer settings](/configure-prysm/proposer-settings.md). See [After the Gloas fork](#after-the-gloas-fork-in-protocol-builders) below for what changes and how to prepare.
+
+:::
+
+## Before the Gloas fork: MEV-Boost and relays
+
+The sections from here through [Advanced Beacon Node Configurations](#advanced-beacon-node-configurations) describe the current, pre-fork setup.
+
 ## Learn about the Builder Lifecycle
 
 <details>
@@ -94,6 +104,14 @@ To `register` the validator against the builder and enable the use of custom bui
 It is **recommended** to configure with the validator client with the `--suggested-fee-recipient` and `--enable-builder` flags. All validators will be registered periodically by using the `--enable-builder` flag.
 **note:**  `--proposer-settings-file` or `--proposer-settings-url` flags with builder settings will override values provided from `--suggested-fee-recipient` and `--enable-builder`flags.
 
+:::warning `--enable-builder` and `--suggested-gas-limit` are legacy
+
+If you have already migrated to [version 2 proposer settings](/configure-prysm/proposer-settings.md), a non-empty `builders` list opts a key into this periodic registration before the fork (an explicit empty list opts it out), so you don't need `--enable-builder` alongside a v2 file.
+
+On Gloas-ready Prysm releases both flags produce pre-fork content only: they still drive MEV-Boost registrations until the fork, but they never override v2 proposer settings, and Prysm warns that they have no effect after it. See the [v1 to v2 field mapping](/configure-prysm/proposer-settings.md#what-replaces-what) for what replaces them.
+
+:::
+
 
 ## 2. Beacon Node: connect to the builder
 
@@ -137,6 +155,8 @@ Update the following configurations and restart the validator client to stop the
 - remove the `--suggested-gas-limit` flag, though it should already be disabled once removing the `--enable-builder` flag.
 - remove all wanted references of the `builder` field from the associated file/json for the validators you no longer want to register within the `--proposer-settings-file` and `--proposer-settings-url` flag.
 
+On [version 2 proposer settings](/configure-prysm/proposer-settings.md), prefer setting `"builders": []` on the keys you want to unregister rather than deleting the `builder` object. An explicit empty list means "use no builders" — it opts the key out of registration before the fork and out of builder bids after it. Deleting the object instead makes the key inherit whatever `default_config` says, which may be the opposite of what you want.
+
 ## 2. Beacon Node: remove builder related flags
 
 The following flag should be removed to disable builder use on the beacon node:
@@ -174,9 +194,9 @@ removing the `--http-mev-relay` flag from the beacon node will disconnect the bu
 ### Advanced Validator Registration
 There are other ways to configure your validator registrations for more granular control on which validator keys should be registered to use the custom builder and which ones should use local execution.
 In these cases you would replace the `--suggested-fee-recipient` flag with  `--proposer-settings-file` flag or `--proposer-settings-url` flag.
-- if configuring with the `--proposer-settings-file` flag and provide it with a suitable JSON or YAML file. This file should include the necessary configuration for the builder. For detailed guidance and an example of this configuration, refer to the [MEV Builder and Gas Limit configuration guide](/configure-prysm/configure-fee-recipient.md#advanced-configure-mev-builder-and-gas-limit).
- - if configuring with the `--proposer-settings-url` flag provide a url that returns the JSON response with the suitable proposer-settings. A guide and example on this configuration can be found [here](/configure-prysm/configure-fee-recipient.md#advanced-configure-mev-builder-and-gas-limit).
- - if configuring with the `--proposer-settings-file` or `--proposer-settings-url` flag with no builder settings but providing the `--enable-builder` flag instead. Optionally, you can also add the `--suggested-gas-limit` to adjust the default gas limit for the builder, this only applies with `--enable-builder`.
+- if configuring with the `--proposer-settings-file` flag and provide it with a suitable JSON or YAML file. This file should include the necessary configuration for the builder. For detailed guidance and an example of this configuration, refer to the [Proposer settings](/configure-prysm/proposer-settings.md) reference.
+ - if configuring with the `--proposer-settings-url` flag provide a url that returns the JSON response with the suitable proposer-settings. A guide and example on this configuration can be found in the [Proposer settings](/configure-prysm/proposer-settings.md) reference.
+ - if configuring with the `--proposer-settings-file` or `--proposer-settings-url` flag with no builder settings but providing the `--enable-builder` flag instead. Optionally, you can also add the `--suggested-gas-limit` to adjust the default gas limit for the builder, this only applies with `--enable-builder`. Both flags are legacy, pre-fork content — see the [warning above](#1-validator-client-register-validator) and the [v1 to v2 field mapping](/configure-prysm/proposer-settings.md#what-replaces-what).
  
 :::info
 
@@ -200,6 +220,12 @@ The circuit breaker is a safety feature for falling back to local execution when
 This occurs when the builder or client using the builder endpoints encounters issues that cause missed blocks. 
 By default, the circuit breaker will be triggered after three slots are consecutively missed or five slots are missed in an epoch, but this can be configured through the `--max-builder-consecutive-missed-slots` and `max-builder-epoch-missed-slots` flags.
 
+:::note
+
+This circuit breaker guards the pre-fork relay flow. After the Gloas fork the protection becomes per-builder rather than global: a builder that wins an auction and then fails to reveal its payload is recorded and temporarily blacklisted, so its bids are neither used for block production nor propagated, and your proposal falls back to the local block. These two flags apply to the pre-fork flow only.
+
+:::
+
 ### Registration cache
 
 Validator registrations for Builder APIs are stored in a cache by default as of `4.0.7` instead of bolt db when starting the beacon node. The cache will enable:
@@ -216,8 +242,39 @@ Values stored in the bolt db will not be cleared and you will not be able to unr
 
 ### Prioritizing local blocks
 
-`--local-block-value-boost` flag is a `uint64` value that provides an additional percentage to multiply the local block value. Use builder block if: `builder_bid_value * 100 > local_block_value * (local-block-value-boost + 100)`. This will encourage your setup to use the local execution if the value earned is not above your threshold, helping to mitigate censorship concerns.
+`--local-block-value-boost` flag is a `uint64` value that provides an additional percentage to multiply the local block value. Use builder block if: `builder_bid_value * 100 > local_block_value * (local-block-value-boost + 100)`. This will encourage your setup to use the local execution if the value earned is not above your threshold, helping to mitigate censorship concerns. After the Gloas fork, the equivalent control is the per-key `builder_boost_factor` in [proposer settings](/configure-prysm/proposer-settings.md).
 
+## After the Gloas fork: in-protocol builders
+
+The [Gloas](https://eips.ethereum.org/EIPS/eip-7732) fork enshrines proposer-builder separation (ePBS) into the protocol. Builders stop being off-chain services fronted by relays and become on-chain actors with their own indices, public keys, and staked balances that back their bids. The entire MEV-Boost flow described above — relays, blinded blocks, validator registration, the `--http-mev-relay` flag — operates until the fork epoch and then retires.
+
+### What changes at a glance
+
+| | Before Gloas (MEV-Boost) | After Gloas (in-protocol) |
+|---|---|---|
+| Builder market | Off-chain builders behind relays | On-chain builders with staked collateral |
+| Where configured | Beacon node `--http-mev-relay` + validator registration | Validator client [v2 proposer settings](/configure-prysm/proposer-settings.md) or the [keymanager builder API](/configure-prysm/proposer-settings.md#keymanager-apis); no beacon node builder flag |
+| Choosing builders | Whatever the relay forwards | You list builder endpoints per key, optionally pinned to specific builder pubkeys |
+| Payment | Builder pays fee recipient inside the payload; relay reputation is the guarantee | Bid `value` is backed by the builder's on-chain balance and settled by the protocol; optional extra `execution_payment` is a promise you must explicitly opt into trusting |
+| Local fallback | Circuit breaker + value comparison | Still there: local execution client remains mandatory, bids compete against your local block, and a per-builder circuit breaker blacklists builders that fail to deliver |
+| Registration | Periodic `registerValidator` calls via relay | Validator client submits signed builder preferences directly to your configured builders ahead of proposals |
+
+### How a Gloas proposal uses builders
+
+1. **Configure builders on the validator client.** List builder endpoints per key (or in `default_config`) in [version 2 proposer settings](/configure-prysm/proposer-settings.md), or manage them at runtime through the keymanager `builder_config` endpoints. No beacon node flag is involved.
+2. **The validator client announces itself to your builders.** Ahead of each upcoming proposal, it signs builder request authentications with the validator key and submits its preferences (such as the maximum execution payment it will accept) to each configured builder.
+3. **The beacon node collects bids.** At proposal time it requests execution payload bids from each configured builder endpoint under a strict timeout, and also considers bids seen on the P2P network. Every bid is validated against the same rules the chain enforces: the builder must be active with enough staked balance to cover its bid, and the bid must match your slot, parent block, fee recipient, and gas limit preference.
+4. **Bids compete against your local block.** Each bid is valued at its protocol-backed `value` plus its promised `execution_payment` capped by your `max_execution_payment` (unset means promised payments count for nothing), filtered by your `min_bid`, scaled by your `builder_boost_factor`, and compared against the locally built payload. Ties go to the local block. See [How a bid is valued](/configure-prysm/proposer-settings.md#how-a-bid-is-valued).
+5. **The winning builder reveals the payload.** Your validator proposes a block committing to the winning bid; the builder then reveals the execution payload later in the slot, and the protocol settles the bid `value` from the builder's balance to your fee recipient. If you self-built, your block carries your local payload as usual.
+6. **Failures are contained.** A builder that wins the auction but fails to reveal the payload costs the slot its execution payload; Prysm records the failure and temporarily blacklists that builder, ignoring its bids and not propagating them.
+
+### Preparing for the fork
+
+- Migrate your proposer settings to v2 before the fork: [Migrating from v1 to v2](/configure-prysm/proposer-settings.md#migrating-from-v1-to-v2). Your v2 `builders` list keeps MEV-Boost registrations flowing until the fork, then becomes your Gloas builder list.
+- Decide your trust posture per builder. Whether a builder's promised execution payments count toward its bids is controlled by `max_execution_payment` — read [Trusting builders](/configure-prysm/proposer-settings.md#trusting-builders-max_execution_payment) carefully, because a non-zero value means bids can win on money the protocol does not guarantee.
+- Keep your execution client: local block building remains the fallback and the baseline that builder bids must beat.
+- After the fork you can drop `--http-mev-relay`, `--enable-builder`, and `--suggested-gas-limit`, and shut down MEV-Boost — see the [flag table](/configure-prysm/proposer-settings.md#flag-changes-and-deprecations).
+- If you run several beacon nodes per validator client, note the new `--stateless` validator flag (forced on automatically in that setup): the validator requests the block and execution payload envelope together and republishes the envelope itself, since only the beacon node that built a block can reveal its payload.
 
 ## Frequently asked questions
 
@@ -246,3 +303,12 @@ There are multiple reasons why this could happen, including an incorrect relay U
 
 #### What if the earnings from the builder are lower than from local execution?
 The block from local execution will be used. This could also be triggered through `--local-block-value-boost` if the earnings from the builder don't pass some percentage threshold.
+
+#### Do I need MEV-Boost or relays after the Gloas fork?
+No. The relay/MEV-Boost flow ends at the fork epoch. External block building afterwards happens through in-protocol builders configured in [v2 proposer settings](/configure-prysm/proposer-settings.md) — and if you configure none, your validator simply self-builds every block.
+
+#### I use MEV-Boost today and do nothing before the fork. What happens?
+Your setup keeps working right up to the fork epoch. At the fork, v1 builder settings (and the `--enable-builder` and `--suggested-gas-limit` flags) stop applying — Prysm logs warnings — and your validator falls back to self-building local blocks with default settings. That's safe, just builder-less: to keep using external builders, migrate to [v2 proposer settings](/configure-prysm/proposer-settings.md#migrating-from-v1-to-v2).
+
+#### After Gloas, is using a builder still a trust decision?
+Less than before, but yes where you opt in. A bid's `value` is backed by the builder's staked balance and settled by the protocol, and a builder that withholds a payload is blacklisted by the circuit breaker. But any `execution_payment` above the protocol-backed value is only a promise: it counts toward bids solely up to the `max_execution_payment` you configure, so treat that field as the amount of trust you extend to a builder. See [Trusting builders](/configure-prysm/proposer-settings.md#trusting-builders-max_execution_payment).
