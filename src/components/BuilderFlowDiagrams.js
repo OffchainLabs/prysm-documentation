@@ -80,86 +80,97 @@ export const PreGloasBuilderFlow = () => (
 export const GloasBuilderFlow = () => (
   <figure style={{ margin: '0 0 1rem' }}>
     <svg
-      style={{ maxWidth: "100%", height: "auto", display: "block" }}
-      viewBox="0 0 1060 470" role="img" aria-label="After the Gloas fork the validator client submits builder preferences directly to configured builders, the beacon node collects execution payload bids from them and from P2P gossip, values those bids against the local block, and the winning builder reveals its payload or is blacklisted and the proposer falls back to the local block.">
-  <defs>
-    <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
-    </marker>
-    <marker id="ahb2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#5b8def"/>
-    </marker>
-  </defs>
-  <rect x="20" y="48" width="180" height="64" rx="8" fill="currentColor" fillOpacity=".05" stroke="currentColor" strokeOpacity=".55"/>
-  <text x="110" y="76" textAnchor="middle" fontSize="12.5" fill="currentColor">v2 proposer settings</text>
-  <text x="110" y="94" textAnchor="middle" fontSize="11" fill="currentColor" opacity=".75">or keymanager API</text>
+          style={{ maxWidth: "100%", height: "auto", display: "block" }}
+          viewBox="0 0 1080 600" role="img" aria-label="After the Gloas fork: the validator client holds the builder configuration and signs preferences, the beacon node forwards them to builders, collects and values execution payload bids from builders and P2P gossip against the local payload from the execution client, and blacklists builders that win but fail to reveal. Builders and the P2P network are outside the operator's infrastructure.">
+      <defs>
+        <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+        <marker id="abg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5b8def"/></marker>
+      </defs>
 
-  <rect x="20" y="200" width="180" height="64" rx="8" fill="currentColor" fillOpacity=".05" stroke="currentColor" strokeOpacity=".55"/>
-  <text x="110" y="237" textAnchor="middle" fontSize="13" fill="currentColor">Validator Client</text>
+      <rect x="16" y="28" width="684" height="540" rx="14" fill="none" stroke="currentColor" strokeOpacity=".35" strokeDasharray="7 5"/>
+      <text x="34" y="50" fontSize="11" fill="currentColor" opacity=".6" letterSpacing=".08em">RUNS ON YOUR INFRASTRUCTURE</text>
 
-  <rect x="290" y="30" width="210" height="80" rx="8" fill="#5b8def" fillOpacity=".14" stroke="#5b8def"/>
-  <text x="395" y="62" textAnchor="middle" fontSize="13" fill="currentColor">Configured builders</text>
-  <text x="395" y="82" textAnchor="middle" fontSize="11" fill="currentColor" opacity=".75">url · builder_pubkeys</text>
+      <rect x="36" y="76" width="210" height="196" rx="10" fill="currentColor" fillOpacity=".04" stroke="currentColor" strokeOpacity=".5"/>
+      <text x="50" y="98" fontSize="11.5" fontWeight="600" fill="currentColor" opacity=".85">Validator client</text>
+      <rect x="50" y="112" width="182" height="56" rx="7" fill="currentColor" fillOpacity=".05" stroke="currentColor" strokeOpacity=".4"/>
+      <text x="141" y="134" textAnchor="middle" fontSize="11.5" fill="currentColor">v2 proposer settings</text>
+      <text x="141" y="151" textAnchor="middle" fontSize="10" fill="currentColor" opacity=".75">or keymanager builder_config</text>
+      <rect x="50" y="194" width="182" height="60" rx="7" fill="currentColor" fillOpacity=".05" stroke="currentColor" strokeOpacity=".4"/>
+      <text x="141" y="217" textAnchor="middle" fontSize="11.5" fill="currentColor">Signs builder request</text>
+      <text x="141" y="233" textAnchor="middle" fontSize="11.5" fill="currentColor">auths + preferences</text>
+      <path d="M141,168 V188" stroke="currentColor" fill="none" markerEnd="url(#ag)"/>
 
-  <rect x="290" y="200" width="210" height="64" rx="8" fill="currentColor" fillOpacity=".05" stroke="currentColor" strokeOpacity=".55"/>
-  <text x="395" y="237" textAnchor="middle" fontSize="13" fill="currentColor">Beacon Node</text>
+      <rect x="36" y="330" width="210" height="76" rx="10" fill="#2f9e68" fillOpacity=".12" stroke="#2f9e68"/>
+      <text x="141" y="360" textAnchor="middle" fontSize="12" fill="currentColor">Execution client</text>
+      <text x="141" y="378" textAnchor="middle" fontSize="10" fill="currentColor" opacity=".78">local payload · engine API</text>
 
-  <rect x="290" y="350" width="210" height="52" rx="8" fill="currentColor" fillOpacity=".04" stroke="currentColor" strokeOpacity=".4" strokeDasharray="5 4"/>
-  <text x="395" y="381" textAnchor="middle" fontSize="12" fill="currentColor" opacity=".85">P2P gossip bids</text>
+      <rect x="330" y="76" width="340" height="460" rx="10" fill="currentColor" fillOpacity=".04" stroke="currentColor" strokeOpacity=".5"/>
+      <text x="344" y="98" fontSize="11.5" fontWeight="600" fill="currentColor" opacity=".85">Beacon node</text>
 
-  <rect x="590" y="170" width="210" height="124" rx="8" fill="#d97706" fillOpacity=".12" stroke="#d97706"/>
-  <text x="695" y="199" textAnchor="middle" fontSize="12.5" fill="currentColor">Bid valuation</text>
-  <text x="695" y="224" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">value + payment (capped)</text>
-  <text x="695" y="243" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">≥ min_bid</text>
-  <text x="695" y="262" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">× boost factor</text>
-  <text x="695" y="281" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">vs local block</text>
+      <rect x="344" y="112" width="312" height="88" rx="7" fill="currentColor" fillOpacity=".05" stroke="currentColor" strokeOpacity=".4"/>
+      <text x="500" y="146" textAnchor="middle" fontSize="12" fill="currentColor">Collects execution payload bids</text>
+      <text x="500" y="168" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".8">from configured builders and P2P gossip</text>
+      <text x="500" y="185" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".8">checks each against consensus rules</text>
 
-  <rect x="860" y="48" width="180" height="88" rx="8" fill="#5b8def" fillOpacity=".14" stroke="#5b8def"/>
-  <text x="950" y="78" textAnchor="middle" fontSize="12.5" fill="currentColor">Builder reveals</text>
-  <text x="950" y="96" textAnchor="middle" fontSize="12.5" fill="currentColor">payload</text>
-  <text x="950" y="118" textAnchor="middle" fontSize="10" fill="currentColor" opacity=".75">value settled from stake</text>
+      <rect x="344" y="228" width="312" height="170" rx="7" fill="#d97706" fillOpacity=".12" stroke="#d97706"/>
+      <text x="500" y="257" textAnchor="middle" fontSize="12" fill="currentColor">Values bids and picks the payload</text>
+      <text x="500" y="285" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">value + execution payment,</text>
+      <text x="500" y="302" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">capped by max_execution_payment</text>
+      <text x="500" y="325" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">discard below min_bid</text>
+      <text x="500" y="348" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">× builder_boost_factor</text>
+      <text x="500" y="371" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">compare against the local payload</text>
 
-  <rect x="860" y="330" width="180" height="76" rx="8" fill="#2f9e68" fillOpacity=".12" stroke="#2f9e68"/>
-  <text x="950" y="362" textAnchor="middle" fontSize="12.5" fill="currentColor">Local block</text>
-  <text x="950" y="380" textAnchor="middle" fontSize="11" fill="currentColor" opacity=".8">(self-build)</text>
+      <rect x="344" y="426" width="312" height="92" rx="7" fill="currentColor" fillOpacity=".05" stroke="currentColor" strokeOpacity=".4"/>
+      <text x="500" y="458" textAnchor="middle" fontSize="12" fill="currentColor">Blacklists a builder that wins</text>
+      <text x="500" y="476" textAnchor="middle" fontSize="12" fill="currentColor">but never reveals its payload</text>
+      <text x="500" y="498" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".8">its bids are dropped, local payload is used</text>
 
-  <path d="M110,112 V194" stroke="currentColor" fill="none" markerEnd="url(#ah2)"/>
-  <text x="124" y="158" fontSize="10.5" fill="currentColor" opacity=".8">builder config</text>
+      <path d="M500,200 V222" stroke="currentColor" fill="none" markerEnd="url(#ag)"/>
+      <path d="M500,398 V420" stroke="currentColor" strokeOpacity=".55" strokeDasharray="5 4" fill="none" markerEnd="url(#ag)"/>
 
-  <path d="M200,220 H250 V70 H284" stroke="#5b8def" strokeDasharray="5 4" fill="none" markerEnd="url(#ahb2)"/>
-  <text x="272" y="108" fontSize="10.5" fill="currentColor" opacity=".85">signed builder</text>
-  <text x="272" y="122" fontSize="10.5" fill="currentColor" opacity=".85">preferences</text>
+      <rect x="800" y="96" width="260" height="120" rx="10" fill="#5b8def" fillOpacity=".14" stroke="#5b8def"/>
+      <text x="930" y="136" textAnchor="middle" fontSize="12.5" fill="currentColor">Builders</text>
+      <text x="930" y="158" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".8">on-chain identities, staked</text>
+      <text x="930" y="176" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".8">reached at url · builder_pubkeys</text>
+      <text x="930" y="196" textAnchor="middle" fontSize="10" fill="currentColor" opacity=".65">outside your infrastructure</text>
 
-  <path d="M395,110 V194" stroke="#5b8def" fill="none" markerEnd="url(#ahb2)"/>
-  <text x="409" y="158" fontSize="10.5" fill="currentColor" opacity=".85">execution payload bids</text>
+      <rect x="800" y="268" width="260" height="64" rx="10" fill="currentColor" fillOpacity=".04" stroke="currentColor" strokeOpacity=".4" strokeDasharray="5 4"/>
+      <text x="930" y="295" textAnchor="middle" fontSize="12" fill="currentColor" opacity=".9">P2P network</text>
+      <text x="930" y="315" textAnchor="middle" fontSize="10" fill="currentColor" opacity=".65">outside your infrastructure</text>
 
-  <path d="M395,350 V270" stroke="currentColor" strokeOpacity=".6" strokeDasharray="5 4" fill="none" markerEnd="url(#ah2)"/>
-  <text x="409" y="315" fontSize="10.5" fill="currentColor" opacity=".75">execution_payment = 0</text>
+      <path d="M246,222 H324" stroke="currentColor" fill="none" markerEnd="url(#ag)"/>
+      <text x="285" y="196" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">builder</text>
+      <text x="285" y="208" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">preferences</text>
 
-  <path d="M500,232 H584" stroke="currentColor" fill="none" markerEnd="url(#ah2)"/>
+      <path d="M246,368 H324" stroke="#2f9e68" fill="none" markerEnd="url(#ag)" style={{ color: '#2f9e68' }}/>
+      <text x="285" y="360" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".85">local payload</text>
 
-  <path d="M800,206 H840 V92 H854" stroke="#5b8def" fill="none" markerEnd="url(#ahb2)"/>
-  <text x="850" y="170" fontSize="10.5" fill="currentColor" opacity=".85">builder wins</text>
+      <path d="M676,128 H794" stroke="#5b8def" fill="none" markerEnd="url(#abg)"/>
+      <text x="718" y="122" fontSize="10.5" fill="currentColor" opacity=".85">preferences</text>
 
-  <path d="M800,258 H840 V368 H854" stroke="#2f9e68" fill="none" markerEnd="url(#ah2)" style={{ color: '#2f9e68' }}/>
-  <text x="850" y="300" fontSize="10.5" fill="currentColor" opacity=".85">local wins</text>
+      <path d="M794,170 H676" stroke="#5b8def" fill="none" markerEnd="url(#abg)"/>
+      <text x="718" y="164" fontSize="10.5" fill="currentColor" opacity=".85">payload bids</text>
 
-  <path d="M985,136 V322" stroke="#d97706" strokeDasharray="5 4" fill="none" markerEnd="url(#ah2)" style={{ color: '#d97706' }}/>
-  <text x="975" y="224" textAnchor="end" fontSize="10.5" fill="currentColor" opacity=".85">no reveal ·</text>
-  <text x="975" y="238" textAnchor="end" fontSize="10.5" fill="currentColor" opacity=".85">blacklisted</text>
+      <path d="M676,202 H794" stroke="#5b8def" fill="none" markerEnd="url(#abg)"/>
+      <text x="718" y="219" fontSize="10.5" fill="currentColor" opacity=".85">signed block</text>
 
-  <g fontSize="11" fontWeight="600" textAnchor="middle">
-    <circle cx="20" cy="112" r="13" fill="#5b8def"/><text x="20" y="116" fill="#fff">1</text>
-    <circle cx="250" cy="160" r="13" fill="#5b8def"/><text x="250" y="164" fill="#fff">2</text>
-    <circle cx="368" cy="152" r="13" fill="#5b8def"/><text x="368" y="156" fill="#fff">3</text>
-    <circle cx="590" cy="170" r="13" fill="#5b8def"/><text x="590" y="174" fill="#fff">4</text>
-    <circle cx="860" cy="136" r="13" fill="#5b8def"/><text x="860" y="140" fill="#fff">5</text>
-    <circle cx="985" cy="266" r="13" fill="#5b8def"/><text x="985" y="270" fill="#fff">6</text>
-  </g>
-</svg>
+      <path d="M794,300 H676" stroke="currentColor" strokeOpacity=".55" strokeDasharray="5 4" fill="none" markerEnd="url(#ag)"/>
+      <text x="718" y="294" fontSize="10.5" fill="currentColor" opacity=".75">gossip bids</text>
+      <text x="718" y="316" fontSize="10.5" fill="currentColor" opacity=".75">payment = 0</text>
+
+      <g fontSize="11" fontWeight="600" textAnchor="middle">
+        <circle cx="50" cy="112" r="13" fill="#5b8def"/><text x="50" y="116" fill="#fff">1</text>
+        <circle cx="285" cy="222" r="13" fill="#5b8def"/><text x="285" y="226" fill="#fff">2</text>
+        <circle cx="700" cy="170" r="13" fill="#5b8def"/><text x="700" y="174" fill="#fff">3</text>
+        <circle cx="344" cy="228" r="13" fill="#5b8def"/><text x="344" y="232" fill="#fff">4</text>
+        <circle cx="700" cy="202" r="13" fill="#5b8def"/><text x="700" y="206" fill="#fff">5</text>
+        <circle cx="344" cy="426" r="13" fill="#5b8def"/><text x="344" y="430" fill="#fff">6</text>
+      </g>
+    </svg>
     <figcaption style={CAPTION}>
-      Numbers match the steps below. Dashed lines carry no payload: builder preferences,
-      gossip bids, and the failure path.
+      Numbers match the steps below. The dashed outline marks what you run: bid collection,
+      valuation and blacklisting all happen inside your beacon node, and every arrow that
+      crosses the outline is a call to something you do not control.
     </figcaption>
   </figure>
 );
