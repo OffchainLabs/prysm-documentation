@@ -18,7 +18,7 @@
     </tr>
     <tr>
       <td><code>level=warning msg="Failed to update proposer settings" error="could not submit signed registrations to beacon node: rpc error: code = InvalidArgument desc = Could not register block builder: could not register validator(s): unsupported error code: 502: did not receive 200 response from API: Builder API validator registration unsuccessful" prefix=validator slot=5069888</code></td>
-      <td>Possibly an issue with mev-boost/relay if you constantly see this.</td>
+      <td>Possibly an issue with mev-boost/relay if you constantly see this. Applies to pre-Gloas MEV-Boost registrations only; after the fork the validator submits builder preferences instead.</td>
     </tr>
     <tr>
     <td><code>Could not determine if beacon chain started: could not setup beacon chain ChainStart streaming client: rpc error: code = Unavailable desc = connection closed: could not connect" prefix=validator</code></td>

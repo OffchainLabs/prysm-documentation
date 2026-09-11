@@ -60,7 +60,9 @@ If your validator is running multiple keys (for example, staking 64 `ETH` using 
 
 ### Configure fee recipient via JSON/YAML (validator client only)
 
-You can assign different wallet addresses to each of your validator public keys using JSON/YAML configuration. Fee recipient address assignments specified through JSON/YAML override those configured through the `--suggested-fee-recipient` flag. This method of configuration uses the following JSON/YAML schema:
+You can assign different wallet addresses to each of your validator public keys using JSON/YAML configuration. Fee recipient address assignments specified through JSON/YAML override those configured through the `--suggested-fee-recipient` flag. This JSON/YAML file is called the **proposer settings** file — fee recipient is one of several per-validator preferences it can carry (gas limit, graffiti, and builder configuration are the others). This page covers the fee recipient fields; see [Proposer settings](/configure-prysm/proposer-settings.md) for the complete reference, including the version 2 schema used for Gloas builder configuration.
+
+The configuration uses the following JSON/YAML schema:
 
 
 <Tabs groupId="format" defaultValue="json" values={[
@@ -123,9 +125,9 @@ Tell your validator to use the JSON/YAML configuration through one of the follow
 
 
 
-### Advanced: Configure MEV builder and gas limit
+### Advanced: Configure gas limit, graffiti, and builders
 
-In the previous section, we reviewed a sample JSON/YAML file. The following file reveals additional properties that can optionally be included in order to configure MEV builder validator registration and gas limits:
+In the previous section, we reviewed a sample JSON/YAML file. The same file can optionally carry further per-validator preferences — a gas limit, graffiti, and builder configuration:
 
 <Tabs groupId="format" defaultValue="json" values={[
         {label: 'JSON', value: 'json'},
@@ -139,25 +141,23 @@ In the previous section, we reviewed a sample JSON/YAML file. The following file
   "proposer_config": {
     "<VALIDATOR PUBLIC KEY>": {
       "fee_recipient": "<WALLET ADDRESS>",
+      "gas_limit": "60000000",
+      "graffiti": "<GRAFFITI STRING>",
       "builder": {
-        "enabled": true,
-        "gas_limit": "30000000"
+        "builders": [
+          { "url": "<BUILDER URL>" }
+        ]
       }
     },
     "<VALIDATOR PUBLIC KEY>": {
       "fee_recipient": "<WALLET ADDRESS>",
       "builder": {
-        "enabled": false,
-        "gas_limit": "30000000"
+        "builders": []
       }
     }
   },
   "default_config": {
-    "fee_recipient": "<WALLET ADDRESS>",
-    "builder": {
-      "enabled": true,
-      "gas_limit": "30000000"
-    }
+    "fee_recipient": "<WALLET ADDRESS>"
   }
 }
 ```
@@ -172,19 +172,17 @@ In the previous section, we reviewed a sample JSON/YAML file. The following file
 proposer_config:
   '<VALIDATOR PUBLIC KEY>':
     fee_recipient: '<WALLET ADDRESS>'
+    gas_limit: '60000000'
+    graffiti: '<GRAFFITI STRING>'
     builder:
-      enabled: true
-      gas_limit: '30000000'
+      builders:
+        - url: '<BUILDER URL>'
   '<VALIDATOR PUBLIC KEY>':
     fee_recipient: '<WALLET ADDRESS>'
     builder:
-      enabled: true
-      gas_limit: '30000000'
+      builders: []
 default_config:
   fee_recipient: '<WALLET ADDRESS>'
-  builder:
-      enabled: true
-      gas_limit: '30000000'
 
 ```
 
@@ -195,9 +193,15 @@ default_config:
 
 New property definitions are as follows:
 
- - `builder`: An object containing key-value pairs related to builder configuration. Applicable only when using custom block builders. If you don't run a builder, you can ignore this.
- - `enabled`: A boolean value that determines whether or not the MEV builder validator registration is enabled. Applicable only when using custom block builders. If you don't run a builder, you can ignore this. `false` is the default.
- - `gas_limit`: A gas limit. Default limit is 30M gwei - `30000000`.
+ - `gas_limit`: The gas limit your validator advertises as its preference for blocks built on its behalf. Most users should leave this unset: your validator then follows the network's scheduled gas limit (currently defaulting to `60000000`) automatically. Set it only to deliberately opt out of the network schedule. In v1 files the gas limit lived inside `builder`; that placement is legacy and stops applying at the Gloas fork.
+ - `graffiti`: An optional graffiti string included in blocks proposed by this key.
+ - `builder`: An object configuring external block builders for this key. Applicable only if you want to use custom block builders — if you don't, you can omit it. In the example above, the first key requests bids from one builder, the second key explicitly opts out of builders (an empty `builders` list means self-build only), and all other keys use the default configuration. Before the Gloas fork, a non-empty `builders` list also opts the key into MEV-Boost validator registration, and an empty list opts it out. The builder object has several more fields — including `max_execution_payment`, which controls how much you trust a builder's promised payments — documented in the [Proposer settings](/configure-prysm/proposer-settings.md) reference. Read [Trusting builders](/configure-prysm/proposer-settings.md#trusting-builders-max_execution_payment) before setting trust-related fields.
+
+:::note Legacy v1 builder fields
+
+Older files may still use the legacy builder fields `enabled` (the MEV-Boost validator registration toggle) and a builder-level `gas_limit`. These keep working until the Gloas fork and are then dropped and replaced with defaults. Prysm reads the schema from the fields you use, so switching to `builders` is the whole migration — an explicit `version` field is optional. See [Migrating from v1 to v2](/configure-prysm/proposer-settings.md#migrating-from-v1-to-v2).
+
+:::
 
 
 
@@ -211,10 +215,10 @@ If you don't see any errors after issuing one of the above commands, your fee re
 `fee-recipient-config-file` and `fee-recipient-config-url` flags are deprecated and have been replaced with `proposer-settings-file` and `proposer-settings-url` flags as of Prysm v2.1.3.
 
 #### How do I ensure that builders receive my fee recipient wallet address?
-When `enable-builder` is set to `true` on your validator, you can use either the `--suggested-fee-recipient` flag or the JSON/YAML configuration method to communicate your fee recipient wallet address to builders.
+Before the Gloas fork, builders learn your fee recipient through MEV-Boost validator registration: with `--enable-builder` set (or a non-empty `builders` list in v2 proposer settings), your validator registers periodically using the fee recipient from the flag or JSON/YAML configuration. After the Gloas fork, your fee recipient is enforced directly — builder bids that don't name your configured fee recipient are rejected before your validator will use them.
 
 #### When should I set my own `gas_limit`, and how do I know what to set?
-This is an advanced configuration property related to custom builders (MEV) that most users won't have to think about. In general, large gas limits will result in you not being able to include many transactions in a block, while using low values won't be as profitable.  See [https://github.com/ethereum/builder-specs/issues/17](https://github.com/ethereum/builder-specs/issues/17) for related discussion.
+Most users should not set one. When `gas_limit` is unset, your validator follows the network's scheduled gas limit ([EIP-8261](https://eips.ethereum.org/EIPS/eip-8261)), falling back to the chain default (currently `60000000`). Set an explicit value only to deliberately opt out of the schedule — Prysm will warn when your value is above or below the scheduled one. Note that in version 2 proposer settings `gas_limit` sits at the same level as `fee_recipient`, not inside `builder`; see [Proposer settings](/configure-prysm/proposer-settings.md).
 
 
 
