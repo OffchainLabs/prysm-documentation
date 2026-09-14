@@ -60,7 +60,7 @@ If your validator is running multiple keys (for example, staking 64 `ETH` using 
 
 ### Configure fee recipient via JSON/YAML (validator client only)
 
-You can assign different wallet addresses to each of your validator public keys using JSON/YAML configuration. Fee recipient address assignments specified through JSON/YAML override those configured through the `--suggested-fee-recipient` flag. This JSON/YAML file is called the **proposer settings** file — fee recipient is one of several per-validator preferences it can carry (gas limit, graffiti, and builder configuration are the others). This page covers the fee recipient fields; see [Proposer settings](/configure-prysm/proposer-settings.md) for the complete reference, including the version 2 schema used for Gloas builder configuration.
+You can assign different wallet addresses to each validator public key using a JSON/YAML configuration. Fee recipient address assignments specified through JSON/YAML override those configured through the `--suggested-fee-recipient` flag. This JSON/YAML file is called the **proposer settings** file — fee recipient is one of several per-validator preferences it can carry (gas limit, graffiti, and builder configuration are the others). This page covers the fee recipient fields; see [Proposer settings](/configure-prysm/proposer-settings.md) for the complete reference, including the version 2 schema used for Gloas builder configuration.
 
 The configuration uses the following JSON/YAML schema:
 
@@ -193,13 +193,13 @@ default_config:
 
 New property definitions are as follows:
 
- - `gas_limit`: The gas limit your validator advertises as its preference for blocks built on its behalf. Most users should leave this unset: your validator then follows the network's scheduled gas limit (currently defaulting to `60000000`) automatically. Set it only to deliberately opt out of the network schedule. In v1 files the gas limit lived inside `builder`; that placement is legacy and stops applying at the Gloas fork.
+ - `gas_limit`: The gas limit your validator advertises as its preference for blocks built on its behalf. Most users should leave this unset: your validator then follows the network's scheduled gas limit (currently defaulting to `60000000`) automatically. Set it only to opt out of the network schedule deliberately. In v1 files, the gas limit lived inside `builder`; that placement is legacy and stops applying at the Gloas fork.
  - `graffiti`: An optional graffiti string included in blocks proposed by this key.
  - `builder`: An object configuring external block builders for this key. Applicable only if you want to use custom block builders — if you don't, you can omit it. In the example above, the first key requests bids from one builder, the second key explicitly opts out of builders (an empty `builders` list means self-build only), and all other keys use the default configuration. Before the Gloas fork, a non-empty `builders` list also opts the key into MEV-Boost validator registration, and an empty list opts it out. The builder object has several more fields — including `max_execution_payment`, which controls how much you trust a builder's promised payments — documented in the [Proposer settings](/configure-prysm/proposer-settings.md) reference. Read [Trusting builders](/configure-prysm/proposer-settings.md#trusting-builders-max_execution_payment) before setting trust-related fields.
 
 :::note Legacy v1 builder fields
 
-Older files may still use the legacy builder fields `enabled` (the MEV-Boost validator registration toggle) and a builder-level `gas_limit`. These keep working until the Gloas fork and are then dropped and replaced with defaults. Prysm reads the schema from the fields you use, so switching to `builders` is the whole migration — an explicit `version` field is optional. See [Migrating from v1 to v2](/configure-prysm/proposer-settings.md#migrating-from-v1-to-v2).
+Older files may still use the legacy builder fields `enabled` (the MEV-Boost validator registration toggle) and a builder-level `gas_limit`. These keep working until the Gloas fork, then get dropped and replaced with defaults. Prysm reads the schema from the fields you use, so switching to `builders` is the whole migration — an explicit `version` field is optional. See [Migrating from v1 to v2](/configure-prysm/proposer-settings.md#migrating-from-v1-to-v2).
 
 :::
 
@@ -215,10 +215,10 @@ If you don't see any errors after issuing one of the above commands, your fee re
 `fee-recipient-config-file` and `fee-recipient-config-url` flags are deprecated and have been replaced with `proposer-settings-file` and `proposer-settings-url` flags as of Prysm v2.1.3.
 
 #### How do I ensure that builders receive my fee recipient wallet address?
-Before the Gloas fork, builders learn your fee recipient through MEV-Boost validator registration: with `--enable-builder` set (or a non-empty `builders` list in v2 proposer settings), your validator registers periodically using the fee recipient from the flag or JSON/YAML configuration. After the Gloas fork, your fee recipient is enforced directly — builder bids that don't name your configured fee recipient are rejected before your validator will use them.
+Before the Gloas fork, builders learn your fee recipient through MEV-Boost validator registration: with `--enable-builder` set (or a non-empty `builders` list in v2 proposer settings), your validator registers periodically using the fee recipient from the flag or JSON/YAML configuration. After the Gloas fork, your fee recipient is enforced directly—builder bids that don't name your configured fee recipient are rejected before your validator uses them.
 
 #### When should I set my own `gas_limit`, and how do I know what to set?
-Most users should not set one. When `gas_limit` is unset, your validator follows the network's scheduled gas limit ([EIP-8261](https://eips.ethereum.org/EIPS/eip-8261)), falling back to the chain default (currently `60000000`). Set an explicit value only to deliberately opt out of the schedule — Prysm will warn when your value is above or below the scheduled one. Note that in version 2 proposer settings `gas_limit` sits at the same level as `fee_recipient`, not inside `builder`; see [Proposer settings](/configure-prysm/proposer-settings.md).
+Most users should not set one. When `gas_limit` is unset, your validator follows the network's scheduled gas limit ([EIP-8261](https://eips.ethereum.org/EIPS/eip-8261)), and falls back to the chain default (currently `60000000`). Set an explicit value only to deliberately opt out of the schedule — Prysm will warn when your value is above or below the scheduled one. Note that in version 2, proposer settings `gas_limit` sits at the same level as `fee_recipient`, not inside `builder`; see [Proposer settings](/configure-prysm/proposer-settings.md).
 
 
 
