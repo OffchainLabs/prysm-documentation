@@ -92,7 +92,7 @@ Once the fork epoch has passed, you can drop `--http-mev-relay`, `--enable-build
 
 ## Configuring builders from the Gloas fork onward
 
-The [Gloas](https://eips.ethereum.org/EIPS/eip-7732) fork enshrines proposer-builder separation (ePBS) into the protocol. Builders stop being off-chain services fronted by relays and become on-chain actors with their own indices, public keys, and staked balances that back their bids. The MEV-Boost flow it replaces — relays, blinded blocks, validator registration, the `--http-mev-relay` flag — operates until the fork epoch and then retires; it is documented in [Before the Gloas fork](#before-the-gloas-fork-mev-boost-and-relays).
+The Gloas fork enshrines proposer-builder separation ([ePBS]((https://eips.ethereum.org/EIPS/eip-7732))) into the protocol. Builders stop being off-chain services fronted by relays and become on-chain actors with their own indices, public keys, and staked balances that back their bids. The MEV-Boost flow it replaces — relays, blinded blocks, validator registration, the `--http-mev-relay` flag — operates until the fork epoch and then retires; it is documented in [Before the Gloas fork](#before-the-gloas-fork-mev-boost-and-relays).
 
 ### What changes at a glance
 
