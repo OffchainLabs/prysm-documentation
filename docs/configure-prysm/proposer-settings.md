@@ -154,7 +154,7 @@ Each entry in a `builders` list describes one builder your validator is willing 
 
 | Field | Description |
 |---|---|
-| `url` | **Required.** The builder's HTTP endpoint (up to 2048 bytes). Entries with the same `url` and auth data are deduplicated. |
+| `url` | **Required.** The builder's HTTP endpoint (up to 2048 bytes). Entries with the same `url` and `auth_data` are deduplicated. |
 | `min_bid` | Per-entry override of the enclosing config's `min_bid`. |
 | `max_execution_payment` | Per-entry override of the enclosing config's `max_execution_payment`. Setting trust ceilings per entry, rather than config-wide, is the recommended pattern. |
 | `builder_boost_factor` | Per-entry override of the enclosing config's `builder_boost_factor`. |
