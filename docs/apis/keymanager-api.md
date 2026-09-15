@@ -27,6 +27,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.ck3J6tcvHcI74IiFj
 ```
 
 
+## Gloas builder configuration endpoints
+
+Prysm releases with Gloas support implement the per-key builder configuration endpoints from [keymanager-APIs #88](https://github.com/ethereum/keymanager-APIs/pull/88): `GET`, `POST`, and `DELETE /eth/v1/validator/{pubkey}/builder_config`. These manage which builders a key requests bids from after the Gloas fork, alongside the existing fee recipient, gas limit, and graffiti endpoints. On networks with no Gloas fork scheduled, they respond `501 Not Implemented`. See [Proposer settings](/configure-prysm/proposer-settings.md#keymanager-apis) for semantics and the relationship to proposer settings files.
+
 ## Other Prysm specific errors and usecases
 
 Prysm comes with some client specific edge cases and usages. These cases will be documented on the [Keymanager API repos under flows](https://github.com/ethereum/keymanager-APIs/tree/master/flows/client-specific/prysm).
