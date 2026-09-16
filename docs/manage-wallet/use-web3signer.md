@@ -55,7 +55,7 @@ Example:
 --remote-signer-keys=0xa99a...e44c,0xb89b...4a0b
 ```
 
-By default, Prysm fetches public keys from the URL once at startup. You can enable polling to refresh URL keys without restarting the validator, or use a key file to manage additional keys through the Remote Keymanager API.
+By default, Prysm fetches public keys from the URL once at startup. You can enable polling to refresh keys from the URL without restarting the validator, or use a key file to manage additional keys through the Remote Keymanager API.
 
 :::tip Running Prysm with Web3Signer does not need Prysm Wallet Creation
 
@@ -190,6 +190,6 @@ If you empty or remove the file while the validator is running, Prysm stops usin
 
 Earlier versions (up to and including v7.1.8) copied flag and URL keys into the key file. Check existing files and remove copies you want to manage only through the flag or URL. Keep keys you intend to manage through the file. A stale file entry can keep a key active after you remove it from the flag or URL.
 
-If you delete a key through the Remote Keymanager API while the flag or URL still supplies it, the API removes the file entry but returns `error`. Read the response message to check whether the file entry was removed and whether the key remains active.
+If you delete a key through the Remote Keymanager API while the flag or URL still supplies it, the API removes the file entry but returns `error`. Review the response message to confirm whether the file entry has been removed and whether the key is still active.
 
 :::
