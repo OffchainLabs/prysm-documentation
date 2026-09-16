@@ -5,10 +5,6 @@
         <th>Solution</th>
     </tr>
     <tr>
-      <td>You see <code>Waiting for keymanager to initialize validator client with web UI...</code></td>
-      <td>You'll usually see this message when your beacon node is trying to interact with a validator client instance before the beacon node is fully synced. This is a known limitation. When your beacon node is finished syncing, this message should go away. Visit [Check Node and Validator Status](/monitoring-alerts-metrics/check-node-and-validator-status.md) to learn how to check the sync status of your beacon node.</td>
-    </tr>
-    <tr>
       <td>Everything seems fine, but your validator balance is going down.</td>
       <td>If your validator client is running fine without errors but you're seeing your validator balance decrease, your beacon node may be experiencing issues with connectivity, stability, or synchronization. Check your beacon node logs to see if there are any errors or crashes.</td>
     </tr>
