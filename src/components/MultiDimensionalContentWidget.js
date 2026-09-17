@@ -45,11 +45,6 @@ export const MultiDimensionalContentWidget = () => {
 		return isOnAuthPage;
 	};
 
-	let isViewingMergePrep = function () {
-		var isOnMergePrepPage = window.location.href.indexOf('/prepare-for-merge') > -1;
-		return isOnMergePrepPage;
-	};
-
 	let scrollDownASmidge = function () {
 		window.scrollBy(0, 10);
 	};

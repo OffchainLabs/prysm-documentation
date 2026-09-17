@@ -1,5 +1,17 @@
 import React from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import CodeBlock from '@theme/CodeBlock';
+
+// Renders a real Docusaurus code block with the current Prysm version interpolated.
+// Simple:   <PrysmVersionCommand prefix="export USE_PRYSM_VERSION=" />
+// Multi-line: <PrysmVersionCommand language="ini" template={`Environment = USE_PRYSM_VERSION={version}`} />
+//   ({version} in `template` is replaced with the current version.)
+export const PrysmVersionCommand = ({ prefix = '', template = null, language = 'bash' }) => {
+  const { siteConfig } = useDocusaurusContext();
+  const version = siteConfig?.customFields?.prysmVersion;
+  const code = template !== null ? template.replaceAll('{version}', version) : `${prefix}${version}`;
+  return <CodeBlock language={language}>{code}</CodeBlock>;
+};
 
 export const PrysmVersion = ({ includeLink = false, majorOverride = null, minorOverride = null, patchOverride = null}) => {
   const { siteConfig } = useDocusaurusContext();

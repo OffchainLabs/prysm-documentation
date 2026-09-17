@@ -1,4 +1,5 @@
-var prysmVersion = "v7.1.0";
+var prysmVersion = "v7.1.8";
+const {themes} = require('prism-react-renderer');
 
 module.exports = {
     title: 'Prysm',
@@ -10,7 +11,11 @@ module.exports = {
             : 'http://localhost:3000',
     baseUrl: '/docs/',
     onBrokenLinks: 'throw',
-    onBrokenMarkdownLinks: 'throw',
+    markdown: {
+        hooks: {
+            onBrokenMarkdownLinks: 'throw',
+        },
+    },
     favicon: 'images/Prysm.svg',
     organizationName: 'Offchain Labs',
     projectName: 'prysm-docs',
@@ -48,7 +53,7 @@ module.exports = {
                 position: 'right',
             },
             {
-                href: 'https://discord.gg/prysm',
+                href: 'https://discord.gg/qEZK94mFXP',
                 label: 'Discord',
                 position: 'right',
             },
@@ -64,7 +69,7 @@ module.exports = {
             links: [],
         },
         prism: {
-            theme: require('prism-react-renderer/themes/dracula'),
+            theme: themes.dracula,
         },
         image: 'images/prysm_together.png'
     },
@@ -100,5 +105,21 @@ module.exports = {
             },
         ],
         require.resolve("docusaurus-lunr-search"),
+        [
+            '@signalwire/docusaurus-plugin-llms-txt',
+            {
+                siteTitle: 'Prysm Documentation',
+                siteDescription: 'Documentation for Prysm, an Ethereum consensus client written in Go.',
+                content: {
+                    enableMarkdownFiles: true,
+                    enableLlmsFullTxt: true,
+                    includeDocs: true,
+                    includeBlog: false,
+                    includePages: false,
+                    // route.path is matched with baseUrl (/docs/) included, so use a baseUrl-agnostic glob
+                    excludeRoutes: ['**/404/'],
+                },
+            },
+        ],
     ],
 };

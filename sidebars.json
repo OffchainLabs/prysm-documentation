@@ -92,10 +92,6 @@
         },
         {
           "type": "doc",
-          "id": "configure-prysm/proof-of-stake-devnet"
-        },
-        {
-          "type": "doc",
           "id": "configure-prysm/staying-up-to-date"
         },
         {
@@ -171,6 +167,10 @@
             {
               "type": "doc",
               "id": "learn/concepts/nodes-networks"
+            },
+            {
+              "type": "doc",
+              "id": "learn/concepts/partial-columns"
             },
             {
               "type": "doc",
@@ -254,7 +254,6 @@
             }
           ]
         },
-
         {
           "type": "doc",
           "id": "learn/eth2"
@@ -378,10 +377,6 @@
         {
           "type": "doc",
           "id": "monitoring-alerts-metrics/individual-validator-monitoring"
-        },
-        {
-          "type": "doc",
-          "id": "monitoring-alerts-metrics/web-interface"
         }
       ]
     },

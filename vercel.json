@@ -5,6 +5,22 @@
   "installCommand": "npm install",
   "trailingSlash": true,
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/robots.txt",
+      "destination": "/docs/robots.txt"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/docs/:path*",
+      "headers": [{ "key": "Vary", "value": "Accept" }]
+    },
+    {
+      "source": "/docs/:path*.md",
+      "headers": [{ "key": "Content-Type", "value": "text/markdown; charset=utf-8" }]
+    }
+  ],
   "redirects": [
     { "source": "/prysm/docs/(.*)", 
       "destination": "/docs/$1", 
@@ -33,9 +49,6 @@
     { "source": "/(docs/advanced/migrating-keys/?)", 
       "destination": "/docs/backup-and-migration/migrating-keys/", 
       "permanent": false },
-    { "source": "/(docs/advanced/proof-of-stake-devnet/?)", 
-      "destination": "/docs/configure-prysm/proof-of-stake-devnet/", 
-      "permanent": false },
     { "source": "/(docs/advanced/switch-clients/?)", 
       "destination": "/docs/backup-and-migration/switch-clients/", 
       "permanent": false },
@@ -60,8 +73,8 @@
     { "source": "/(docs/contribute/required-reading/?)", 
       "destination": "/docs/learn/required-reading/", 
       "permanent": false },
-    { "source": "/(docs/devtools/block-explorers/?)", 
-      "destination": "/docs/misc/block-explorers/", 
+    { "source": "/(docs/devtools/block-explorers/?)",
+      "destination": "/docs/misc/block-explorers/",
       "permanent": false },
     { "source": "/(docs/devtools/end-to-end/?)", 
       "destination": "/docs/learn/dev-concepts/end-to-end/", 
@@ -165,14 +178,11 @@
     { "source": "/(docs/prysm-usage/secure-grpc/?)", 
       "destination": "/docs/manage-connections/secure-grpc/", 
       "permanent": false },
-    { "source": "/(docs/prysm-usage/slasher/?)", 
-      "destination": "/docs/configure-prysm/slasher/", 
+    { "source": "/(docs/prysm-usage/slasher/?)",
+      "destination": "/docs/configure-prysm/slasher/",
       "permanent": false },
     { "source": "/(docs/prysm-usage/staying-up-to-date/?)", 
       "destination": "/docs/configure-prysm/staying-up-to-date/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/web-interface/?)", 
-      "destination": "/docs/monitoring-alerts-metrics/web-interface/", 
       "permanent": false },
     { "source": "/(docs/reading/bazel/?)", 
       "destination": "/docs/learn/tools/bazel/", 
@@ -183,8 +193,8 @@
     { "source": "/(docs/reading/golang/?)", 
       "destination": "/docs/learn/tools/golang/", 
       "permanent": false },
-    { "source": "/(docs/reading/testnet_postmortems/?)", 
-      "destination": "/docs/misc/testnet-postmortems/", 
+    { "source": "/(docs/reading/testnet_postmortems/?)",
+      "destination": "/docs/misc/testnet-postmortems/",
       "permanent": false },
     { "source": "/(docs/wallet/deterministic/?)", 
       "destination": "/docs/manage-wallet/deterministic/", 

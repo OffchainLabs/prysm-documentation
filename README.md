@@ -9,7 +9,7 @@ Below are steps for initializing and reproducing this portal for development.
 1. The latest version of [Node](https://nodejs.org/en/download/) installed.
 2. npm (comes with Node.js)
 
-   > You have to be on Node >= 8.x.
+   > You have to be on Node >= 20.
 
 ## Installation
 
@@ -21,7 +21,7 @@ Below are steps for initializing and reproducing this portal for development.
 ## Running the development server
 
 1. From the root directory, run the local web server using `npm start`.
-2. Load the example site at http://localhost:3000/prsym/docs if it did not already open automatically. If port 3000 has already been taken, another port will be used. Look at the console messages to see which.
+2. Load the example site at http://localhost:3000/docs/ if it did not already open automatically. If port 3000 has already been taken, another port will be used. Look at the console messages to see which.
 
    You should see the example site loaded in your web browser. There's also a LiveReload server running, and any changes made to the docs and files in the project directory will cause the page to refresh.
 
@@ -51,3 +51,11 @@ Alternatively, you can use the Vercel CLI to deploy from your local machine:
 npm install -g vercel
 vercel
 ```
+
+## Maintenance
+
+When a new version of Prysm is released, update the following files:
+
+- `docusaurus.config.js` — bump `prysmVersion` (line 1) to the new tag (e.g., `"v7.1.5"`). This drives the version badge and release link in the navbar.
+- `docs/faq.md` — update any hardcoded version strings in example terminal-output blocks to match the new release.
+- `.node-version` — update if the required Node version changes; keep `README.md` in sync.
