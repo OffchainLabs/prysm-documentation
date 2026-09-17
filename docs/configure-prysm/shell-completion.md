@@ -195,7 +195,7 @@ If you run Prysm using the `prysm.sh` script, you can still use completion by fi
 
 ## How it works
 
-The shell completion scripts use urfave/cli's built-in completion mechanism. When you press `TAB`, the shell runs the binary with a hidden `--generate-bash-completion` flag appended to your current input. The binary returns a list of valid completions for your context, which the shell then presents as suggestions.
+The shell completion scripts use urfave/cli's built-in completion mechanism. When you press `TAB`, the shell runs the binary with a hidden `--generate-bash-completion` flag appended to your current input. The binary returns a list of valid completions for your context, and the shell presents them as suggestions.
 
 This means completions always reflect the current binary's actual flags and commands - they're never out of date.
 
@@ -203,8 +203,8 @@ This means completions always reflect the current binary's actual flags and comm
 
 ### Completions not working after installation
 
-1. **Start a new terminal session** - Completion scripts are typically loaded when the shell starts
-2. **Check the script location** - Ensure the completion script is in the correct directory for your shell
+1. **Start a new terminal session** - Completion scripts are typically loaded when the shell starts.
+2. **Check the script location** - Ensure the completion script is in the correct directory for your shell.
 3. **Verify bash-completion is installed** (Bash only):
    ```bash
    # Debian/Ubuntu
