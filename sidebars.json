@@ -80,6 +80,10 @@
         },
         {
           "type": "doc",
+          "id": "configure-prysm/shell-completion"
+        },
+        {
+          "type": "doc",
           "id": "configure-prysm/slasher"
         },
         {
