@@ -10,7 +10,7 @@ const ENDPOINT = 'https://cli.prylabs.network';
 const COMPONENTS = ['beacon-chain', 'validator', 'prysmctl', 'client-stats'];
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DOC_PATH = resolve(__dirname, '../docs/configure-prysm/command-line-options.md');
+const DOC_PATH = resolve(__dirname, '../docs/configure-prysm/command-line-options.mdx');
 
 async function fetchHelp(component) {
   const res = await fetch(`${ENDPOINT}/${component}`);

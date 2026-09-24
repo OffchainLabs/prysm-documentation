@@ -753,3 +753,7 @@ html[data-theme='dark'] .header-badge .badge-label {
   color: hsla(0, 0%, 100%, .4);
   text-align: center;
 }
+
+.markdown h2[id] {
+  scroll-margin-top: calc(var(--ifm-navbar-height) + 0.5rem);
+}
