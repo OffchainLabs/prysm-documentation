@@ -16,7 +16,7 @@ import TabItem from '@theme/TabItem';
 
 This page is the canonical reference for the **version 2 (v2) proposer settings schema** introduced for the [Gloas](https://eips.ethereum.org/EIPS/eip-7732) fork, which enshrines proposer-builder separation (ePBS) into the protocol. It covers every field, how values are inherited and merged, how v2 behaves on networks that haven't forked yet, what happens to v1 settings at the fork, and which flags are deprecated.
 
-If you only need to set a fee recipient, start with [Configure Fee Recipient](/configure-prysm/configure-fee-recipient.md). For the end-to-end builder workflow (MEV-Boost today, in-protocol builders after Gloas), see [Configure MEV Builder](/configure-prysm/configure-mev-builder.md).
+If you only need to set a fee recipient, start with [Configure Fee Recipient](/configure-prysm/configure-fee-recipient.mdx). For the end-to-end builder workflow (MEV-Boost today, in-protocol builders after Gloas), see [Configure MEV Builder](/configure-prysm/configure-mev-builder.mdx).
 
 :::tip Update to v2
 
@@ -39,7 +39,7 @@ Nothing changes here with v2 — the same sources work, in the same way:
 - **Command-line flags**, which populate `default_config` for every key: `--suggested-fee-recipient` and `--suggested-gas-limit`, plus `--builder-urls`, `--builder-min-bid`, `--builder-boost-factor` and `--builder-max-execution-payment` for Gloas builders. See [Configuring builders with flags](#configuring-builders-with-flags).
 - `--proposer-settings-file=<path>`: a local JSON or YAML file using the schema on this page.
 - `--proposer-settings-url=<url>`: a remote endpoint returning the same schema as a JSON payload (Prysm issues a GET request and expects a JSON response body).
-- [Keymanager APIs](/apis/keymanager-api.md): per-key fee recipient, gas limit, graffiti, and (new) builder configuration endpoints.
+- [Keymanager APIs](/apis/keymanager-api.mdx): per-key fee recipient, gas limit, graffiti, and (new) builder configuration endpoints.
 
 `--proposer-settings-file` and `--proposer-settings-url` are mutually exclusive — the validator client refuses to start with both.
 
@@ -149,7 +149,7 @@ Numeric values may be written as strings (`"60000000"`) or bare numbers (`600000
 | Field | Description |
 |---|---|
 | `fee_recipient` | The Ethereum address that receives priority fees (and, after Gloas, builder payments). A per-key value overrides `default_config`, which overrides `--suggested-fee-recipient`. |
-| `gas_limit` | The gas limit your validator advertises as its preference for blocks built on its behalf. **New in v2 at this level.** Leave it unset to follow the network's scheduled gas limit ([EIP-8261](https://eips.ethereum.org/EIPS/eip-8261)), or the chain default shipped in your Prysm release when no schedule entry is active — the [command-line options](/configure-prysm/command-line-options.md) reference is generated per release, and the default it shows for `--suggested-gas-limit` is that same value. Set it only to deliberately opt out of the network schedule; Prysm logs a warning once per epoch when your explicit value is above or below the scheduled value. In v1 the gas limit lived inside `builder`; that placement is legacy and stops applying at the Gloas fork. |
+| `gas_limit` | The gas limit your validator advertises as its preference for blocks built on its behalf. **New in v2 at this level.** Leave it unset to follow the network's scheduled gas limit ([EIP-8261](https://eips.ethereum.org/EIPS/eip-8261)), or the chain default shipped in your Prysm release when no schedule entry is active — the [command-line options](/configure-prysm/command-line-options.mdx) reference is generated per release, and the default it shows for `--suggested-gas-limit` is that same value. Set it only to deliberately opt out of the network schedule; Prysm logs a warning once per epoch when your explicit value is above or below the scheduled value. In v1 the gas limit lived inside `builder`; that placement is legacy and stops applying at the Gloas fork. |
 | `graffiti` | Graffiti string included in blocks proposed by this key. |
 | `builder` | Builder configuration for this key — see below. Omit it entirely if you only self-build. |
 
@@ -354,7 +354,7 @@ Dropping v1 builder content is deliberately safe-by-default: the failure mode is
 
 ## Keymanager APIs
 
-All existing proposer-related keymanager endpoints continue to work, with two behavioral updates and one new endpoint group. See the [Keymanager APIs](/apis/keymanager-api.md) page for authentication.
+All existing proposer-related keymanager endpoints continue to work, with two behavioral updates and one new endpoint group. See the [Keymanager APIs](/apis/keymanager-api.mdx) page for authentication.
 
 - **Gas limit endpoints** now read and write the option-level (v2) gas limit and no longer require a builder to be enabled. Deleting a gas limit unsets it—the key then follows the network's scheduled gas limit — instead of pinning the current default value.
 - **Fee recipient, gas limit, and graffiti writes** no longer snapshot `default_config`'s builder settings onto the key; the key continues to follow the default builder config as it changes.
