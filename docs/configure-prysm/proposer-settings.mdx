@@ -30,7 +30,7 @@ Before Gloas, external block building happened outside the protocol: validators 
 
 Gloas changes the model. Builders become on-chain actors with their own indices, public keys, and staked balances. Your validator no longer registers with a relay; instead it decides, per proposal, **which builder bids to consider and how to value them**. That requires expressing things v1 has no words for: which builders you'll talk to, how much of a builder's promised payment you're willing to trust, a minimum acceptable bid, and how to weigh builder bids against your own locally built block. The v2 schema adds those fields and moves the gas limit to its natural, builder-independent home.
 
-v2 proposer settings are supported in Prysm releases with Gloas support (releases after v7.1.8).
+v2 proposer settings landed in Prysm **v7.2.0**, together with the keymanager `builder_config` endpoints.
 
 ## How proposer settings are supplied
 
@@ -46,6 +46,12 @@ Nothing changes here with v2 — the same sources work, in the same way:
 ### Configuring builders with flags
 
 If the same builder configuration suits every key, the flags below set it without a settings file, the same way `--suggested-fee-recipient` sets a default fee recipient. Per-key settings from a file, URL, or the keymanager API always win over them.
+
+:::note The four `--builder-*` flags are newer than v7.2.0
+
+They merged after the v7.2.0 release, so they are not in it. On v7.2.0, configure builders through a proposer settings file, a URL, or the keymanager API. `--suggested-gas-limit` — the last row below — is available in v7.2.0.
+
+:::
 
 | Flag | Effect |
 |---|---|
@@ -379,6 +385,9 @@ Prysm validates proposer settings at load time and prefers dropping bad input ov
 | "--enable-builder is legacy (pre-gloas) mev-boost content and has no effect after the gloas fork…" | A legacy flag is set alongside v2 settings. | Drop the flag once you've expressed the intent in v2 settings. |
 | "--suggested-gas-limit overrides the network gas limit schedule from the Gloas fork; remove it to follow the schedule" | Your explicit gas limit is pinning the key, so scheduled increases no longer apply. | Remove the flag unless you mean to opt out. A second warning follows if the value exceeds the highest scheduled limit. |
 | "Dropped the default builder settings a previous run stored in the validator DB…" (same pattern for the default gas limit) | Flag-set defaults do not survive a restart without the flags. | Pass `--builder-urls` (or the settings source) on every start, or move the configuration into a settings file. |
+| "…configure Gloas builders, but this network has no Gloas fork scheduled" | Builder flags are set on a network that will never use them. | Harmless, but they do nothing here. Drop them, or check you are on the network you meant. |
+| "The default_config from --proposer-settings-file replaces the builder defaults set by …" | A settings source and the builder flags both set defaults, and the file wins. | Expected. Drop the flags, or remove `default_config` from the source if you meant the flags to apply. |
+| "Per-key proposer settings saved in the validator DB by a previous run differ from the configured settings file/URL…" | The source is authoritative and is replacing stored per-key entries. The log names them in `droppedKeys` and `overriddenKeys`, with counts. | Expected if you manage keys by file. If you set them through the keymanager API, note they do not survive a restart while a file or URL is configured. |
 
 ## Frequently asked questions
 

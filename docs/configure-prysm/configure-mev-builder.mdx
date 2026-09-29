@@ -34,7 +34,9 @@ If you run a builder today, switching to v2 builder settings is the one change y
 
 :::warning v1 builder settings are not carried across the fork
 
-`enabled` and the builder-level `gas_limit` are **dropped at the fork epoch** and replaced with defaults — they are not translated into their v2 equivalents. A validator that has not migrated keeps proposing perfectly well, but self-builds every block with no builder configured, and follows the network's default gas limit. Fee recipients and graffiti are unaffected either way.
+The v1 builder fields **in a settings file** — `enabled` and the builder-level `gas_limit` — are dropped at the fork epoch and replaced with defaults; they are not translated into their v2 equivalents. A validator that has not migrated keeps proposing perfectly well, but self-builds every block with no builder configured, and its gas limit falls back to the network's scheduled value ([EIP-8261](https://eips.ethereum.org/EIPS/eip-8261)). Fee recipients and graffiti are unaffected either way.
+
+`--suggested-gas-limit` is the exception. It sets the option-level default gas limit, which is **not** dropped at the fork — it survives and overrides the schedule, so remove the flag rather than relying on the fork to clear it.
 
 :::
 
