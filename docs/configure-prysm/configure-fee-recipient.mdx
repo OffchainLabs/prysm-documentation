@@ -121,7 +121,7 @@ The above example demonstrates configuring two 1:1 mappings between `validator p
 Tell your validator to use the JSON/YAML configuration through one of the following flags: 
 
  - `proposer-settings-file`: Points to a local JSON/YAML file. 
- - `proposer-settings-url`: Points to a remote JSON/YAML configuration endpoint in URL format. JSON should be delivered as a JSON payload, not as a JSON file. Your client will issue a GET request and expects the response <code>Content-Type</code> header to be <code>application/json</code>
+ - `proposer-settings-url`: Points to a remote configuration endpoint in URL format. The endpoint must return JSON (YAML is only supported for files), delivered as a JSON payload rather than a file download. Your client issues a GET request and parses the response body as JSON.
 
 
 
