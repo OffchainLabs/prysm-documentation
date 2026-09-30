@@ -43,7 +43,7 @@ Nothing changes here with v2 — the same sources work, in the same way:
 
 :::warning Unknown fields fail the load
 
-Files and URL responses are parsed strictly: a field name Prysm doesn't recognize — a typo, or a field copied from another client or from the keymanager API wire format — stops the validator client from loading the settings, rather than being ignored. A common case is `builder_pubkeys`, which is the keymanager API's name; in a settings file the field is `pubkeys`.
+Files and URL responses are parsed strictly: a field name Prysm doesn't recognize — a typo, or a field copied from another client or from the keymanager API wire format — stops the validator client from loading the settings, rather than being ignored. A common case is `pubkeys`, the old name of the builder allowlist field; it is now `builder_pubkeys`, as in the keymanager API.
 
 :::
 
@@ -191,14 +191,16 @@ Each entry in a `builders` list describes one builder your validator is willing 
 | `min_bid` | Per-entry override of the enclosing config's `min_bid`. |
 | `max_execution_payment` | Per-entry override of the enclosing config's `max_execution_payment`. Setting trust ceilings per entry, rather than config-wide, is the recommended pattern. |
 | `builder_boost_factor` | Per-entry override of the enclosing config's `builder_boost_factor`. |
-| `pubkeys` | Optional allowlist of builder BLS public keys. When set, only bids signed by these on-chain builder identities are accepted from this entry; when omitted, any active builder responding at the URL is accepted. (The keymanager API calls this field `builder_pubkeys`.) |
-| `auth_data` | Optional opaque bytes your validator signs to authenticate its requests to this builder. When omitted, it defaults to the lowercased hostname of `url` (for example `builder.example`; IPv6 hosts in brackets), which is the spec convention — most operators never set this. At most 4096 bytes. |
+| `builder_pubkeys` | Optional allowlist of builder BLS public keys, as `0x`-hex strings. When set, only bids signed by these on-chain builder identities are accepted from this entry; when omitted, any active builder responding at the URL is accepted. At most 64 keys. |
+| `auth_data` | Optional opaque bytes, as a `0x`-hex string, that your validator signs to authenticate its requests to this builder. When omitted, it defaults to the lowercased hostname of `url` (for example `builder.example`; IPv6 hosts in brackets), which is the spec convention — most operators never set this. At most 4096 bytes. |
 
 Fields left unset on an entry fall back to the enclosing `builder` config, then to `default_config`'s builder config.
 
 :::note
 
-`pubkeys` and `auth_data` are byte fields: in a JSON/YAML settings file they take standard JSON byte encoding (base64), not hex. The [keymanager builder API](#keymanager-apis) accepts the friendlier `0x`-hex form, so prefer managing these two fields through the API.
+`builder_pubkeys` and `auth_data` use the same names and `0x`-hex encoding in a settings file as in the [keymanager builder API](#keymanager-apis), so an entry can be copied between the two unchanged. A value that isn't valid `0x`-hex stops the validator client from loading the file or URL.
+
+If you wrote a settings file against an earlier development build, which used a `pubkeys` field and base64 values, rename the field to `builder_pubkeys` and convert each value to hex — for example `echo '<base64 value>' | base64 -d | od -An -tx1 | tr -d ' \n'`, then prefix the output with `0x`.
 
 :::
 
@@ -265,7 +267,7 @@ v1 builder settings are **not migrated automatically**, because the v1 fields an
 | Use builders for a key | `builder.enabled: true` | a non-empty `builder.builders` list |
 | Don't use builders for a key | `builder.enabled: false` | `builder.builders: []`, or no `builder` object at all to inherit the default |
 | Choose *which* builders | not expressible — the beacon node's `--http-mev-relay` picked one relay for every key | `builders[].url`, per key |
-| Accept bids only from specific builders | not expressible | `builders[].pubkeys` |
+| Accept bids only from specific builders | not expressible | `builders[].builder_pubkeys` |
 | Authenticate your requests to a builder | not expressible | `builders[].auth_data` (defaults to the URL's hostname) |
 | Set a gas limit | `builder.gas_limit`, or `--suggested-gas-limit` | `gas_limit` at the option level, beside `fee_recipient`, or `--suggested-gas-limit`. Both override the [EIP-8261](https://eips.ethereum.org/EIPS/eip-8261) schedule from the fork onward — leave the field unset and drop the flag to follow the schedule instead |
 | Ignore bids below a floor | beacon node `--min-builder-bid`, applied to every key | `min_bid`, per builder config or per entry |
@@ -392,7 +394,7 @@ Prysm validates proposer settings at load time. Unknown fields and invalid build
 | "Proposer settings contain v1 builder fields, which do not apply to gloas; proposer preferences are prepared with defaults…" | Logged at each epoch start from the last epoch before the fork while v1 builder content remains. | Migrate to v2 now — the fork is one epoch away. |
 | "V1 builder settings, including gas limits, do not apply to gloas and were replaced with defaults…" | The fork cutover dropped your v1 builder content. | Provide v2 settings if you want builders (or an explicit gas limit). |
 | "Builder entries have no max_execution_payment: their execution layer payment is ignored and only collateral-backed bid value counts…" | Your builder entries are in trustless-only mode. | Intentional? No action. Otherwise set a deliberate per-entry cap — after reading [Trusting builders](#trusting-builders-max_execution_payment). |
-| "Removed N invalid or duplicate builder entries from proposer settings" | Entries failed validation — missing, oversized, or unparseable `url`, a non-ASCII hostname (use punycode), more than 64 entries (the first 64 are kept), more than 64 or invalid `pubkeys`, oversized `auth_data` — or duplicated another entry. | Check the log's `reasons` field and fix the matching entries in your source. |
+| "Removed N invalid or duplicate builder entries from proposer settings" | Entries failed validation — missing, oversized, or unparseable `url`, a non-ASCII hostname (use punycode), more than 64 entries (the first 64 are kept), more than 64 or invalid `builder_pubkeys`, oversized `auth_data` — or duplicated another entry. | Check the log's `reasons` field and fix the matching entries in your source. |
 | "--enable-builder is legacy (pre-gloas) mev-boost content and has no effect after the gloas fork…" | A legacy flag is set alongside v2 settings. | Drop the flag once you've expressed the intent in v2 settings. |
 | "--suggested-gas-limit overrides the network gas limit schedule from the Gloas fork; remove it to follow the schedule" | Your explicit gas limit is pinning the key, so scheduled increases no longer apply. | Remove the flag unless you mean to opt out. A second warning follows if the value exceeds the highest scheduled limit. |
 | "Dropped the default builder settings a previous run stored in the validator DB…" (same pattern for the default gas limit) | Default builders or a default gas limit stored by an earlier run — from flags or an earlier settings source — are not carried over when this run's flags and settings source don't set them. | Pass `--builder-urls` (or the settings source) on every start, or move the configuration into a settings file. |
