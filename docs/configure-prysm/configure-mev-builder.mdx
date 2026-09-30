@@ -109,7 +109,7 @@ The Gloas fork enshrines proposer-builder separation ([ePBS](https://eips.ethere
 | | Before Gloas (MEV-Boost) | After Gloas (in-protocol) |
 |---|---|---|
 | Builder market | Off-chain builders behind relays | On-chain builders with staked collateral |
-| Where configured | Beacon node `--http-mev-relay` + validator registration | Validator client [v2 proposer settings](/configure-prysm/proposer-settings.mdx), the [`--builder-urls` flags](/configure-prysm/proposer-settings.mdx#configuring-builders-with-flags), or the [keymanager builder API](/configure-prysm/proposer-settings.mdx#keymanager-apis); no beacon node builder flag |
+| Where configured | Beacon node `--http-mev-relay` + validator registration | Validator client [v2 proposer settings](/configure-prysm/proposer-settings.mdx), the [`--builder-urls` flags](/configure-prysm/proposer-settings.mdx#configuring-gloas-builders-with-flags), or the [keymanager builder API](/configure-prysm/proposer-settings.mdx#keymanager-apis); no beacon node builder flag |
 | Choosing builders | Whatever the relay forwards | You list builder endpoints per key, optionally pinned to specific builder pubkeys |
 | Payment | Builder pays fee recipient inside the payload; relay reputation is the guarantee | Bid `value` is backed by the builder's on-chain balance and settled by the protocol; optional extra `execution_payment` is a promise you must explicitly opt into trusting |
 | Local fallback | Circuit breaker + value comparison | Still there: local execution client remains mandatory, bids compete against your local block, and a per-builder circuit breaker blacklists builders that fail to deliver |
