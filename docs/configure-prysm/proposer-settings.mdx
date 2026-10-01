@@ -43,7 +43,7 @@ Nothing changes here with v2 — the same sources work, in the same way:
 
 :::warning Unknown fields fail the load
 
-Files and URL responses are parsed strictly: a field name Prysm doesn't recognize — a typo, or a field copied from another client or from the keymanager API wire format — stops the validator client from loading the settings, rather than being ignored. A common case is `pubkeys`, the old name of the builder allowlist field; it is now `builder_pubkeys`, as in the keymanager API.
+Files and URL responses are parsed strictly: a field name Prysm doesn't recognize — a typo, or a field copied from another client's settings file — stops the validator client from loading the settings, rather than being ignored. A common case is `pubkeys`, the old name of the builder allowlist field; it is now `builder_pubkeys`, as in the keymanager API.
 
 :::
 
@@ -374,7 +374,7 @@ Dropping v1 builder content is deliberately safe-by-default: the failure mode is
 
 All existing proposer-related keymanager endpoints continue to work, with two behavioral updates and one new endpoint group. See the [Keymanager APIs](/apis/keymanager-api.mdx) page for authentication.
 
-- **Gas limit endpoints** now read and write the option-level (v2) gas limit and no longer require a builder to be enabled. For a key with no gas limit of its own, `GET` reports the chain default shipped in your release, not the scheduled value the key actually follows. `DELETE` resets the key to `default_config`'s gas limit when one is set (from the file or `--suggested-gas-limit`); otherwise it unsets the value, and the key follows the network's scheduled gas limit. It returns `404` if the key has no gas limit to reset.
+- **Gas limit endpoints** now read and write the option-level (v2) gas limit and no longer require a builder to be enabled. From the Gloas fork onward, `GET` reports the gas limit the key actually signs: its own value or `default_config`'s if one is set, otherwise the network's scheduled gas limit (or the chain default shipped in your release when no schedule entry is active). Before the fork it reports the gas limit used for MEV-Boost registration. `DELETE` resets the key to `default_config`'s gas limit when one is set (from the file or `--suggested-gas-limit`); otherwise it unsets the value, and the key follows the network's scheduled gas limit. It returns `404` if the key has no gas limit to reset.
 - **Fee recipient, gas limit, and graffiti writes** no longer snapshot `default_config`'s builder settings onto the key; the key continues to follow the default builder config as it changes.
 - **`GET`/`POST`/`DELETE /eth/v1/validator/{pubkey}/builder_config`** (new, per [keymanager-APIs #88](https://github.com/ethereum/keymanager-APIs/pull/88)) manage the per-key builder config:
   - `GET` returns the key's config **resolved against `default_config`**, with concrete values for every field (no floor is reported as `"0"`, neutral boost as `"100"`, trustless-only as `"0"`), safe to re-submit as-is. The API has no config-level `max_execution_payment`: it exists only per builder entry, and `GET` folds any config-level value from your file into each entry.
