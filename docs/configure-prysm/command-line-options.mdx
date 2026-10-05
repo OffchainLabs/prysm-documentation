@@ -41,6 +41,7 @@ beacon-chain OPTIONS:
    --chain-config-file value                                      Path to a YAML file with chain config values.
    --chain-id value                                               Sets the chain id of the beacon chain (default: 0)
    --disable-debug-rpc-endpoints                                  Disables the debug Beacon API namespace. (default: false)
+   --disable-graffiti-client-append                               Disables appending consensus and execution client version information to the block graffiti (default: false)
    --e2e-config                                                   Enables the E2E testing config, only for use within end-to-end testing. (default: false)
    --grpc-max-msg-size value                                      WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..
                                                                     Integer to define max receive message call size (in bytes).
@@ -66,7 +67,7 @@ p2p OPTIONS:
    --blob-batch-limit-burst-factor value                                  The factor by which blob batch limit may increase on burst. (default: 3)
    --block-batch-limit value                                              The amount of blocks the local peer is bounded to request and respond to in a batch. Maximum 128 (default: 64)
    --block-batch-limit-burst-factor value                                 The factor by which block batch limit may increase on burst. (default: 2)
-   --bootstrap-node value [ --bootstrap-node value ]                      The enr/enode address of bootstrap node. Beacon node will connect for peer discovery via DHT. Multiple nodes can be passed by using the flag multiple times but not comma-separated. You can also pass YAML files containing multiple nodes. (default: "enr:-KG4QNTx85fjxABbSq_Rta9wy56nQ1fHK0PewJbGjLm1M4bMGx5-3Qq4ZX2-iFJ0pys_O90sVXNNOxp2E7afBsGsBrgDhGV0aDKQu6TalgMAAAD__________4JpZIJ2NIJpcIQEnfA2iXNlY3AyNTZrMaECGXWQ-rQ2KZKRH1aOW4IlPDBkY4XDphxg9pxKytFCkayDdGNwgiMog3VkcIIjKA", "enr:-KG4QF4B5WrlFcRhUU6dZETwY5ZzAXnA0vGC__L1Kdw602nDZwXSTs5RFXFIFUnbQJmhNGVU6OIX7KVrCSTODsz1tK4DhGV0aDKQu6TalgMAAAD__________4JpZIJ2NIJpcIQExNYEiXNlY3AyNTZrMaECQmM9vp7KhaXhI-nqL_R0ovULLCFSFTa9CPPSdb1zPX6DdGNwgiMog3VkcIIjKA", "enr:-Ku4QImhMc1z8yCiNJ1TyUxdcfNucje3BGwEHzodEZUan8PherEo4sF7pPHPSIB1NNuSg5fZy7qFsjmUKs2ea1Whi0EBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpD1pf1CAAAAAP__________gmlkgnY0gmlwhBLf22SJc2VjcDI1NmsxoQOVphkDqal4QzPMksc5wnpuC3gvSC8AfbFOnZY_On34wIN1ZHCCIyg", "enr:-Ku4QP2xDnEtUXIjzJ_DhlCRN9SN99RYQPJL92TMlSv7U5C1YnYLjwOQHgZIUXw6c-BvRg2Yc2QsZxxoS_pPRVe0yK8Bh2F0dG5ldHOIAAAAAAAAAACEZXRoMpD1pf1CAAAAAP__________gmlkgnY0gmlwhBLf22SJc2VjcDI1NmsxoQMeFF5GrS7UZpAH2Ly84aLK-TyvH-dRo0JM1i8yygH50YN1ZHCCJxA", "enr:-Ku4QPp9z1W4tAO8Ber_NQierYaOStqhDqQdOPY3bB3jDgkjcbk6YrEnVYIiCBbTxuar3CzS528d2iE7TdJsrL-dEKoBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpD1pf1CAAAAAP__________gmlkgnY0gmlwhBLf22SJc2VjcDI1NmsxoQMw5fqqkw2hHC4F5HZZDPsNmPdB1Gi8JPQK7pRc9XHh-oN1ZHCCKvg", "enr:-Jq4QItoFUuug_n_qbYbU0OY04-np2wT8rUCauOOXNi0H3BWbDj-zbfZb7otA7jZ6flbBpx1LNZK2TDebZ9dEKx84LYBhGV0aDKQtTA_KgEAAAD__________4JpZIJ2NIJpcISsaa0ZiXNlY3AyNTZrMaEDHAD2JKYevx89W0CcFJFiskdcEzkH_Wdv9iW42qLK79ODdWRwgiMo", "enr:-Jq4QN_YBsUOqQsty1OGvYv48PMaiEt1AzGD1NkYQHaxZoTyVGqMYXg0K9c0LPNWC9pkXmggApp8nygYLsQwScwAgfgBhGV0aDKQtTA_KgEAAAD__________4JpZIJ2NIJpcISLosQxiXNlY3AyNTZrMaEDBJj7_dLFACaxBfaI8KZTh_SSJUjhyAyfshimvSqo22WDdWRwgiMo", "enr:-Ku4QHqVeJ8PPICcWk1vSn_XcSkjOkNiTg6Fmii5j6vUQgvzMc9L1goFnLKgXqBJspJjIsB91LTOleFmyWWrFVATGngBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpC1MD8qAAAAAP__________gmlkgnY0gmlwhAMRHkWJc2VjcDI1NmsxoQKLVXFOhp2uX6jeT0DvvDpPcU8FWMjQdR4wMuORMhpX24N1ZHCCIyg", "enr:-Ku4QG-2_Md3sZIAUebGYT6g0SMskIml77l6yR-M_JXc-UdNHCmHQeOiMLbylPejyJsdAPsTHJyjJB2sYGDLe0dn8uYBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpC1MD8qAAAAAP__________gmlkgnY0gmlwhBLY-NyJc2VjcDI1NmsxoQORcM6e19T1T9gi7jxEZjk_sjVLGFscUNqAY9obgZaxbIN1ZHCCIyg", "enr:-Ku4QPn5eVhcoF1opaFEvg1b6JNFD2rqVkHQ8HApOKK61OIcIXD127bKWgAtbwI7pnxx6cDyk_nI88TrZKQaGMZj0q0Bh2F0dG5ldHOIAAAAAAAAAACEZXRoMpC1MD8qAAAAAP__________gmlkgnY0gmlwhDayLMaJc2VjcDI1NmsxoQK2sBOLGcUb4AwuYzFuAVCaNHA-dy24UuEKkeFNgCVCsIN1ZHCCIyg", "enr:-Ku4QEWzdnVtXc2Q0ZVigfCGggOVB2Vc1ZCPEc6j21NIFLODSJbvNaef1g4PxhPwl_3kax86YPheFUSLXPRs98vvYsoBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpC1MD8qAAAAAP__________gmlkgnY0gmlwhDZBrP2Jc2VjcDI1NmsxoQM6jr8Rb1ktLEsVcKAPa08wCsKUmvoQ8khiOl_SLozf9IN1ZHCCIyg", "enr:-LK4QA8FfhaAjlb_BXsXxSfiysR7R52Nhi9JBt4F8SPssu8hdE1BXQQEtVDC3qStCW60LSO7hEsVHv5zm8_6Vnjhcn0Bh2F0dG5ldHOIAAAAAAAAAACEZXRoMpC1MD8qAAAAAP__________gmlkgnY0gmlwhAN4aBKJc2VjcDI1NmsxoQJerDhsJ-KxZ8sHySMOCmTO6sHM3iCFQ6VMvLTe948MyYN0Y3CCI4yDdWRwgiOM", "enr:-LK4QKWrXTpV9T78hNG6s8AM6IO4XH9kFT91uZtFg1GcsJ6dKovDOr1jtAAFPnS2lvNltkOGA9k29BUN7lFh_sjuc9QBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpC1MD8qAAAAAP__________gmlkgnY0gmlwhANAdd-Jc2VjcDI1NmsxoQLQa6ai7y9PMN5hpLe5HmiJSlYzMuzP7ZhwRiwHvqNXdoN0Y3CCI4yDdWRwgiOM")
+   --bootstrap-node value [ --bootstrap-node value ]                      The enr/enode address of bootstrap node. Beacon node will connect for peer discovery via DHT. Multiple nodes can be passed by using the flag multiple times but not comma-separated. You can also pass YAML files containing multiple nodes. (default: "enr:-KG4QNTx85fjxABbSq_Rta9wy56nQ1fHK0PewJbGjLm1M4bMGx5-3Qq4ZX2-iFJ0pys_O90sVXNNOxp2E7afBsGsBrgDhGV0aDKQu6TalgMAAAD__________4JpZIJ2NIJpcIQEnfA2iXNlY3AyNTZrMaECGXWQ-rQ2KZKRH1aOW4IlPDBkY4XDphxg9pxKytFCkayDdGNwgiMog3VkcIIjKA", "enr:-KG4QF4B5WrlFcRhUU6dZETwY5ZzAXnA0vGC__L1Kdw602nDZwXSTs5RFXFIFUnbQJmhNGVU6OIX7KVrCSTODsz1tK4DhGV0aDKQu6TalgMAAAD__________4JpZIJ2NIJpcIQExNYEiXNlY3AyNTZrMaECQmM9vp7KhaXhI-nqL_R0ovULLCFSFTa9CPPSdb1zPX6DdGNwgiMog3VkcIIjKA", "enr:-Ku4QImhMc1z8yCiNJ1TyUxdcfNucje3BGwEHzodEZUan8PherEo4sF7pPHPSIB1NNuSg5fZy7qFsjmUKs2ea1Whi0EBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpD1pf1CAAAAAP__________gmlkgnY0gmlwhBLf22SJc2VjcDI1NmsxoQOVphkDqal4QzPMksc5wnpuC3gvSC8AfbFOnZY_On34wIN1ZHCCIyg", "enr:-Ku4QP2xDnEtUXIjzJ_DhlCRN9SN99RYQPJL92TMlSv7U5C1YnYLjwOQHgZIUXw6c-BvRg2Yc2QsZxxoS_pPRVe0yK8Bh2F0dG5ldHOIAAAAAAAAAACEZXRoMpD1pf1CAAAAAP__________gmlkgnY0gmlwhBLf22SJc2VjcDI1NmsxoQMeFF5GrS7UZpAH2Ly84aLK-TyvH-dRo0JM1i8yygH50YN1ZHCCJxA", "enr:-Ku4QPp9z1W4tAO8Ber_NQierYaOStqhDqQdOPY3bB3jDgkjcbk6YrEnVYIiCBbTxuar3CzS528d2iE7TdJsrL-dEKoBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpD1pf1CAAAAAP__________gmlkgnY0gmlwhBLf22SJc2VjcDI1NmsxoQMw5fqqkw2hHC4F5HZZDPsNmPdB1Gi8JPQK7pRc9XHh-oN1ZHCCKvg", "enr:-Jq4QItoFUuug_n_qbYbU0OY04-np2wT8rUCauOOXNi0H3BWbDj-zbfZb7otA7jZ6flbBpx1LNZK2TDebZ9dEKx84LYBhGV0aDKQtTA_KgEAAAD__________4JpZIJ2NIJpcISsaa0ZiXNlY3AyNTZrMaEDHAD2JKYevx89W0CcFJFiskdcEzkH_Wdv9iW42qLK79ODdWRwgiMo", "enr:-Jq4QN_YBsUOqQsty1OGvYv48PMaiEt1AzGD1NkYQHaxZoTyVGqMYXg0K9c0LPNWC9pkXmggApp8nygYLsQwScwAgfgBhGV0aDKQtTA_KgEAAAD__________4JpZIJ2NIJpcISLosQxiXNlY3AyNTZrMaEDBJj7_dLFACaxBfaI8KZTh_SSJUjhyAyfshimvSqo22WDdWRwgiMo", "enr:-KG4QIH7EyRfHFmXLZaG6j0bMvow18k63nKWPfppuKh6iBHMPGM93HX3W3hl7jZdv_Hz8yd_jXVHX2loStJKOZqNRu0BgmlkgnY0gmlwhNRj2kKDaXA2kCoAHKALAA0CAAAAAAAAAF6Jc2VjcDI1NmsxoQMngQgKvKJR49-jugrZ_05LhAHbUlSCwZ_HyqVCb3SXYoN1ZHCCTrqEdWRwNoJOug", "enr:-KG4QJIyNiCpvXrnK8dugxmFckcIduvuQraNlX0GlKwF-XyPeZ-ZG7_yHhsr08K85X1utedECuRXhXiPYJoMogs8ai4BgmlkgnY0gmlwhIHUpj2DaXA2kCYEqIAABAHQAAAAA2GdUACJc2VjcDI1NmsxoQNQbzy36fddhPGH1I6D5rQyj8zUDGWQAkkWS37qBLB_yIN1ZHCCIyiEdWRwNoIjKA", "enr:-KG4QDU7s2q7Cl_qGr2BucsrhN1bKywwstBqMLUtR6f_pOejVAjXLAQsFBOCSgALH_Oy7eshQ2ic7CbFwRZIxZGIMMsBgmlkgnY0gmlwhJB-_BiDaXA2kCQAYYABAADQAAAAAYEgYAGJc2VjcDI1NmsxoQLACT5Njs8OjnCiL4_11wgqunT0BPxQ5PndoKoF6ICNWYN1ZHCCIyiEdWRwNoIjKA", "enr:-KG4QD_qJswcSJKmI_kjUZ-QbUuLUzniIakQbJKgh4YFzluGEKikFzaVoIbS7jpbw2K9hjmWTn7Ha3zyNIm0Ysu-dSgBgmlkgnY0gmlwhLKc14yDaXA2kCoBBP8A9DxKAAAAAAAAAAGJc2VjcDI1NmsxoQOVp1YSg2ZkGenRZi4iGebFira2xZrER7F_WW55-Rd3boN1ZHCCIyiEdWRwNoIjKA", "enr:-KG4QIFbm7kLOmOeiDwjSxLXEN0Ms4advV742CYLpGUCndm2XvAnM9uKVdWpydb8Gpstk44eFDlZlPDyV2gX7uH7KHgBgmlkgnY0gmlwhAXfXlGDaXA2kCoBBP8C8BytAAAAAAAAAAGJc2VjcDI1NmsxoQIAizAK-MKs-s08GzGzoPVIaBmfdKqosqxSkwxUuV2UnIN1ZHCCIyiEdWRwNoIjKA", "enr:-LK4QA8FfhaAjlb_BXsXxSfiysR7R52Nhi9JBt4F8SPssu8hdE1BXQQEtVDC3qStCW60LSO7hEsVHv5zm8_6Vnjhcn0Bh2F0dG5ldHOIAAAAAAAAAACEZXRoMpC1MD8qAAAAAP__________gmlkgnY0gmlwhAN4aBKJc2VjcDI1NmsxoQJerDhsJ-KxZ8sHySMOCmTO6sHM3iCFQ6VMvLTe948MyYN0Y3CCI4yDdWRwgiOM", "enr:-LK4QKWrXTpV9T78hNG6s8AM6IO4XH9kFT91uZtFg1GcsJ6dKovDOr1jtAAFPnS2lvNltkOGA9k29BUN7lFh_sjuc9QBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpC1MD8qAAAAAP__________gmlkgnY0gmlwhANAdd-Jc2VjcDI1NmsxoQLQa6ai7y9PMN5hpLe5HmiJSlYzMuzP7ZhwRiwHvqNXdoN0Y3CCI4yDdWRwgiOM")
    --data-column-batch-limit value                                        The amount of data columns the local peer is bounded to request and respond to in a batch. (default: 4096)
    --data-column-batch-limit-burst-factor value                           The factor by which data column batch limit may increase on burst. (default: 4)
    --enable-upnp                                                          Enable the service (Beacon chain or Validator) to use UPnP when possible. (default: false)
@@ -113,6 +114,7 @@ db OPTIONS:
    --slots-per-archive-point value                                     The slot durations of when an archived state gets saved in the beaconDB. (default: 2048)
    
 builder OPTIONS:
+   --builder-header-timeout value                Timeout to use when fetching a block header from the builder API, as a duration (e.g. 1s, 2s, 2500ms). Must be greater than 0. Only effective up to the Fulu fork. (default: 1s)
    --disable-builder-ssz                         Disables SSZ encoding for Builder API requests and responses, using JSON instead. (default: false)
    --http-mev-relay value                        A MEV builder relay string http endpoint, this will be used to interact MEV builder network using API defined in: https://ethereum.github.io/builder-specs/#/Builder
    --local-block-value-boost value               A percentage boost for local block construction as a Uint64. This is used to prioritize local block construction over relay/builder block constructionBoost is an additional percentage to multiple local block value. Use builder block if: builder_bid_value * 100 > local_block_value * (local-block-value-boost + 100) (default: 10)
@@ -176,9 +178,11 @@ features OPTIONS:
    --disable-registration-cache                         Temporary flag for disabling the validator registration cache instead of using the DB. Note: registrations do not clear on restart while using the DB. (default: false)
    --disable-resource-manager                           Disables running the libp2p resource manager. (default: false)
    --disable-staking-contract-check                     Disables checking of staking contract deposits when proposing blocks, useful for devnets. (default: false)
+   --disable-track-equivocations                        Disables recording proposer equivocations observed on gossip into forkchoice. (default: false)
    --disable-verbose-sig-verification                   Disables identifying invalid signatures if batch verification fails when processing block. (default: false)
    --enable-discovery-reboot                            Experimental: Enables the discovery listener to rebooted in the event of connectivity issues. (default: false)
    --enable-experimental-attestation-pool               Enables an experimental attestation pool design. (default: false)
+   --enable-fast-confirmation                           Enables the fast confirmation rule (FCR) for rapid block confirmation under synchrony assumptions. (default: false)
    --enable-full-ssz-data-logging                       Enables displaying logs for full ssz data on rejected gossip messages. (default: false)
    --enable-hashtree                                    (Experimental): Enables the hashtree hashing library. (default: false)
    --enable-historical-state-representation             Enables the beacon chain to save historical states in a space efficient manner. (Warning): Once enabled, this feature migrates your database in to a new schema and there is no going back. At worst, your entire database might get corrupted. (default: false)
@@ -195,7 +199,6 @@ features OPTIONS:
    --save-invalid-block-temp                            Writes invalid blocks to temp directory. (default: false)
    --sepolia                                            Runs Prysm configured for the Sepolia test network. (default: false)
    --sync-from value                                    Forces the head of the beacon chain to a specific block root. Values can be 'head' or a block root. The block root has to be known to the beacon node and correspond to a block newer than the current finalized checkpoint.
-   --track-equivocations                                Records proposer equivocations observed on gossip and marks the slot in forkchoice if the equivocation arrives before the configured early deadline. (default: false)
    
 merge OPTIONS:
    --terminal-block-hash-epoch-override value  Sets the block hash epoch to manual overrides the default TERMINAL_BLOCK_HASH_ACTIVATION_EPOCH value. WARNING: This flag should be used only if you have a clear understanding that community has decided to override the terminal block hash activation epoch. Incorrect usage will result in your node experience consensus failure. (default: 0)
@@ -235,7 +238,7 @@ USAGE:
    validator [options] command [command options] [arguments...]
 
 VERSION:
-  Prysm/v7.1.8/51b5a75ebbadf05af22bd2601b5baf7a9e99b66d. Built at: 2026-07-23 16:40:44+00:00
+  Prysm/v7.2.0/03f3712a184c1c7cc9fd38d3b1abc5328934cdef. Built at: 2026-09-25 14:26:44+00:00
 
 global OPTIONS:
    wallet                       Defines commands for interacting with Ethereum validator wallets.
@@ -290,7 +293,7 @@ rpc OPTIONS:
   --beacon-rest-api-headers value                            Comma-separated list of key value pairs to pass as headers for all HTTP calls to the beacon node. 
                                                                To provide multiple values for the same key, specify the same key for each value. 
                                                                Example: --grpc-headers=key1=value1,key1=value2,key2=value3
-  --beacon-rest-api-provider value, --beacon-rest value      Beacon node REST API provider endpoint. Setting this implicitly enables the beacon REST API (no need for --enable-beacon-rest-api). Use a comma-separated list for ordered failover; the first endpoint is primary, and failover wraps back to the first after the last. (default: "http://127.0.0.1:3500")
+  --beacon-rest-api-provider value, --beacon-rest value      Beacon node REST API provider endpoint. Setting this implicitly enables the beacon REST API (no need for --enable-beacon-rest-api). Use a comma-separated list to connect to several beacon nodes: the validator client listens to the event stream of every node and queries all of them, keeping the best suited response. (default: "http://127.0.0.1:3500")
   --beacon-rpc-provider value, --beacon-grpc value           WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..
                                                                Beacon node RPC provider endpoint. (default: "127.0.0.1:4000")
   --grpc-headers value                                       WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..
@@ -318,7 +321,7 @@ proposer OPTIONS:
                                                        fee recipient and gas limit. File format found in docs.
   --proposer-settings-url value                      Sets URL to a REST endpoint containing validator settings used when proposing blocks such as
                                                        fee recipient and gas limit. File format found in docs
-  --stateless                                        Enables stateless block production for Gloas: the validator requests the block and execution payload envelope together and republishes the envelope itself. Works over both the gRPC and REST validator clients. (default: false)
+  --stateless                                        Enables stateless block production from Gloas onward: the validator requests the block and execution payload envelope together and republishes the envelope itself. Works over both the gRPC and REST validator clients. Forced on when several beacon nodes are configured, since only the node that built a block can reveal its payload. (default: false)
   --suggested-fee-recipient value                    Sets ALL validators' mapping to a suggested eth address to receive gas fees when proposing a block.
                                                        Note that this is only a suggestion when integrating with a Builder API, which may choose to specify
                                                        a different fee recipient as payment for the blocks it builds.For additional setting overrides use the 
@@ -328,6 +331,9 @@ proposer OPTIONS:
   
 remote signer OPTIONS:
   --validators-external-signer-key-file value, --remote-signer-keys-file value                                                                               A file path used to load remote public validator keys and persist them through restarts.
+  --validators-external-signer-poll-interval value, --remote-signer-poll-interval value                                                                      Interval to poll the external signer public-keys URL for added or removed validators (e.g. 30s, 5m). 
+                                                                                                                                                               Zero or negative disables polling. A failed or empty response keeps the current keys, 
+                                                                                                                                                               so removing every key from the URL will not stop validating. (default: 0s)
   --validators-external-signer-public-keys value, --remote-signer-keys value [ --validators-external-signer-public-keys value, --remote-signer-keys value ]  Comma separated list of public keys OR an external url endpoint for the validator to retrieve public keys from for usage with web3signer.
   --validators-external-signer-url value, --remote-signer-url value                                                                                          URL for consensys' web3signer software to use with the Prysm validator client.
   
@@ -339,7 +345,7 @@ misc OPTIONS:
   --disable-rewards-penalties-logging                               Disables reward/penalty logging during cluster deployment. (default: false)
   --distributed                                                     To enable the use of prysm validator client in Distributed Validator Cluster (default: false)
   --keymanager-token-file value, --validator-api-bearer-file value  Path to auth token file used for validator apis. (default: "/root/.eth2validators/prysm-wallet-v2/auth-token")
-  --max-health-checks value                                         Maximum number of health checks to perform before exiting if not healthy. Set to 0 or a negative number for indefinite checks. (default: 0)
+  --max-health-checks value                                         Maximum number of consecutive failed health checks before exiting. A health check fails when no connected beacon node is ready. Set to 0 or a negative number for indefinite checks. (default: 0)
   
 features OPTIONS:
   --disable-attest-timely                       Disable validator attesting timely after current block processes. See #8185 for more details. (default: false)
@@ -347,8 +353,8 @@ features OPTIONS:
   --dynamic-key-reload-debounce-interval value  (Advanced): Specifies the time duration the validator waits to reload new keys if they have changed on disk.
                                                 Can be any type of duration such as 1.5s, 1000ms, 1m. (default: 1s)
   --enable-beacon-rest-api, --enable-rest       (Experimental): Enables the beacon REST API when querying a beacon node. Optional: also enabled implicitly when --beacon-rest-api-provider is set. (default: false)
-  --enable-doppelganger                         Enables the validator to perform a doppelganger check. 
-                                                  This is not a foolproof method to find duplicate instances in the network. 
+  --enable-doppelganger                         Enables the validator to perform a doppelganger check.
+                                                  This is not a foolproof method to find duplicate instances in the network.
                                                   Your validator will still be vulnerable if it is being run in unsafe configurations. (default: false)
   --enable-minimal-slashing-protection          (Experimental): Enables the minimal slashing protection. See EIP-3076 for more details. (default: false)
   --enable-slashing-protection-history-pruning  Enables the pruning of the validator client's slashing protection database. (default: false)
@@ -373,10 +379,10 @@ Refer to the [Use `prysmctl`](./prysmctl.mdx) for `prysmctl` download and instal
 
 ```
 NAME:
-   prysmctl-v7.1.8-linux-amd64 - A new cli application
+   prysmctl-v7.2.0-linux-amd64 - A new cli application
 
 USAGE:
-   prysmctl-v7.1.8-linux-amd64 [global options] command [command options]
+   prysmctl-v7.2.0-linux-amd64 [global options] command [command options]
 
 COMMANDS:
    checkpoint-sync, cpt-sync  commands for managing checkpoint sync
