@@ -123,7 +123,7 @@ export const GloasBuilderFlow = () => (
       <rect x="344" y="426" width="312" height="92" rx="7" fill="currentColor" fillOpacity=".05" stroke="currentColor" strokeOpacity=".4"/>
       <text x="500" y="458" textAnchor="middle" fontSize="12" fill="currentColor">Blacklists a builder that wins</text>
       <text x="500" y="476" textAnchor="middle" fontSize="12" fill="currentColor">but never reveals its payload</text>
-      <text x="500" y="498" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".8">its bids are dropped, local payload is used</text>
+      <text x="500" y="498" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity=".8">its bids are dropped from later proposals</text>
 
       <path d="M500,200 V222" stroke="currentColor" fill="none" markerEnd="url(#ag)"/>
       <path d="M500,398 V420" stroke="currentColor" strokeOpacity=".55" strokeDasharray="5 4" fill="none" markerEnd="url(#ag)"/>
