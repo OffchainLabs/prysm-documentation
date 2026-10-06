@@ -67,7 +67,10 @@ You can migrate at any time before the fork. Before the fork, a v2 file behaves 
 "gas_limit": "60000000",
 "builder": {
   "builders": [
-    { "url": "https://builder-a.example" }
+    {
+      "url": "https://builder-a.example",
+      "max_execution_payment": "100000000"
+    }
   ]
 }
 ```
@@ -76,6 +79,8 @@ You can migrate at any time before the fork. Before the fork, a v2 file behaves 
 </Tabs>
 
 In v2, a non-empty `builders` list replaces `enabled: true`, and an empty list (`"builders": []`) replaces `enabled: false`. Don't delete the `builder` object to turn builders off for a key, because a key without one uses the builder settings from `default_config`.
+
+Set `max_execution_payment` on each builder entry, as in the example. Without it, the builder's bids will rarely win. Step 3 explains the value.
 
 ### 2. Remove the gas limit
 
@@ -95,6 +100,8 @@ Unless you want a fixed gas limit, delete `gas_limit` when you migrate. The same
 
 - If you leave it unset, only the guaranteed part of each bid counts. Bids that depend on the promised payment will rarely beat your local block.
 - If you set it above zero, a bid can win on payment that the builder might not make.
+
+The value is in gwei, where 1 ETH = 1,000,000,000 gwei, so `100000000` is 0.1 ETH. It is the most promised payment Prysm counts from that builder for one block, and so the most you can lose on one proposal if the builder doesn't pay. See [Using one builder for all keys](/configure-prysm/proposer-settings.mdx#using-one-builder-for-all-keys) for a conversion table and a worked example.
 
 Read [Trusting builders](/configure-prysm/proposer-settings.mdx#trusting-builders-max_execution_payment) before you choose a value, and set it on each builder entry rather than for the whole config.
 
@@ -127,7 +134,7 @@ The Gloas fork adds proposer-builder separation ([ePBS](https://eips.ethereum.or
 
 <GloasBuilderFlow />
 
-1. **You configure builders on the validator client.** Use [version 2 proposer settings](/configure-prysm/proposer-settings.mdx) to list builder URLs per key or in `default_config`, use `--builder-urls` and the related flags to set the same builders for every key, or use the keymanager `builder_config` endpoints. You don't need a beacon node flag.
+1. **You configure builders on the validator client.** Use [version 2 proposer settings](/configure-prysm/proposer-settings.mdx) to list builder URLs per key or in `default_config`, use `--builder-urls` and the related flags to set the same builders for every key, or use the keymanager `builder_config` endpoints. Set `max_execution_payment` for each builder, or its bids will rarely win. You don't need a beacon node flag.
 2. **The validator client sends its preferences through the beacon node.** Before each proposal, the validator client signs builder request authentications with the validator key and sends them, along with preferences such as `max_execution_payment`, to the beacon node. The beacon node forwards them to each configured builder over the builder API. The validator client never contacts a builder directly.
 3. **The beacon node collects bids.** At proposal time, the beacon node requests execution payload bids from each configured builder. It waits up to `600ms` by default (set with the beacon node's `--builder-bid-timeout`), and also considers bids received over the P2P network. It checks every bid against the same rules the chain enforces: the builder must be active and have enough staked balance to cover the bid, the bid must match your slot, parent block, and fee recipient, and its gas limit must move toward your gas limit preference within the per-block adjustment limit.
 4. **Bids are compared with your local block.** A bid's value is its guaranteed `value`, plus its promised `execution_payment` up to your `max_execution_payment` (nothing, if that is unset). Bids below your `min_bid` are discarded, the rest are scaled by your `builder_boost_factor`, and the highest is compared with your local payload. If they are equal, the local block is used. See [How a bid is valued](/configure-prysm/proposer-settings.mdx#how-a-bid-is-valued).
