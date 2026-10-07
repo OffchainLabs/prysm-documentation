@@ -7,7 +7,7 @@ description: Reference for Prysm's proposer settings — fee recipients, gas lim
 
 import {HeaderBadgesWidget} from '@site/src/components/HeaderBadgesWidget.js';
 
-<HeaderBadgesWidget commaDelimitedContributors="James" />
+<HeaderBadgesWidget commaDelimitedContributors="James" fork="Gloas" />
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -17,6 +17,14 @@ import TabItem from '@theme/TabItem';
 Before Gloas, the `builder` section only said whether to register a key with MEV-Boost relays. From the fork, builders are on-chain participants that your validator asks for bids directly, so v2 adds fields for which builders to use, how much of their promised payment to count, a minimum bid, and how to weigh bids against your own block, and it moves the gas limit out of `builder`. If your settings file configures builders, update it before the fork: v1 builder settings keep working until then, and at the fork Prysm removes them and uses defaults. See [Migrating from v1 to v2](#migrating-from-v1-to-v2).
 
 If you only need to set a fee recipient, see [Configure Fee Recipient](/configure-prysm/configure-fee-recipient.mdx). For how builders work before and after Gloas, see [Configure MEV Builder](/configure-prysm/configure-mev-builder.mdx).
+
+<span id="requires-gloas"></span>
+
+:::info Requires the Gloas fork
+
+The builder fields, the `--builder-*` flags, and the keymanager `builder_config` endpoints on this page only work on networks with a Gloas fork epoch scheduled: testnets and devnets first, and mainnet once the fork is scheduled there. On other networks a v2 file still loads, but bids are never requested and the endpoints return `501`. Fee recipient, gas limit, and graffiti settings work everywhere. Until the fork epoch, builders still run through MEV-Boost, and a `builders` list only decides which keys register; see [Running v2 settings before the Gloas fork](#running-v2-settings-before-the-gloas-fork).
+
+:::
 
 ## Using one builder for all keys
 
@@ -433,10 +441,6 @@ Unknown fields, a `version` above `2`, invalid builder flags, and `builder_pubke
 #### Do I have to do anything if I never use builders?
 
 Set your fee recipient, with a flag or in a file. You don't need `"version": 2`, a `builder` section, or any new flags. After the fork, your validator requests no builder bids and its gas limit follows the network schedule, unless you set `--suggested-gas-limit` or a `gas_limit`. Trustless bids that builders broadcast over P2P can still beat your own block on guaranteed value (see [How a bid is valued](#how-a-bid-is-valued)); if you never want that, set `builder_boost_factor` to `0` in `default_config` or pass `--builder-boost-factor=0`.
-
-#### Which networks does this apply to right now?
-
-Bids are only requested and compared on networks with a Gloas fork epoch scheduled: testnets and devnets first, and mainnet once the fork is scheduled there. On other networks, a v2 file loads without errors, the keymanager builder endpoints return `501`, and the Gloas-specific warnings aren't logged. A non-empty `builders` list still registers the key with MEV-Boost on any network, and an empty list still opts it out.
 
 #### Can I mix the flags and a v2 file?
 
