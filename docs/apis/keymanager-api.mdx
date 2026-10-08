@@ -27,9 +27,36 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.ck3J6tcvHcI74IiFj
 ```
 
 
-## Gloas builder configuration endpoints
+## Proposer settings endpoints
 
-Prysm releases with Gloas support implement the per-key builder configuration endpoints from [keymanager-APIs #88](https://github.com/ethereum/keymanager-APIs/pull/88): `GET`, `POST`, and `DELETE /eth/v1/validator/{pubkey}/builder_config`. These manage which builders a key requests bids from after the Gloas fork, alongside the existing fee recipient, gas limit, and graffiti endpoints. On networks with no Gloas fork scheduled, they respond `501 Not Implemented`. See [Proposer settings](/configure-prysm/proposer-settings.mdx#keymanager-apis) for semantics and the relationship to proposer settings files.
+The fee recipient, gas limit, graffiti, and builder endpoints read and write the validator client's [proposer settings](/configure-prysm/proposer-settings.mdx) for one key at a time. Changes are saved in the validator database and survive restarts, but a settings file or URL takes priority at startup: a non-empty `proposer_config` in the source replaces every stored per-key setting. Fee recipient, gas limit, and graffiti writes don't copy the builder settings from `default_config` onto the key, so the key keeps following the default builder configuration as it changes.
+
+### Gas limit
+
+`GET`, `POST`, and `DELETE /eth/v1/validator/{pubkey}/gas_limit` read and write the key's `gas_limit` and don't require a builder to be enabled. From the Gloas fork, `GET` returns the gas limit the key signs: its own value or `default_config`'s if either is set, otherwise the network's [scheduled gas limit](/configure-prysm/proposer-settings.mdx#the-gas-limit-schedule) or the chain default. Before the fork it returns the value used for MEV-Boost registration. `DELETE` resets the key to `default_config`'s gas limit if one is set (from the settings file or `--suggested-gas-limit`), otherwise removes the key's value so it follows the schedule, and returns `404` if there is nothing to reset.
+
+### Builder configuration
+
+`GET`, `POST`, and `DELETE /eth/v1/validator/{pubkey}/builder_config`, from [keymanager-APIs #88](https://github.com/ethereum/keymanager-APIs/pull/88), manage which builders a key requests bids from after the Gloas fork. On networks with no Gloas fork scheduled they respond `501 Not Implemented`.
+
+- `GET` returns the key's config combined with `default_config`, with a value for every field: `"0"` for no minimum bid, `"100"` for the default boost factor, `"0"` for no counted execution payment. Sending the result back unchanged pins those values on the key.
+- `POST` replaces the key's whole builder config and leaves fee recipient, gas limit, and graffiti alone. An empty object (`{}`) removes the key's builder config so it follows `default_config`. Unknown fields are ignored.
+- `DELETE` removes the key's builder config so it follows `default_config` again.
+
+Integers are decimal strings and byte fields (`builder_pubkeys`, `auth_data`) are `0x`-hex. `max_execution_payment` exists only per builder entry; `GET` copies a config-level value from a settings file onto each entry, and `POST` can't set one. A `POST` body that gives a key one builder and counts its promised payments in full:
+
+```json
+{
+  "builders": [
+    {
+      "url": "https://builder-a.example",
+      "max_execution_payment": "18446744073709551615"
+    }
+  ]
+}
+```
+
+The fields and their meaning are described in [Proposer settings](/configure-prysm/proposer-settings.mdx#field-reference).
 
 ## Other Prysm specific errors and usecases
 
