@@ -141,7 +141,7 @@ The same file can also set a gas limit, graffiti, and builder configuration for 
 These fields are described on the [Proposer settings](/configure-prysm/proposer-settings.mdx) page, which documents the whole file:
 
 - [`gas_limit`](/configure-prysm/proposer-settings.mdx#options-per-key-and-in-default_config): leave it unset to follow the network's scheduled gas limit. If you set it, the key uses your value instead of the schedule.
-- [`builder`](/configure-prysm/proposer-settings.mdx#the-builder-object): which builders the key requests bids from, and how their bids are valued. Read [Trusting builders](/configure-prysm/proposer-settings.mdx#trusting-builders-max_execution_payment) before setting `max_execution_payment`.
+- [`builder`](/configure-prysm/proposer-settings.mdx#the-builder-object): which builders the key requests bids from, and how their bids are valued. See [Configuring builders](/configure-prysm/proposer-settings.mdx#configuring-builders) before setting `max_execution_payment`.
 - [Migrating from v1 to v2](/configure-prysm/proposer-settings.mdx#migrating-from-v1-to-v2): how to replace the legacy `enabled` field and the `gas_limit` inside `builder` before the Gloas fork.
 
 ## Frequently asked questions

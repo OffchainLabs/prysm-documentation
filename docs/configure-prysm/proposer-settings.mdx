@@ -26,9 +26,15 @@ The builder fields, the `--builder-*` flags, and the keymanager `builder_config`
 
 :::
 
-## Using one builder for all keys
+## Configuring builders
 
-The simplest setup gives every key the same builder URL and a `max_execution_payment` for it:
+<Tabs groupId="setup" defaultValue="simple" values={[
+        {label: 'All keys', value: 'simple'},
+        {label: 'Per key', value: 'advanced'}
+    ]}>
+  <TabItem value="simple">
+
+One builder for every key, trusting its promised payments in full. This is all most operators need:
 
 <Tabs groupId="format" defaultValue="json" values={[
         {label: 'JSON', value: 'json'},
@@ -45,7 +51,7 @@ The simplest setup gives every key the same builder URL and a `max_execution_pay
       "builders": [
         {
           "url": "https://builder-a.example",
-          "max_execution_payment": "100000000"
+          "max_execution_payment": "18446744073709551615"
         }
       ]
     }
@@ -63,7 +69,8 @@ default_config:
   builder:
     builders:
       - url: 'https://builder-a.example'
-        max_execution_payment: '100000000'
+        # 2^64 - 1: count the builder's promised execution payment in full
+        max_execution_payment: '18446744073709551615'
 ```
 
   </TabItem>
@@ -73,54 +80,18 @@ default_config:
 ./prysm.sh validator \
   --suggested-fee-recipient=0x6e35733c5af9B61374A128e6F85f553aF09ff89A \
   --builder-urls=https://builder-a.example \
-  --builder-max-execution-payment=100000000
+  --builder-max-execution-payment=18446744073709551615  # 2^64 - 1: count promised payments in full
 ```
 
   </TabItem>
 </Tabs>
 
-**Set `max_execution_payment` with the URL.** A builder's bid can pay you in two ways: `value`, which the protocol takes from the builder's staked balance, and `execution_payment`, which the builder only promises to pay inside the block. If `max_execution_payment` is unset, it is `0` and Prysm counts only `value`, so a builder that pays mainly through `execution_payment` almost never beats your local block. On networks with Gloas scheduled, Prysm warns at startup about entries that leave it unset (an explicit `0` is taken as deliberate).
+**`max_execution_payment` is a trust decision.** A bid's `value` is guaranteed by the builder's staked balance; its `execution_payment` is only a promise to pay inside the block, which the protocol doesn't check. This field sets how much of that promise Prysm counts when it values the bid. The maximum, `18446744073709551615` (2^64 − 1), counts it in full, the same trust you gave a relay under MEV-Boost: a builder that doesn't pay can cost you the whole promised amount. A smaller value in gwei (`100000000` is 0.1 ETH) caps that loss. Unset or `0` counts nothing, so bids that depend on promised payment rarely beat your own block, and Prysm warns at startup about entries that leave it unset. Prysm has no separate flag gating this; the value itself is the opt-in. Set it per builder entry rather than for the whole config.
 
-**The value is in gwei** (1 ETH = 1,000,000,000 gwei), so `100000000` is 0.1 ETH:
+  </TabItem>
+  <TabItem value="advanced">
 
-| ETH | gwei |
-|---|---|
-| 0.01 | `10000000` |
-| 0.1 | `100000000` |
-| 0.5 | `500000000` |
-| 1 | `1000000000` |
-
-It is the most promised payment Prysm counts from that builder for one block: with a limit of 0.1 ETH, a bid of 0.01 ETH `value` plus 0.3 ETH `execution_payment` is valued at 0.11 ETH. Because the payment isn't guaranteed, it is also the most you can lose compared with your own block if the builder wins and doesn't pay. Prysm doesn't recommend an amount; read [Trusting builders](#trusting-builders-max_execution_payment) before choosing one.
-
-### Configuring Gloas builders with flags
-
-The flags set the same builder configuration for every key, the way `--suggested-fee-recipient` sets a default fee recipient. Per-key settings from a file, URL, or the keymanager API take priority over them.
-
-| Flag | Effect |
-|---|---|
-| `--builder-urls` | Comma-separated builder URLs to request bids from, at most 64. Auth data agreed with a builder goes in a `0x`-hex fragment (`https://builder.example#0x0123`); otherwise the lowercased hostname is used. An invalid URL, a non-hex fragment, more than 64 entries, or a duplicate stops the validator client from starting. |
-| `--builder-min-bid` | Minimum bid, in gwei: the bid value plus its execution payment, counted up to `--builder-max-execution-payment`. |
-| `--builder-boost-factor` | Percentage applied to a bid's value before comparing it with your local payload: `100` is neutral, below `100` favors your payload, `0` always uses it (also against [P2P bids](#how-a-bid-is-valued)). |
-| `--builder-max-execution-payment` | Maximum execution payment, in gwei, counted toward a bid. `0` counts only the value backed by the builder's stake; anything above counts payment the builder only promises. See [Trusting builders](#trusting-builders-max_execution_payment). |
-
-Set `--builder-max-execution-payment` with `--builder-urls`; on its own, `--builder-urls` counts none of a builder's promised payment. Pass the flags on every start: they apply only to the run that sets them, and Prysm warns when it drops stored values because the flags are missing. Before the fork, a non-empty `--builder-urls` also registers keys with MEV-Boost, as `--enable-builder` does, including keys whose `builder` object has only v1 fields; set `"builders": []` on a key to keep it out.
-
-## How proposer settings are supplied
-
-- **Command-line flags**, which set `default_config` for every key: `--suggested-fee-recipient`, `--suggested-gas-limit`, and the [builder flags](#configuring-gloas-builders-with-flags).
-- `--proposer-settings-file=<path>`: a local JSON or YAML file using the schema on this page.
-- `--proposer-settings-url=<url>`: a URL that returns the same schema as JSON (Prysm sends a GET request; YAML is only supported for files).
-- [Keymanager APIs](/apis/keymanager-api.mdx): endpoints for each key's fee recipient, gas limit, graffiti, and builder configuration.
-
-`--proposer-settings-file` and `--proposer-settings-url` can't be combined; the validator client won't start with both. Files and URL responses are parsed strictly: a field name Prysm doesn't recognize, a `version` above `2`, or a `builder_pubkeys` or `auth_data` value that isn't `0x`-hex stops the settings from loading. (`pubkeys`, the old name of `builder_pubkeys`, is the common case.)
-
-A `default_config` in a file or URL replaces the defaults set by flags, including `--suggested-fee-recipient` and `--suggested-gas-limit`, so put those values in the file. With a v1 file, `--suggested-gas-limit` also overwrites the `gas_limit` inside `builder` for every key, as it always has.
-
-Loaded settings are saved in the validator client database, so changes made through the keymanager APIs survive restarts. A file or URL takes priority over the database at startup: a non-empty `proposer_config` replaces all stored per-key settings, and a `default_config` replaces the stored default. If you manage keys through the keymanager APIs and restart with a settings file, those keys are reset to what the file says.
-
-## The v2 schema
-
-This example configures one validator key and a default for all other keys:
+Different builders, limits, or trust per validator key, with a default for every other key:
 
 <Tabs groupId="format" defaultValue="json" values={[
         {label: 'JSON', value: 'json'},
@@ -187,7 +158,46 @@ default_config:
   </TabItem>
 </Tabs>
 
-The configured key considers bids from two builders, counting up to 0.1 ETH of builder A's promised execution payment and none of builder B's, and ignores bids worth less than 0.01 ETH. Every other key uses the default, which requests no builder bids because `builders` is an empty list.
+The configured key considers bids from two builders, counting up to 0.1 ETH of builder A's promised execution payment and none of builder B's, and ignores bids worth less than 0.01 ETH. Every other key uses the default, which requests no builder bids because `builders` is an empty list. The example also pins the key's `gas_limit`; leave that field out unless you want a fixed gas limit (see the warning below). Every field can be set per key or in `default_config`; see the [field reference](#field-reference) and [Inheritance and merge rules](#inheritance-and-merge-rules).
+
+  </TabItem>
+</Tabs>
+
+<span id="gas-limit-override"></span>
+
+:::warning A gas limit you set overrides the gas limit schedule
+
+From the Gloas fork onward, a `gas_limit` in your settings, per key or in `default_config`, or one passed with `--suggested-gas-limit`, is the gas limit your validator signs into its proposer preferences. It overrides the network's [scheduled gas limit](#the-gas-limit-schedule), so the key keeps that value and doesn't pick up scheduled increases. Prysm warns at startup when the flag is set, and once per epoch when it signs a preference that differs from the schedule. Unless you want a fixed gas limit, leave `gas_limit` unset and don't use the flag.
+
+:::
+
+### Configuring Gloas builders with flags
+
+The flags set the same builder configuration for every key, the way `--suggested-fee-recipient` sets a default fee recipient. Per-key settings from a file, URL, or the keymanager API take priority over them.
+
+| Flag | Effect |
+|---|---|
+| `--builder-urls` | Comma-separated builder URLs to request bids from, at most 64. Auth data agreed with a builder goes in a `0x`-hex fragment (`https://builder.example#0x0123`); otherwise the lowercased hostname is used. An invalid URL, a non-hex fragment, more than 64 entries, or a duplicate stops the validator client from starting. |
+| `--builder-min-bid` | Minimum bid, in gwei: the bid value plus its execution payment, counted up to `--builder-max-execution-payment`. |
+| `--builder-boost-factor` | Percentage applied to a bid's value before comparing it with your local payload: `100` is neutral, below `100` favors your payload, `0` always uses it (also against [P2P bids](#how-a-bid-is-valued)). |
+| `--builder-max-execution-payment` | Maximum execution payment, in gwei, counted toward a bid: `0` counts only the value backed by the builder's stake, `18446744073709551615` counts promised payment in full. See [Configuring builders](#configuring-builders). |
+
+Set `--builder-max-execution-payment` with `--builder-urls`; on its own, `--builder-urls` counts none of a builder's promised payment. Pass the flags on every start: they apply only to the run that sets them, and Prysm warns when it drops stored values because the flags are missing. Before the fork, a non-empty `--builder-urls` also registers keys with MEV-Boost, as `--enable-builder` does, including keys whose `builder` object has only v1 fields; set `"builders": []` on a key to keep it out.
+
+## How proposer settings are supplied
+
+- **Command-line flags**, which set `default_config` for every key: `--suggested-fee-recipient`, `--suggested-gas-limit`, and the [builder flags](#configuring-gloas-builders-with-flags).
+- `--proposer-settings-file=<path>`: a local JSON or YAML file using the schema on this page.
+- `--proposer-settings-url=<url>`: a URL that returns the same schema as JSON (Prysm sends a GET request; YAML is only supported for files).
+- [Keymanager APIs](/apis/keymanager-api.mdx): endpoints for each key's fee recipient, gas limit, graffiti, and builder configuration.
+
+`--proposer-settings-file` and `--proposer-settings-url` can't be combined; the validator client won't start with both. Files and URL responses are parsed strictly: a field name Prysm doesn't recognize, a `version` above `2`, or a `builder_pubkeys` or `auth_data` value that isn't `0x`-hex stops the settings from loading. (`pubkeys`, the old name of `builder_pubkeys`, is the common case.)
+
+A `default_config` in a file or URL replaces the defaults set by flags, including `--suggested-fee-recipient` and `--suggested-gas-limit`, so put those values in the file. With a v1 file, `--suggested-gas-limit` also overwrites the `gas_limit` inside `builder` for every key, as it always has.
+
+Loaded settings are saved in the validator client database, so changes made through the keymanager APIs survive restarts. A file or URL takes priority over the database at startup: a non-empty `proposer_config` replaces all stored per-key settings, and a `default_config` replaces the stored default. If you manage keys through the keymanager APIs and restart with a settings file, those keys are reset to what the file says.
+
+## Field reference
 
 Amounts and gas limits can be written as strings (`"60000000"`) or plain numbers; strings are recommended because the keymanager API uses them. `version` must be a plain number. All amounts (`min_bid`, `max_execution_payment`) are in gwei.
 
@@ -204,15 +214,9 @@ Amounts and gas limits can be written as strings (`"60000000"`) or plain numbers
 | Field | Description |
 |---|---|
 | `fee_recipient` | The Ethereum address that receives priority fees and, after Gloas, builder payments. A per-key value overrides `default_config`, which overrides `--suggested-fee-recipient`. |
-| `gas_limit` | The gas limit your validator asks for in blocks built for it. **New in v2 at this level.** Leave it unset to follow the network's [scheduled gas limit](#the-gas-limit-schedule), or the chain default in your Prysm release when no schedule entry applies (the [command-line options](/configure-prysm/command-line-options.mdx) page shows that default for `--suggested-gas-limit`). Set it only to use a fixed value instead; see the warning below. In v1, the gas limit was set inside `builder`; that location stops working at the Gloas fork. |
+| `gas_limit` | The gas limit your validator asks for in blocks built for it. **New in v2 at this level.** Leave it unset to follow the network's [scheduled gas limit](#the-gas-limit-schedule), or the chain default in your Prysm release when no schedule entry applies (the [command-line options](/configure-prysm/command-line-options.mdx) page shows that default for `--suggested-gas-limit`). Set it only to use a fixed value instead; see [the warning above](#gas-limit-override). In v1, the gas limit was set inside `builder`; that location stops working at the Gloas fork. |
 | `graffiti` | The graffiti string included in blocks proposed by this key. |
 | `builder` | Builder configuration for this key. See below. Leave it out to use the builder configuration from `default_config`. |
-
-:::warning A gas limit you set overrides the gas limit schedule
-
-From the Gloas fork onward, a `gas_limit` set here, or passed with `--suggested-gas-limit`, is the gas limit your validator signs into its proposer preferences. It overrides the network's [scheduled gas limit](#the-gas-limit-schedule), so the key keeps that value and doesn't pick up scheduled increases. Prysm warns at startup when the flag is set, and once per epoch when it signs a preference that differs from the schedule. Unless you want a fixed gas limit, leave `gas_limit` unset and don't use the flag.
-
-:::
 
 ### The `builder` object
 
@@ -220,7 +224,7 @@ From the Gloas fork onward, a `gas_limit` set here, or passed with `--suggested-
 |---|---|
 | `builders` | The builders this key requests bids from. See [Builder entries](#builder-entries). Leaving it out means the key uses the list from `default_config`; an empty list (`[]`) means it requests bids from no builders (bids broadcast over P2P can still win; see [How a bid is valued](#how-a-bid-is-valued)). At most 64 entries. Duplicate or invalid entries are dropped with a warning; values that aren't valid `0x`-hex fail the load. |
 | `min_bid` | Minimum [effective value](#how-a-bid-is-valued), in gwei; lower bids are ignored. Unset means no minimum. Can be overridden per entry. |
-| `max_execution_payment` | Maximum execution payment, in gwei, counted toward a bid. **This is how much you trust the builder to pay; read [Trusting builders](#trusting-builders-max_execution_payment) first.** Unset or `0` counts none. Can be overridden per entry. |
+| `max_execution_payment` | Maximum execution payment, in gwei, counted toward a bid: unset or `0` counts none, `18446744073709551615` counts it in full. This is how much you trust the builder to pay; see [Configuring builders](#configuring-builders). Can be overridden per entry. |
 | `builder_boost_factor` | Percentage applied to bid values before comparing them with your local block: `100` (default) is neutral, above favors builders, below favors your block, `0` means a bid never wins. Can be overridden per entry. |
 | `enabled` | **Legacy (v1).** Registers the key with MEV-Boost before the Gloas fork, even next to `builders: []`. Ignored by the Gloas builder settings and removed at the fork. In v2, a non-empty `builders` list registers the key instead; see [Running v2 settings before the Gloas fork](#running-v2-settings-before-the-gloas-fork). |
 | `gas_limit` | **Legacy (v1).** The MEV-Boost registration gas limit. In v2, set `gas_limit` next to `fee_recipient` instead. |
@@ -244,42 +248,15 @@ A field not set on an entry is taken from the enclosing `builder` config, and th
 
 ## How a bid is valued
 
-`min_bid`, `max_execution_payment`, and `builder_boost_factor` all affect how Prysm chooses a payload after Gloas. When your validator is about to propose, the beacon node builds a local payload, requests bids from your configured builders, collects bids broadcast over the P2P network, and then:
-
-1. **Checks that each bid is valid**, the same way the chain does: the builder is active and can pay the bid's `value`, the bid is for your slot, parent block, fee recipient, and gas limit preference, and the signature verifies. Bids from blacklisted builders are skipped.
-2. **Calculates each bid's effective value**: `value`, which the protocol guarantees from the builder's staked balance, plus `execution_payment`, which the builder only promises to pay inside the payload, **counted up to your `max_execution_payment`**. With that unset or `0`, only `value` counts.
-3. **Discards bids below the minimum.** A bid whose effective value is below the applicable `min_bid` is discarded.
-4. **Compares bids.** Each remaining bid's effective value is multiplied by its `builder_boost_factor` divided by 100 and compared with your local payload and the other bids. The highest wins; ties go to the local payload.
-
-Builders are queried in parallel with a `600ms` budget by default (`--builder-bid-timeout` on the beacon node); a builder that doesn't answer in time is skipped for that proposal, not blacklisted.
+After Gloas, the beacon node builds a local payload for every proposal, requests bids from your configured builders (in parallel, with a `600ms` budget by default; `--builder-bid-timeout` on the beacon node), and collects bids broadcast over the P2P network. Each bid that passes the chain's validity checks is valued at its `value`, which the protocol guarantees from the builder's staked balance, plus its `execution_payment`, which the builder only promises to pay, counted up to your `max_execution_payment`. Bids below `min_bid` are discarded, the rest are multiplied by `builder_boost_factor` divided by 100, and the highest is compared with your local payload. Ties go to your own block.
 
 **Bids from the P2P network.** Builders can also broadcast bids to every proposer over P2P, without being configured anywhere. These must carry a zero `execution_payment`, so only their guaranteed `value` counts, and Prysm compares them with your local payload on every proposal, whether or not you configured any builders, using the `min_bid` and `builder_boost_factor` from your builder config (none and `100` if you have no config). An empty `builders` list stops bid requests, not P2P bids; to always use your own block, set `builder_boost_factor` to `0`.
 
-If no bid wins, your block commits to a self-build bid, and your validator client signs and publishes the execution payload envelope from your local execution client right after the block. You still need a synced execution client: if it can't produce a payload, Prysm falls back to the best P2P bid, and if there is none, the proposal fails.
-
-**Builders that don't deliver.** A builder that wins and then doesn't reveal its payload is blacklisted for the rest of the epoch, or for 256 epochs (about 27 hours) after a second failure within five epochs. Its bids are ignored and not forwarded to peers; revealing a valid payload clears the record. If seven or more builders are blacklisted at once, the beacon node uses only its own block until they recover.
-
-## Trusting builders: `max_execution_payment`
-
-:::caution Setting this means trusting a builder to pay
-
-A bid's `value` is guaranteed: the protocol checks that the builder's staked balance covers it before the bid can win, and pays your fee recipient from that balance once the payload is revealed. A bid's `execution_payment` is only a promise to pay your fee recipient inside the payload. The protocol doesn't hold that amount or check that it is paid.
-
-Setting `max_execution_payment` above `0` lets a bid win on promised payment, so a malicious or faulty builder can outbid everyone and never pay. Set it to the most you are willing to risk on that builder in a single block, and set it on the entries of builders you trust rather than for the whole config. Leaving it unset or `0` risks nothing, but builders whose bids depend on execution payments will rarely or never be used; Prysm warns at startup about entries that leave it unset. The maximum, `18446744073709551615` (2^64 − 1), accepts any promised amount and isn't recommended.
-
-Unlike some other clients, Prysm has no separate flag that gates this. A non-zero `max_execution_payment` is all it takes.
-
-:::
+If no bid wins, your validator uses its own payload. A builder that wins and then doesn't reveal its payload is blacklisted for the rest of the epoch, or for 256 epochs after a second failure within five, and its bids are ignored meanwhile; see [How a Gloas proposal uses builders](/configure-prysm/configure-mev-builder.mdx#how-a-gloas-proposal-uses-builders) for the full flow.
 
 ## The gas limit schedule
 
-From the Gloas fork onward, your validator signs a gas limit preference, and builder bids must be compatible with it. [EIP-8261](https://eips.ethereum.org/EIPS/eip-8261) defines a gas limit schedule in the network configuration that clients use as the default for that preference, so raising the network's gas limit no longer needs every operator to change a flag.
-
-- **What it is.** `GAS_LIMIT_SCHEDULE` entries in the network config, each with an `EPOCH` and a `GAS_LIMIT`. The most recent entry whose epoch has been reached applies, from the Gloas fork epoch onward. For a key without a gas limit you set, Prysm signs the scheduled value, or the chain default in your release if no entry applies yet. The schedule is a recommendation: a block's gas limit can still move by at most about 1/1024 of the parent's per block, so increases take effect over many blocks, and a builder bid must use exactly the gas limit that moves from the parent's toward your preference within that step.
-- **Overriding it.** A `gas_limit` you set, or `--suggested-gas-limit`, overrides the schedule; Prysm uses your value and warns once per epoch when it signs a preference that differs from the scheduled one.
-- **Where it comes from.** The validator client reads the schedule from its own network config, not from the beacon node. For the networks Prysm supports, it is built into each release. On a custom network or devnet, pass the network's `config.yaml` to the validator client with `--chain-config-file` too, or it won't have the schedule.
-
-To see the gas limit a key is signing, call the keymanager `GET /eth/v1/validator/{pubkey}/gas_limit` endpoint.
+From the Gloas fork, a key with no `gas_limit` of its own signs the network's scheduled gas limit ([EIP-8261](https://eips.ethereum.org/EIPS/eip-8261)), taken from the `GAS_LIMIT_SCHEDULE` entries in the network config, or the chain default when no entry applies yet. Prysm ships the schedule for the networks it supports. On a custom network or devnet, pass the network's `config.yaml` to the validator client with `--chain-config-file` too, or it won't have one. To see the gas limit a key signs, call the keymanager `GET /eth/v1/validator/{pubkey}/gas_limit` endpoint.
 
 ## Inheritance and merge rules
 
@@ -288,19 +265,6 @@ To see the gas limit a key is signing, call the keymanager `GET /eth/v1/validato
 The `builders` list is **replaced, not merged**. A per-key list, including an empty list (`[]`), replaces the default list completely. If a key doesn't set `builders`, it uses the default list. So to stop a single key from requesting builder bids, set `"builders": []`.
 
 `gas_limit` works the same way: a per-key value takes priority over `default_config`. If neither sets it, the network's scheduled gas limit or the chain default applies.
-
-## Running v2 settings before the Gloas fork
-
-Between upgrading Prysm and the fork epoch, your validator still uses MEV-Boost, and your v2 settings decide which keys to register:
-
-| Your v2 settings | Before the fork (MEV-Boost) | After the fork (Gloas) |
-|---|---|---|
-| Non-empty `builders` list | Key is registered with MEV-Boost relays, as with v1 `enabled: true` | Bids are requested from the listed builders |
-| Empty list (`builders: []`) | Key is **not** registered, unless the legacy `enabled: true` is also set | No builder bids are requested |
-| No `builders` field, but other builder fields set (`min_bid`, etc.) | The key's own config doesn't decide; the `default_config` setting applies, if any | Uses the `builders` list from `default_config` |
-| Legacy `enabled: true` together with v2 fields | Key is registered | `enabled` is ignored, and removed at the fork |
-
-Registration still uses your fee recipient and gas limit (a `gas_limit` next to `fee_recipient` wins over a legacy one inside `builder`), and the beacon node's `--http-mev-relay` setup doesn't change until the fork. The keymanager `builder_config` endpoints return `501` until your network schedules the fork.
 
 ## Migrating from v1 to v2
 
@@ -389,6 +353,19 @@ To migrate:
 3. Delete `relays` if present. Optionally add `"version": 2`; the builder fields already make the file v2.
 4. Restart the validator client and check the [startup logs](#startup-warnings-explained).
 
+### Running v2 settings before the Gloas fork
+
+You can migrate at any time before the fork. Until the fork epoch, your validator still uses MEV-Boost, and your v2 settings decide which keys to register:
+
+| Your v2 settings | Before the fork (MEV-Boost) | After the fork (Gloas) |
+|---|---|---|
+| Non-empty `builders` list | Key is registered with MEV-Boost relays, as with v1 `enabled: true` | Bids are requested from the listed builders |
+| Empty list (`builders: []`) | Key is **not** registered, unless the legacy `enabled: true` is also set | No builder bids are requested |
+| No `builders` field, but other builder fields set (`min_bid`, etc.) | The key's own config doesn't decide; the `default_config` setting applies, if any | Uses the `builders` list from `default_config` |
+| Legacy `enabled: true` together with v2 fields | Key is registered | `enabled` is ignored, and removed at the fork |
+
+Registration still uses your fee recipient and gas limit (a `gas_limit` next to `fee_recipient` wins over a legacy one inside `builder`), and the beacon node's `--http-mev-relay` setup doesn't change until the fork. The keymanager `builder_config` endpoints return `501` until your network schedules the fork.
+
 ### What happens if you don't migrate
 
 Nothing changes before the fork, except that Prysm warns at startup about deprecated v1 builder fields once your network schedules Gloas. At the fork epoch, Prysm removes `enabled` and the `gas_limit` inside `builder` with a warning and keeps fee recipients and graffiti. Your gas limit follows the network schedule, and Prysm requests no builder bids until you add v2 settings (trustless P2P bids can still beat your own block; see [How a bid is valued](#how-a-bid-is-valued)). Nothing in this fallback counts a payment that isn't backed by a builder's staked balance.
@@ -426,7 +403,7 @@ Unknown fields, a `version` above `2`, invalid builder flags, and `builder_pubke
 | "Proposer settings contain deprecated v1 builder fields (enabled, builder-level gas limits); they stop applying at the gloas fork…" | Your network has Gloas scheduled and your settings contain v1 builder fields (`--enable-builder`, or `--suggested-gas-limit` without v2 settings, counts too). | Migrate to v2 before the fork epoch. |
 | "Proposer settings contain v1 builder fields, which do not apply to gloas; proposer preferences are prepared with defaults…" | Logged at each epoch start from the last epoch before the fork while v1 builder fields remain. | Migrate to v2 now. |
 | "V1 builder settings, including gas limits, do not apply to gloas and were replaced with defaults…" | At the fork, Prysm removed your v1 builder settings. | Add v2 settings if you want builders or a fixed gas limit. |
-| "Builders have no max_execution_payment (default 0): execution payment is ignored, so these builders' bids may lose to the local payload." | The listed builders have no `max_execution_payment` on the entry or on any `builder` config they inherit from, so only each bid's `value` counts. Gloas-scheduled networks only; an explicit `0` doesn't trigger it. | Set `max_execution_payment` on each entry after reading [Trusting builders](#trusting-builders-max_execution_payment), or ignore it if that's what you want. |
+| "Builders have no max_execution_payment (default 0): execution payment is ignored, so these builders' bids may lose to the local payload." | The listed builders have no `max_execution_payment` on the entry or on any `builder` config they inherit from, so only each bid's `value` counts. Gloas-scheduled networks only; an explicit `0` doesn't trigger it. | Set `max_execution_payment` on each entry (see [Configuring builders](#configuring-builders)), or ignore it if that's what you want. |
 | "Removed N invalid or duplicate builder entries from proposer settings" | Entries had a missing, too long, or unparseable `url`, a non-ASCII hostname, more than 64 entries (the first 64 are kept), more than 64 or wrong-length `builder_pubkeys`, `auth_data` over 4096 bytes, or duplicated another entry. | Fix the entries named in the log's `reasons` field (duplicates are counted but not listed). |
 | "--enable-builder is legacy (pre-gloas) mev-boost content and has no effect after the gloas fork…" | `--enable-builder` is set together with v2 settings. | Remove the flag once your v2 settings say which keys use builders. |
 | "--suggested-gas-limit overrides the network gas limit schedule from the Gloas fork; remove it to follow the schedule" | The flag fixes your gas limit, so scheduled increases won't apply. A second warning follows if the value is above the highest scheduled limit. | Remove the flag unless you want a fixed gas limit. |

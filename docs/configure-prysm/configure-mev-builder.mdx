@@ -50,7 +50,7 @@ At the fork epoch, Prysm stops using the v1 builder fields in your settings file
   "builders": [
     {
       "url": "https://builder-a.example",
-      "max_execution_payment": "100000000"
+      "max_execution_payment": "18446744073709551615"
     }
   ]
 }
@@ -61,7 +61,7 @@ At the fork epoch, Prysm stops using the v1 builder fields in your settings file
 
 A non-empty `builders` list replaces `enabled: true`, and an empty list (`"builders": []`) replaces `enabled: false`. Don't delete the `builder` object to turn builders off for a key, because a key without one uses the builder settings from `default_config`.
 
-Set `max_execution_payment` on each entry. It is the most of a builder's promised execution payment that Prysm counts toward its bid, in gwei (`100000000` is 0.1 ETH); without it, the builder's bids will rarely win. The protocol doesn't guarantee that payment, so it is also the most you can lose on a proposal if the builder doesn't pay. Read [Trusting builders](/configure-prysm/proposer-settings.mdx#trusting-builders-max_execution_payment) before choosing a value.
+Set `max_execution_payment` on each entry; without it, the builder's bids will rarely win. It is how much of the builder's promised execution payment Prysm counts toward its bid. The example uses the maximum, `18446744073709551615` (2^64 − 1), which counts the promise in full, the same trust you gave a relay under MEV-Boost. The protocol doesn't guarantee that payment, so a smaller value in gwei (`100000000` is 0.1 ETH) caps what you can lose on a proposal if the builder doesn't pay. See [Configuring builders](/configure-prysm/proposer-settings.mdx#configuring-builders) for the trade-off.
 
 ### 2. Delete the gas limit
 
