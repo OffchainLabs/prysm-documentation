@@ -28,7 +28,7 @@ v1 builder settings (`enabled` and the `gas_limit` inside `builder`) stop workin
 
 :::info Requires the Gloas fork
 
-The builder fields, the `--builder-*` flags, and the keymanager `builder_config` endpoints on this page only work on networks with a Gloas fork epoch scheduled: testnets and devnets first, and mainnet once the fork is scheduled there. On other networks a v2 file still loads, but bids are never requested and the endpoints return `501`. Fee recipient, gas limit, and graffiti settings work everywhere. Until the fork epoch, builders still run through MEV-Boost, and a `builders` list only decides which keys register; see [Running v2 settings before the Gloas fork](#running-v2-settings-before-the-gloas-fork).
+The builder fields, the `--builder-*` flags, and the keymanager `builder_config` endpoints on this page only work on networks with a Gloas fork epoch scheduled: testnets and devnets first, and mainnet once the fork is scheduled there. On other networks, a v2 file still loads, but bids are never requested, and the endpoints return `501`. Fee recipient, gas limit, and graffiti settings work everywhere. Until the fork epoch, builders still run through MEV-Boost, and a `builders` list only decides which keys register; see [Running v2 settings before the Gloas fork](#running-v2-settings-before-the-gloas-fork).
 
 :::
 
