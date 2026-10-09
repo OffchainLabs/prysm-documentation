@@ -320,7 +320,7 @@ Nothing changes before the fork, except that Prysm warns at startup about deprec
 
 A `default_config` in a file or URL replaces the defaults set by flags, including `--suggested-fee-recipient` and `--suggested-gas-limit`, so put those values in the file. With a v1 file, `--suggested-gas-limit` also overwrites the `gas_limit` inside `builder` for every key, as it always has.
 
-Loaded settings are saved in the validator client database, so changes made through the keymanager APIs survive restarts. A file or URL takes priority over the database at startup: a non-empty `proposer_config` replaces all stored per-key settings, and a `default_config` replaces the stored default. If you manage keys through the keymanager APIs and restart with a settings file, those keys are reset to what the file says.
+The validator client saves loaded settings to its database, so changes made through the keymanager APIs survive restarts. A file or URL takes priority over the database at startup: a non-empty `proposer_config` replaces all stored per-key settings, and a `default_config` replaces the stored default. If you manage keys through the keymanager APIs and restart with a settings file, those keys are reset to what the file says.
 
 ## Field reference
 
