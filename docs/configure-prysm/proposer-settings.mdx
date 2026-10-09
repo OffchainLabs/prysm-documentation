@@ -381,7 +381,7 @@ If no bid wins, your validator uses its own payload. A builder that wins and the
 
 ## The gas limit schedule
 
-From the Gloas fork, a key with no `gas_limit` of its own signs the network's scheduled gas limit ([EIP-8261](https://eips.ethereum.org/EIPS/eip-8261)), taken from the `GAS_LIMIT_SCHEDULE` entries in the network config, or the chain default when no entry applies yet. Prysm ships the schedule for the networks it supports. On a custom network or devnet, pass the network's `config.yaml` to the validator client with `--chain-config-file` too, or it won't have one. To see the gas limit a key signs, call the keymanager `GET /eth/v1/validator/{pubkey}/gas_limit` endpoint.
+From the Gloas fork, a key with no `gas_limit` of its own indicates the network's scheduled gas limit ([EIP-8261](https://eips.ethereum.org/EIPS/eip-8261)), taken from the `GAS_LIMIT_SCHEDULE` entries in the network config, or the chain default when no entry applies yet. Prysm ships the schedule for the networks it supports. On a custom network or devnet, pass the network's `config.yaml` to the validator client with `--chain-config-file` too, or it won't have one. To see the gas limit a key signs, call the keymanager `GET /eth/v1/validator/{pubkey}/gas_limit` endpoint.
 
 ## Inheritance and merge rules
 
