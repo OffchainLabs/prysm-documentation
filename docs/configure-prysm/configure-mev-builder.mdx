@@ -15,63 +15,7 @@ There are risks to using a builder which may result in missed rewards, missed pr
 
 :::
 
-This page covers block building with builders before and after the Gloas fork. From the fork onward, you configure builders on the validator client; see [Configuring builders from the Gloas fork onward](#configuring-builders-from-the-gloas-fork-onward). Until your network reaches the fork epoch, builders are reached through MEV-Boost and relays; see [Before the Gloas fork](#before-the-gloas-fork-mev-boost-and-relays) at the end of this page. If you use a builder today, your v1 builder settings stop working at the fork: [Preparing for the Gloas fork](#preparing-for-the-gloas-fork) shows the one change to make, and you can make it now.
-
-{/* TRANSITIONAL SECTION - safe to delete once every network Prysm supports has passed
-    the Gloas fork epoch. Nothing here is unique: the durable migration reference is
-    "Migrating from v1 to v2" in configure-prysm/proposer-settings.mdx. Deleting this section
-    also makes the last sentence of the intro paragraph above unnecessary. */}
-
-## Preparing for the Gloas fork
-
-At the fork epoch, Prysm stops using the v1 builder fields in your settings file (`enabled` and the `gas_limit` inside `builder`) and uses defaults instead; it doesn't convert them to v2. A validator that hasn't migrated keeps proposing but requests no bids from builders. Fee recipients and graffiti are not affected. You can migrate at any time before the fork: until then, a v2 file behaves like your v1 file, with a non-empty `builders` list keeping the key registered with your relay and the beacon node still using `--http-mev-relay`. Your builder URLs are first contacted in the epoch before the fork.
-
-### 1. Replace `enabled` with a `builders` list
-
-<Tabs groupId="migrate-v1-v2" defaultValue="v1" values={[
-        {label: 'v1 (today)', value: 'v1'},
-        {label: 'v2', value: 'v2'}
-    ]}>
-  <TabItem value="v1">
-
-```json
-"builder": {
-  "enabled": true,
-  "gas_limit": "60000000"
-}
-```
-
-  </TabItem>
-  <TabItem value="v2">
-
-```json
-"gas_limit": "60000000",
-"builder": {
-  "builders": [
-    {
-      "url": "https://builder-a.example",
-      "max_execution_payment": "18446744073709551615"
-    }
-  ]
-}
-```
-
-  </TabItem>
-</Tabs>
-
-A non-empty `builders` list replaces `enabled: true`, and an empty list (`"builders": []`) replaces `enabled: false`. Don't delete the `builder` object to turn builders off for a key, because a key without one uses the builder settings from `default_config`.
-
-Set `max_execution_payment` on each entry; without it, the builder's bids will rarely win. It is how much of the builder's promised execution payment Prysm counts toward its bid. The example uses the maximum, `18446744073709551615` (2^64 − 1), which counts the promise in full, the same trust you gave a relay under MEV-Boost. The protocol doesn't guarantee that payment, so a smaller value in gwei (`100000000` is 0.1 ETH) caps what you can lose on a proposal if the builder doesn't pay. See [Configuring builders](/configure-prysm/proposer-settings.mdx#configuring-builders) for the trade-off.
-
-### 2. Delete the gas limit
-
-In v2, `gas_limit` sits next to `fee_recipient`, and from the fork onward a value there overrides the network's [scheduled gas limit](/configure-prysm/proposer-settings.mdx#the-gas-limit-schedule); the v1 field inside `builder` never did. Delete it unless you want a fixed gas limit, and remove `--suggested-gas-limit` for the same reason. With a v1 file, the flag also overwrites the `gas_limit` inside `builder` for every key; that copy is dropped at the fork.
-
-### 3. Restart and check the logs
-
-Prysm logs whether it is treating an unversioned file as version 2, any builder entries it removed, and, on networks with Gloas scheduled, any legacy v1 fields and any entries without a `max_execution_payment`. The [startup warnings table](/configure-prysm/proposer-settings.mdx#startup-warnings-explained) explains each message. After the fork epoch, remove `--http-mev-relay` and `--enable-builder` and stop MEV-Boost; [What replaces what](/configure-prysm/proposer-settings.mdx#what-replaces-what) lists the v2 equivalent of each flag.
-
-For the complete field mapping, JSON and YAML examples, and the keymanager API equivalents, see [Migrating from v1 to v2](/configure-prysm/proposer-settings.mdx#migrating-from-v1-to-v2).
+This page covers block building with builders before and after the Gloas fork. From the fork onward, you configure builders on the validator client; see [Configuring builders from the Gloas fork onward](#configuring-builders-from-the-gloas-fork-onward). Until your network reaches the fork epoch, builders are reached through MEV-Boost and relays; see [Before the Gloas fork](#before-the-gloas-fork-mev-boost-and-relays) at the end of this page. If you use a builder today, your v1 builder settings stop working at the fork: [Migrating from v1 to v2](/configure-prysm/proposer-settings.mdx#migrating-from-v1-to-v2) shows the one change to make, and you can make it now.
 
 ## Configuring builders from the Gloas fork onward
 
@@ -85,8 +29,8 @@ The Gloas fork adds proposer-builder separation ([ePBS](https://eips.ethereum.or
 | Where you configure them | Beacon node `--http-mev-relay`, plus validator registration | Validator client: [v2 proposer settings](/configure-prysm/proposer-settings.mdx), the [`--builder-urls` flags](/configure-prysm/proposer-settings.mdx#configuring-gloas-builders-with-flags), or the [keymanager builder API](/configure-prysm/proposer-settings.mdx#keymanager-apis). No beacon node builder flag is needed. |
 | Choosing builders | The relay chooses | You list builder URLs per key, and can limit each URL to specific builder public keys |
 | Payment | The builder pays your fee recipient inside the payload; you rely on the relay's reputation | The bid `value` is paid by the protocol from the builder's on-chain balance. An extra `execution_payment` is a promise that counts only if you set `max_execution_payment`. |
-| Fallback to local blocks | Circuit breaker and value comparison | Your execution client is still required, bids still compete with your local block, and each builder that fails to deliver is blacklisted individually |
-| Registration | Periodic `registerValidator` calls sent through the relay | The validator client signs a request authentication for each builder and sends it with its `max_execution_payment`; the beacon node forwards them to your builders before each proposal |
+| Fallback to local blocks | Circuit breaker and value comparison | Bids compete with your local block on every proposal, and each builder that fails to deliver is blacklisted individually (steps 4 and 6 below) |
+| Registration | Periodic `registerValidator` calls sent through the relay | A signed request authentication per builder, sent through the beacon node before each proposal (step 2 below) |
 
 ### How a Gloas proposal uses builders
 
@@ -110,7 +54,7 @@ The Gloas fork adds proposer-builder separation ([ePBS](https://eips.ethereum.or
 No. After the fork, you configure builders in [v2 proposer settings](/configure-prysm/proposer-settings.mdx). If you don't configure any, your validator requests no builder bids; only trustless bids broadcast over P2P can still beat your own block.
 
 #### I use MEV-Boost today and do nothing before the fork. What happens?
-Everything keeps working until the fork epoch. At the fork, your v1 builder settings and `--enable-builder` stop having any effect, Prysm logs warnings, and your validator keeps proposing with its own blocks, requesting no builder bids. To keep using builders, migrate to [v2 proposer settings](/configure-prysm/proposer-settings.mdx#migrating-from-v1-to-v2). `--suggested-gas-limit` keeps applying after the fork; remove it to follow the gas limit schedule.
+Everything keeps working until the fork epoch. At the fork, your v1 builder settings and `--enable-builder` stop having any effect, and your validator proposes its own blocks without requesting builder bids. To keep using builders, [migrate to v2 proposer settings](/configure-prysm/proposer-settings.mdx#migrating-from-v1-to-v2); you can do it now.
 
 {/* LEGACY SECTION - everything from here to the end of the page describes the pre-Gloas
     MEV-Boost flow. Delete the whole block once every network Prysm supports has passed the
@@ -119,7 +63,7 @@ Everything keeps working until the fork epoch. At the fork, your v1 builder sett
 
 ## Before the Gloas fork: MEV-Boost and relays
 
-The rest of this page describes block building with builders **before the Gloas fork**, using relays, MEV-Boost, periodic validator registration, and the `--http-mev-relay` flag. It applies until your network reaches the fork epoch; after that, none of it is used, and this section will be removed. Switching to [v2 builder settings](#preparing-for-the-gloas-fork) now changes nothing below: registration, relays, and `--http-mev-relay` keep working until the fork, and your builder configuration keeps working after it.
+The rest of this page describes block building with builders **before the Gloas fork**, using relays, MEV-Boost, periodic validator registration, and the `--http-mev-relay` flag. It applies until your network reaches the fork epoch; after that, none of it is used, and this section will be removed. [Migrating to v2 builder settings](/configure-prysm/proposer-settings.mdx#migrating-from-v1-to-v2) now changes nothing below: registration, relays, and `--http-mev-relay` keep working until the fork, and your builder configuration keeps working after it.
 
 ## Learn about the Builder Lifecycle
 
@@ -198,7 +142,7 @@ To `register` the validator against the builder and enable the use of custom bui
 It is **recommended** to configure with the validator client with the `--suggested-fee-recipient` and `--enable-builder` flags. All validators will be registered periodically by using the `--enable-builder` flag.
 **note:**  `--proposer-settings-file` or `--proposer-settings-url` flags with builder settings will override values provided from `--suggested-fee-recipient` and `--enable-builder`flags.
 
-With [version 2 proposer settings](/configure-prysm/proposer-settings.mdx), a key with a non-empty `builders` list is registered periodically before the fork and a key with an empty list is not, so you don't need `--enable-builder` with a v2 file; a non-empty `--builder-urls` registers keys the same way. On networks with a Gloas fork scheduled, `--enable-builder` only affects registration before the fork, and Prysm warns that it does nothing after it. A key's own v2 builder settings take priority over the flag, but it still registers keys that use `default_config`, even if `default_config` has `"builders": []`. The [v1-to-v2 field mapping](/configure-prysm/proposer-settings.mdx#what-replaces-what) lists what replaces it.
+With [v2 proposer settings](/configure-prysm/proposer-settings.mdx), a key with a non-empty `builders` list is registered and a key with an empty list is not, so you don't need `--enable-builder`; see [Running v2 settings before the Gloas fork](/configure-prysm/proposer-settings.mdx#running-v2-settings-before-the-gloas-fork). The flag only affects registration before the fork, and Prysm warns that it does nothing after it. If you keep it, it registers every key that follows `default_config`, even when `default_config` has `"builders": []`; a key's own `builders` list still wins.
 
 
 <h2 id="2-beacon-node-connect-to-the-builder">2. Beacon Node: connect to the builder</h2>
@@ -243,7 +187,7 @@ Update the following configurations and restart the validator client to stop the
 - remove the `--suggested-gas-limit` flag. It applies whether or not `--enable-builder` is set, and from the Gloas fork onward it overrides the network gas limit schedule.
 - remove all wanted references of the `builder` field from the associated file/json for the validators you no longer want to register within the `--proposer-settings-file` and `--proposer-settings-url` flag.
 
-With [version 2 proposer settings](/configure-prysm/proposer-settings.mdx), set `"builders": []` on the keys you want to unregister instead of deleting their `builder` object. An empty list means the key uses no builders: it isn't registered before the fork and doesn't request bids after it. If you delete the object, the key uses the builder settings from `default_config` instead, which may not be what you want.
+With [v2 proposer settings](/configure-prysm/proposer-settings.mdx), set `"builders": []` on the keys you want to unregister. An empty list means the key uses no builders: it isn't registered before the fork and doesn't request bids after it. Deleting the key's `builder` object instead makes it follow `default_config`, the settings for every key without an entry of its own, which may still list builders.
 
 <h2 id="2-beacon-node-remove-builder-related-flags">2. Beacon Node: remove builder related flags</h2>
 

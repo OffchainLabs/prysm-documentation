@@ -20,7 +20,7 @@ If you only need to set a fee recipient, see [Configure Fee Recipient](/configur
 
 :::tip Already using MEV-Boost? Migrate before the fork
 
-v1 builder settings (`enabled` and the `gas_limit` inside `builder`) stop working at the Gloas fork, and Prysm doesn't convert them. Most operators need one change before then: replace `enabled` with a `builders` list. It is safe to do now. See [Migrating from v1 to v2](#migrating-from-v1-to-v2), or the step-by-step version in [Preparing for the Gloas fork](/configure-prysm/configure-mev-builder.mdx#preparing-for-the-gloas-fork).
+v1 builder settings (`enabled` and the `gas_limit` inside `builder`) stop working at the Gloas fork, and Prysm doesn't convert them. Most operators need one change before then: replace `enabled` with a `builders` list. It is safe to do now. See [Migrating from v1 to v2](#migrating-from-v1-to-v2).
 
 :::
 
@@ -92,12 +92,14 @@ default_config:
   </TabItem>
 </Tabs>
 
-**`max_execution_payment` is a trust decision.** A bid's `value` is guaranteed by the builder's staked balance; its `execution_payment` is only a promise to pay inside the block, which the protocol doesn't check. This field sets how much of that promise Prysm counts when it values the bid. The maximum, `18446744073709551615` (2^64 − 1), counts it in full, the same trust you gave a relay under MEV-Boost: a builder that doesn't pay can cost you the whole promised amount. A smaller value in gwei (`100000000` is 0.1 ETH) caps that loss. Unset or `0` counts nothing, so bids that depend on promised payment rarely beat your own block, and Prysm warns at startup about entries that leave it unset. Prysm has no separate flag gating this; the value itself is the opt-in. Set it per builder entry rather than for the whole config.
+In a file, `default_config` is the settings for every key that has no entry of its own under `proposer_config`, so here it covers every key; the flags set the same defaults. The **Per key** tab shows the remaining fields.
+
+**`max_execution_payment` is a trust decision.** A bid's `value` is guaranteed by the builder's staked balance; its `execution_payment` is only a promise to pay inside the block, which the protocol doesn't check. This field sets how much of that promise Prysm counts when it values the bid. The maximum, `18446744073709551615` (2^64 − 1), counts it in full, the same trust you gave a relay under MEV-Boost: a builder that doesn't pay can cost you the whole promised amount. A smaller value in gwei (`100000000` is 0.1 ETH) caps that loss. Unset or `0` counts nothing, so bids that depend on promised payment rarely beat your own block, and Prysm warns at startup about entries that leave it unset. Prysm has no separate flag gating this; the value itself is the opt-in. Set it per builder entry, or on the `builder` object as the default for all of its entries; the keymanager API reads and writes it per entry.
 
   </TabItem>
   <TabItem value="advanced">
 
-Different builders, limits, or trust per validator key, with a default for every other key:
+Different builders, limits, or trust per validator key. `proposer_config` lists the keys that get their own settings; `default_config` covers every other key. This example sets every field; only `url` is required:
 
 <Tabs groupId="format" defaultValue="yaml" values={[
         {label: 'YAML', value: 'yaml'},
@@ -116,10 +118,16 @@ proposer_config:
     builder:
       min_bid: '10000000'
       builder_boost_factor: '100'
+      max_execution_payment: '100000000'
       builders:
         - url: 'https://builder-a.example'
-          max_execution_payment: '100000000'
+          builder_pubkeys:
+            - '0x93247f2209abcacf57b75a51dafae777f9dd38bc7053d1af526f220a7489a6d3a2753e5f3e8b1cfe39b56f43611df74a'
+          auth_data: '0x0123'
+          max_execution_payment: '18446744073709551615'
         - url: 'https://builder-b.example'
+          min_bid: '20000000'
+          builder_boost_factor: '90'
 default_config:
   fee_recipient: '0x6e35733c5af9B61374A128e6F85f553aF09ff89A'
   builder:
@@ -140,13 +148,20 @@ default_config:
       "builder": {
         "min_bid": "10000000",
         "builder_boost_factor": "100",
+        "max_execution_payment": "100000000",
         "builders": [
           {
             "url": "https://builder-a.example",
-            "max_execution_payment": "100000000"
+            "builder_pubkeys": [
+              "0x93247f2209abcacf57b75a51dafae777f9dd38bc7053d1af526f220a7489a6d3a2753e5f3e8b1cfe39b56f43611df74a"
+            ],
+            "auth_data": "0x0123",
+            "max_execution_payment": "18446744073709551615"
           },
           {
-            "url": "https://builder-b.example"
+            "url": "https://builder-b.example",
+            "min_bid": "20000000",
+            "builder_boost_factor": "90"
           }
         ]
       }
@@ -164,7 +179,9 @@ default_config:
   </TabItem>
 </Tabs>
 
-The configured key considers bids from two builders, counting up to 0.1 ETH of builder A's promised execution payment and none of builder B's, and ignores bids worth less than 0.01 ETH. Every other key uses the default, which requests no builder bids because `builders` is an empty list. The example also pins the key's `gas_limit`; leave that field out unless you want a fixed gas limit (see the warning below). Every field can be set per key or in `default_config`; see the [field reference](#field-reference) and [Inheritance and merge rules](#inheritance-and-merge-rules).
+The listed key requests bids from two builders. Its `builder` object sets the defaults for both entries: ignore bids worth less than 0.01 ETH (`min_bid`), compare bids with the local block at face value (`builder_boost_factor: 100`), and count up to 0.1 ETH of promised execution payment (`max_execution_payment`). Builder A overrides that cap to count promised payments in full, accepts bids only from one builder public key (`builder_pubkeys`), and gets custom `auth_data` in the signed requests; builder B keeps the cap but raises its minimum bid to 0.02 ETH and has its bids counted at 90% of their value (`builder_boost_factor: 90`), which favors your own block. The key also pins its gas limit and graffiti; leave `gas_limit` out unless you want a fixed value (see the warning below). Every other key follows `default_config`, which requests no bids because its `builders` list is empty.
+
+Builders are used only where a `builders` list says so: on the key itself, or in `default_config` for keys that don't set one. A key with no `builder` object follows `default_config` like any other field it leaves unset, so when the default lists builders, a key that should use none needs `"builders": []` of its own. See the [field reference](#field-reference) and [Inheritance and merge rules](#inheritance-and-merge-rules).
 
   </TabItem>
 </Tabs>
@@ -192,7 +209,7 @@ Set `--builder-max-execution-payment` with `--builder-urls`; on its own, `--buil
 
 ## Migrating from v1 to v2
 
-Prysm doesn't convert v1 builder settings automatically. The v1 fields control MEV-Boost registration, which doesn't exist after the fork.
+The v1 builder fields control MEV-Boost registration, which doesn't exist after the fork, so Prysm doesn't convert them; you replace them.
 
 ### What replaces what
 
@@ -201,7 +218,7 @@ Prysm doesn't convert v1 builder settings automatically. The v1 fields control M
 | The file's schema version | no `version` field, or `version: 1` | `version: 2`. Optional: a file with no `version` is treated as v2 once it has any v2 builder field below. If the file says `version: 1`, change it to `2` |
 | Use builders for a key | `builder.enabled: true` | a non-empty `builder.builders` list |
 | Use builders for every key, by flag | `--enable-builder` (registers every key; does nothing after the fork, and warns next to v2 settings) | `--builder-urls` with `--builder-max-execution-payment`, or a `builders` list in `default_config` |
-| Don't request builder bids for a key | `builder.enabled: false` | `builder.builders: []`, or no `builder` object to use the default |
+| Don't request builder bids for a key | `builder.enabled: false` | `builder.builders: []`, or no `builder` object to follow `default_config` |
 | Which builders to use | not possible: `--http-mev-relay` set one relay for every key | `builders[].url`, per key |
 | Accept bids only from specific builders | not possible | `builders[].builder_pubkeys` |
 | Authenticate your requests to a builder | not possible | `builders[].auth_data` (defaults to the URL's hostname) |
@@ -213,36 +230,39 @@ Prysm doesn't convert v1 builder settings automatically. The v1 fields control M
 | Generate the builder fields with `prysmctl validator proposer-settings` | `--with-builder` | not available: the flag still writes v1 fields and warns, so add the `builders` list by hand |
 | A fee recipient or graffiti | `fee_recipient`, `graffiti` | unchanged |
 
-### The same file, both ways
+### How to migrate
 
-<Tabs groupId="format" defaultValue="v1" values={[
-        {label: 'v1 (legacy)', value: 'v1'},
-        {label: 'v2', value: 'v2'}
+1. Replace each `"enabled": true` with a `builders` list and set `max_execution_payment` on each entry. Replace each `"enabled": false` with `"builders": []`, or remove the `builder` object if the key should follow `default_config`.
+2. **Delete `gas_limit` instead of moving it**, unless you want a fixed gas limit. Next to `fee_recipient`, it overrides the [gas limit schedule](#the-gas-limit-schedule) from the fork onward; inside `builder` it never did. Remove `--suggested-gas-limit` for the same reason.
+3. Delete `relays` if present. Optionally add `"version": 2`; the builder fields already make the file v2.
+4. Restart the validator client and check the [startup logs](#startup-warnings-explained). The beacon node keeps using `--http-mev-relay` until the fork; after the fork epoch, remove it and `--enable-builder`, and stop MEV-Boost.
+
+A migrated file, with one key on a builder and every other key off builders:
+
+<Tabs groupId="format" defaultValue="yaml" values={[
+        {label: 'YAML', value: 'yaml'},
+        {label: 'JSON', value: 'json'}
     ]}>
-  <TabItem value="v1">
+  <TabItem value="yaml">
 
-```json
-{
-  "proposer_config": {
-    "0xa057816155ad77931185101128655c0191bd0214c201ca48ed887f6c4c6adf334070efcd75140eada5ac83a92506dd7a": {
-      "fee_recipient": "0x50155530FCE8a85ec7055A5F8b2bE214B3DaeFd3",
-      "builder": {
-        "enabled": true,
-        "gas_limit": "60000000"
-      }
-    }
-  },
-  "default_config": {
-    "fee_recipient": "0x6e35733c5af9B61374A128e6F85f553aF09ff89A",
-    "builder": {
-      "enabled": false
-    }
-  }
-}
+```yaml
+---
+version: 2
+proposer_config:
+  '0xa057816155ad77931185101128655c0191bd0214c201ca48ed887f6c4c6adf334070efcd75140eada5ac83a92506dd7a':
+    fee_recipient: '0x50155530FCE8a85ec7055A5F8b2bE214B3DaeFd3'
+    builder:
+      builders:
+        - url: 'https://builder-a.example'
+          max_execution_payment: '18446744073709551615'
+default_config:
+  fee_recipient: '0x6e35733c5af9B61374A128e6F85f553aF09ff89A'
+  builder:
+    builders: []
 ```
 
   </TabItem>
-  <TabItem value="v2">
+  <TabItem value="json">
 
 ```json
 {
@@ -250,10 +270,12 @@ Prysm doesn't convert v1 builder settings automatically. The v1 fields control M
   "proposer_config": {
     "0xa057816155ad77931185101128655c0191bd0214c201ca48ed887f6c4c6adf334070efcd75140eada5ac83a92506dd7a": {
       "fee_recipient": "0x50155530FCE8a85ec7055A5F8b2bE214B3DaeFd3",
-      "gas_limit": "60000000",
       "builder": {
         "builders": [
-          { "url": "https://builder-a.example" }
+          {
+            "url": "https://builder-a.example",
+            "max_execution_payment": "18446744073709551615"
+          }
         ]
       }
     }
@@ -269,15 +291,6 @@ Prysm doesn't convert v1 builder settings automatically. The v1 fields control M
 
   </TabItem>
 </Tabs>
-
-The v2 example keeps `gas_limit` so that the two files match; you probably want to delete it instead (step 2).
-
-To migrate:
-
-1. Replace each `"enabled": true` with a `builders` list and set `max_execution_payment` on each entry. Replace each `"enabled": false` with `"builders": []`, or remove the `builder` object so the key uses the default.
-2. **Delete `gas_limit` instead of moving it**, unless you want a fixed gas limit. Next to `fee_recipient`, it overrides the [gas limit schedule](#the-gas-limit-schedule) from the fork onward; inside `builder` it never did.
-3. Delete `relays` if present. Optionally add `"version": 2`; the builder fields already make the file v2.
-4. Restart the validator client and check the [startup logs](#startup-warnings-explained).
 
 ### Running v2 settings before the Gloas fork
 
@@ -351,7 +364,7 @@ Each entry in a `builders` list describes one builder your validator can request
 |---|---|
 | `url` | **Required.** The builder's HTTP(S) endpoint, up to 2048 bytes, with an ASCII hostname. Entries with the same `url` and `auth_data` are duplicates. |
 | `min_bid` | Overrides the enclosing config's `min_bid` for this builder. |
-| `max_execution_payment` | Overrides the enclosing config's `max_execution_payment` for this builder. Set it here rather than for the whole config. |
+| `max_execution_payment` | Overrides the enclosing config's `max_execution_payment` for this builder. |
 | `builder_boost_factor` | Overrides the enclosing config's `builder_boost_factor` for this builder. |
 | `builder_pubkeys` | Optional allowlist of builder BLS public keys (48-byte `0x`-hex strings, at most 64). If set, only bids from these builders are accepted from this URL. |
 | `auth_data` | Optional bytes, as a `0x`-hex string, that your validator signs to authenticate its requests to this builder. Defaults to the lowercased hostname of `url` (`builder.example`; IPv6 in brackets), as the [builder spec](https://github.com/ethereum/builder-specs/blob/main/specs/gloas/validator.md#default-auth-data) defines, so most operators never set it. At most 4096 bytes. |
@@ -374,7 +387,7 @@ From the Gloas fork, a key with no `gas_limit` of its own signs the network's sc
 
 `min_bid`, `max_execution_payment`, and `builder_boost_factor` are inherited one field at a time. A per-key value takes priority. If the key doesn't set a field, the value from `default_config` is used. If neither sets it, the default applies: no minimum bid, no promised payment counted, and a boost factor of 100. Builder entries inherit from their enclosing config in the same way.
 
-The `builders` list is **replaced, not merged**. A per-key list, including an empty list (`[]`), replaces the default list completely. If a key doesn't set `builders`, it uses the default list. So to stop a single key from requesting builder bids, set `"builders": []`.
+The `builders` list is **replaced, not merged**. A per-key list, including an empty list (`[]`), replaces the default list completely. If a key doesn't set `builders`, it uses the default list, and a key with no `builder` object at all uses the whole `builder` object from `default_config`. So to stop a single key from requesting builder bids, set `"builders": []`.
 
 `gas_limit` works the same way: a per-key value takes priority over `default_config`. If neither sets it, the network's scheduled gas limit or the chain default applies.
 
@@ -406,7 +419,7 @@ Unknown fields, a `version` above `2`, invalid builder flags, and `builder_pubke
 
 #### Do I have to do anything if I never use builders?
 
-Set your fee recipient, with a flag or in a file. You don't need `"version": 2`, a `builder` section, or any new flags. After the fork, your validator requests no builder bids and its gas limit follows the network schedule, unless you set `--suggested-gas-limit` or a `gas_limit`. Trustless bids that builders broadcast over P2P can still beat your own block on guaranteed value (see [How a bid is valued](#how-a-bid-is-valued)); if you never want that, set `builder_boost_factor` to `0` in `default_config` or pass `--builder-boost-factor=0`.
+Set your fee recipient, with a flag or in a file. You don't need `"version": 2`, a `builder` section, or any new flags. After the fork, your validator requests no builder bids and its gas limit follows the network schedule, unless you set `--suggested-gas-limit` or a `gas_limit`. Trustless bids broadcast over P2P can still beat your own block; see [How a bid is valued](#how-a-bid-is-valued) if you never want that.
 
 #### Can I mix the flags and a v2 file?
 
