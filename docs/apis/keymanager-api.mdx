@@ -37,7 +37,7 @@ The fee recipient, gas limit, graffiti, and builder endpoints read and write the
 
 ### Builder configuration
 
-`GET`, `POST`, and `DELETE /eth/v1/validator/{pubkey}/builder_config`, from [keymanager-APIs #88](https://github.com/ethereum/keymanager-APIs/pull/88), manage which builders a key requests bids from after the Gloas fork. On networks with no Gloas fork scheduled they respond `501 Not Implemented`.
+`GET`, `POST`, and `DELETE /eth/v1/validator/{pubkey}/builder_config`, from [keymanager-APIs #88](https://github.com/ethereum/keymanager-APIs/pull/88), manage which builders a key requests bids from after the Gloas fork. On networks with no Gloas fork scheduled, they respond `501 Not Implemented`.
 
 - `GET` returns the key's config combined with `default_config`, with a value for every field: `"0"` for no minimum bid, `"100"` for the default boost factor, `"0"` for no counted execution payment. Sending the result back unchanged pins those values on the key.
 - `POST` replaces the key's whole builder config and leaves fee recipient, gas limit, and graffiti alone. An empty object (`{}`) removes the key's builder config so it follows `default_config`. Unknown fields are ignored.
