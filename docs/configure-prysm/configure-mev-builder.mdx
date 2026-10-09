@@ -184,7 +184,7 @@ Make sure you are using the correct version that supports the current version of
 
 Update the following configurations and restart the validator client to stop the periodic registration of the validator. 
 - remove the `--enable-builder` flag.
-- remove the `--suggested-gas-limit` flag. It applies whether or not `--enable-builder` is set, and from the Gloas fork onward it overrides the network gas limit schedule.
+- remove the `--suggested-gas-limit` flag. It applies whether or not `--enable-builder` is set, and from the Gloas fork onward, it overrides the network gas limit schedule.
 - remove all wanted references of the `builder` field from the associated file/json for the validators you no longer want to register within the `--proposer-settings-file` and `--proposer-settings-url` flag.
 
 With [v2 proposer settings](/configure-prysm/proposer-settings.mdx), set `"builders": []` on the keys you want to unregister. An empty list means the key uses no builders: it isn't registered before the fork and doesn't request bids after it. Deleting the key's `builder` object instead makes it follow `default_config`, the settings for every key without an entry of its own, which may still list builders.
