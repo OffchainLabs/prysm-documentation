@@ -369,7 +369,7 @@ Each entry in a `builders` list describes one builder your validator can request
 | `builder_pubkeys` | Optional allowlist of builder BLS public keys (48-byte `0x`-hex strings, at most 64). If set, only bids from these builders are accepted from this URL. |
 | `auth_data` | Optional bytes, as a `0x`-hex string, that your validator signs to authenticate its requests to this builder. Defaults to the lowercased hostname of `url` (`builder.example`; IPv6 in brackets), as the [builder spec](https://github.com/ethereum/builder-specs/blob/main/specs/gloas/validator.md#default-auth-data) defines, so most operators never set it. At most 4096 bytes. |
 
-A field not set on an entry is taken from the enclosing `builder` config, and then from the `builder` config in `default_config`. `builder_pubkeys` and `auth_data` use the same names and `0x`-hex format as the [keymanager builder API](#keymanager-apis), so you can copy an entry between the two. Files written for an earlier development build used a `pubkeys` field with base64 values; rename the field and convert each value to hex (`echo '<base64 value>' | base64 -d | od -An -tx1 | tr -d ' \n'`, then prefix `0x`).
+A field not set on an entry is taken from the enclosing `builder` config, and then from the `builder` config in `default_config`. `builder_pubkeys` and `auth_data` use the same names and `0x`-hex format as the [keymanager builder API](#keymanager-apis), you can copy an entry between the two. Files written for an earlier development build used a `pubkeys` field with base64 values; rename the field and convert each value to hex (`echo '<base64 value>' | base64 -d | od -An -tx1 | tr -d ' \n'`, then prefix `0x`).
 
 ## How a bid is valued
 
