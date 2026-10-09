@@ -12,7 +12,7 @@ import {HeaderBadgesWidget} from '@site/src/components/HeaderBadgesWidget.js';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-**Proposer settings** control how your validator client proposes blocks: for each validator key, the fee recipient, gas limit, graffiti, and builder configuration, plus a default for every key you don't configure individually. This page is the reference for the **version 2 (v2) schema**, introduced for the [Gloas](https://eips.ethereum.org/EIPS/eip-7732) fork.
+**Proposer settings** control how your validator client proposes blocks: for each validator key, the fee recipient, gas limit, graffiti, and builder configuration, plus a default for every key you don't configure individually. This page references for the **version 2 (v2) schema**, introduced for the [Gloas](https://eips.ethereum.org/EIPS/eip-7732) fork.
 
 Before Gloas, the `builder` section only said whether to register a key with MEV-Boost relays. From the fork, builders are on-chain participants that your validator asks for bids directly, so v2 adds fields for which builders to use, how much of their promised payment to count, a minimum bid, and how to weigh bids against your own block, and it moves the gas limit out of `builder`.
 
@@ -94,7 +94,7 @@ default_config:
 
 In a file, `default_config` is the settings for every key that has no entry of its own under `proposer_config`, so here it covers every key; the flags set the same defaults. The **Per key** tab shows the remaining fields.
 
-**`max_execution_payment` is a trust decision.** A bid's `value` is guaranteed by the builder's staked balance; its `execution_payment` is only a promise to pay inside the block, which the protocol doesn't check. This field sets how much of that promise Prysm counts when it values the bid. The maximum, `18446744073709551615` (2^64 − 1), counts it in full, the same trust you gave a relay under MEV-Boost: a builder that doesn't pay can cost you the whole promised amount. A smaller value in gwei (`100000000` is 0.1 ETH) caps that loss. Unset or `0` counts nothing, so bids that depend on promised payment rarely beat your own block, and Prysm warns at startup about entries that leave it unset. Prysm has no separate flag gating this; the value itself is the opt-in. Set it per builder entry, or on the `builder` object as the default for all of its entries; the keymanager API reads and writes it per entry.
+**`max_execution_payment` is a trust decision.** A bid's `value` is guaranteed by the builder's staked balance; its `execution_payment` is only a promise to pay inside the block, which the protocol doesn't check. This field sets how much of that promise Prysm counts when it values the bid. The maximum, `18446744073709551615` (2^64 − 1), counts it in full, the same trust you gave a relay under MEV-Boost: a builder that doesn't pay can cost you the whole promised amount. A smaller value in gwei (`100000000` is 0.1 ETH) caps that loss. Unset or `0` counts as nothing, so bids that depend on promised payment rarely beat your own block, and Prysm warns at startup about entries that leave it unset. Prysm has no separate flag gating this; the value itself is the opt-in. Set it per builder entry, or on the `builder` object as the default for all of its entries; the keymanager API reads and writes it per entry.
 
   </TabItem>
   <TabItem value="advanced">
