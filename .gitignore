@@ -11,6 +11,8 @@
 
 # Misc
 .DS_Store
+# Files the Claude desktop app saves into the connected folder
+Claude outputs/
 .env.local
 .env.development.local
 .env.test.local

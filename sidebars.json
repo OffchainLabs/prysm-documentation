@@ -68,11 +68,19 @@
         },
         {
           "type": "doc",
+          "id": "configure-prysm/proposer-settings"
+        },
+        {
+          "type": "doc",
           "id": "configure-prysm/authentication"
         },
         {
           "type": "doc",
           "id": "configure-prysm/builder"
+        },
+        {
+          "type": "doc",
+          "id": "configure-prysm/mev-boost"
         },
         {
           "type": "doc",
