@@ -16,13 +16,13 @@ module.exports = {
             onBrokenMarkdownLinks: 'throw',
         },
     },
-    favicon: 'images/Prysm.svg',
+    favicon: 'images/prysm-logo.svg',
     organizationName: 'Offchain Labs',
     projectName: 'prysm-docs',
     staticDirectories: ['static'],
 
     customFields: {
-        image: 'images/Prysm.svg',
+        image: 'images/prysm-logo.svg',
         prysmVersion: prysmVersion,
     },
     trailingSlash: true,
@@ -33,7 +33,7 @@ module.exports = {
             title: "Prysm Documentation",
             logo: {
                 alt: "Prysm logo",
-                src: 'images/logo2.png',
+                src: 'images/prysm-logo.png',
                 href: '/docs/',
             },
             items: [{
@@ -63,7 +63,7 @@ module.exports = {
             logo: {
                 alt: "Prysm Eth2 Docs",
                 href: '/docs/',
-                src: 'images/Prysm.svg',
+                src: 'images/prysm-logo.svg',
             },
             copyright: `Copyright © ${new Date().getFullYear()} Offchain Labs, Inc., Validator Deposit Contract 0x00000000219ab540356cbb839cbe05303d7705fa`,
             links: [],

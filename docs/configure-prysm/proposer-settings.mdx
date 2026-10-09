@@ -94,7 +94,7 @@ default_config:
 
 In a file, `default_config` is the settings for every key that has no entry of its own under `proposer_config`, so here it covers every key; the flags set the same defaults. The **Per key** tab shows the remaining fields.
 
-**`max_execution_payment` is a trust decision.** A bid's `value` is guaranteed by the builder's staked balance; its `execution_payment` is only a promise to pay inside the block, which the protocol doesn't check. This field sets how much of that promise Prysm counts when it values the bid. The maximum, `18446744073709551615` (2^64 − 1), counts it in full, the same trust you gave a relay under MEV-Boost: a builder that doesn't pay can cost you the whole promised amount. A smaller value in gwei (`100000000` is 0.1 ETH) caps that loss. Unset or `0` counts nothing, so bids that depend on promised payment rarely beat your own block, and Prysm warns at startup about entries that leave it unset. Prysm has no separate flag gating this; the value itself is the opt-in. Set it per builder entry, or on the `builder` object as the default for all of its entries; the keymanager API reads and writes it per entry.
+**`max_execution_payment` is a trust decision.** A bid's `value` is guaranteed by the builder's staked balance; its `execution_payment` is only a promise to pay inside the block, which the protocol doesn't check. This field sets how much of that promise Prysm counts when it values the bid. The maximum, `18446744073709551615` (2^64 − 1), counts it in full, the same trust you gave a relay under MEV-Boost: a builder that doesn't pay can cost you the whole promised amount. A smaller value in gwei (`100000000` is 0.1 ETH) caps that loss. Unset or `0` counts none of it, so bids that depend on promised payment rarely beat your own block, and Prysm warns at startup about entries that leave it unset. Prysm has no separate flag gating this; the value itself is the opt-in. Set it per builder entry, or on the `builder` object as the default for all of its entries; the keymanager API reads and writes it per entry.
 
   </TabItem>
   <TabItem value="advanced">
@@ -294,7 +294,7 @@ default_config:
 
 ### Running v2 settings before the Gloas fork
 
-You can migrate at any time before the fork. Until the fork epoch, your validator still uses MEV-Boost, and your v2 settings decide which keys to register:
+You can migrate anytime before the fork. Until the fork epoch, your validator still uses MEV-Boost, and your v2 settings decide which keys to register:
 
 | Your v2 settings | Before the fork (MEV-Boost) | After the fork (Gloas) |
 |---|---|---|
@@ -307,7 +307,7 @@ Registration still uses your fee recipient and gas limit (a `gas_limit` next to 
 
 ### What happens if you don't migrate
 
-Nothing changes before the fork, except that Prysm warns at startup about deprecated v1 builder fields once your network schedules Gloas. At the fork epoch, Prysm removes `enabled` and the `gas_limit` inside `builder` with a warning and keeps fee recipients and graffiti. Your gas limit follows the network schedule, and Prysm requests no builder bids until you add v2 settings (trustless P2P bids can still beat your own block; see [How a bid is valued](#how-a-bid-is-valued)). Nothing in this fallback counts a payment that isn't backed by a builder's staked balance.
+Nothing changes before the fork, except that Prysm warns at startup about deprecated v1 builder fields once your network schedules Gloas. At the fork epoch, Prysm removes `enabled` and the `gas_limit` inside `builder` with a warning and keeps fee recipients and graffiti. Your gas limit follows the network schedule, and Prysm requests no builder bids until you add v2 settings (trustless P2P bids can still beat your own block; see [How a bid is valued](#how-a-bid-is-valued)). This fallback never counts a payment that isn't backed by a builder's staked balance.
 
 ## How proposer settings are supplied
 
