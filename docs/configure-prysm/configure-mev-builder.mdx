@@ -46,7 +46,7 @@ The Gloas fork adds proposer-builder separation ([ePBS](https://eips.ethereum.or
 ### What you still need to run
 
 - Your execution client. Prysm builds a local block for every proposal, as the fallback and as the baseline bids must beat. If it can't produce a payload, Prysm falls back to the best bid received over P2P.
-- If one validator client uses several beacon nodes, Prysm turns on the `--stateless` validator flag: the validator requests the block and payload envelope together and republishes the envelope itself, because only the beacon node that built a block can reveal its payload.
+- If one validator client uses several beacon nodes, Prysm turns on the `--stateless` validator flag: the validator requests the block and payload envelope together. It republishes the envelope itself, because only the beacon node that built a block can reveal its payload.
 
 ## Frequently asked questions
 
