@@ -307,7 +307,7 @@ Registration still uses your fee recipient and gas limit (a `gas_limit` next to 
 
 ### What happens if you don't migrate
 
-Nothing changes before the fork, except that Prysm warns at startup about deprecated v1 builder fields once your network schedules Gloas. At the fork epoch, Prysm removes `enabled` and the `gas_limit` inside `builder` with a warning and keeps fee recipients and graffiti. Your gas limit follows the network schedule, and Prysm requests no builder bids until you add v2 settings (trustless P2P bids can still beat your own block; see [How a bid is valued](#how-a-bid-is-valued)). Nothing in this fallback counts a payment that isn't backed by a builder's staked balance.
+Nothing changes before the fork, except that Prysm warns at startup about deprecated v1 builder fields once your network schedules Gloas. At the fork epoch, Prysm removes `enabled` and the `gas_limit` inside `builder` with a warning and keeps fee recipients and graffiti. Your gas limit follows the network schedule, and Prysm requests no builder bids until you add v2 settings (trustless P2P bids can still beat your own block; see [How a bid is valued](#how-a-bid-is-valued)). Nothing in this fallback counts as a payment that isn't backed by a builder's staked balance.
 
 ## How proposer settings are supplied
 
