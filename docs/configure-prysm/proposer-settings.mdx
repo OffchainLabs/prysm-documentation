@@ -397,7 +397,7 @@ The fee recipient, gas limit, graffiti, and `builder_config` endpoints read and 
 
 ## Startup warnings explained
 
-Unknown fields, a `version` above `2`, invalid builder flags, and `builder_pubkeys` or `auth_data` values that aren't `0x`-hex stop the settings from loading. Builder entries that break a size or format limit are dropped with a warning instead. Most messages below appear at startup; a few repeat while their cause remains.
+Unknown fields, a `version` above `2`, invalid builder flags, and `builder_pubkeys` or `auth_data` values that aren't `0x`-hex stop the settings from loading. Builder entries that break a size or format limit are dropped with a warning instead. Most messages below appear at startup; a few repeat as long as the cause remains.
 
 | Log message (abbreviated) | Meaning | Action |
 |---|---|---|
