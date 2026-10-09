@@ -33,7 +33,7 @@ The fee recipient, gas limit, graffiti, and builder endpoints read and write the
 
 ### Gas limit
 
-`GET`, `POST`, and `DELETE /eth/v1/validator/{pubkey}/gas_limit` read and write the key's `gas_limit` and don't require a builder to be enabled. From the Gloas fork, `GET` returns the gas limit the key signs: its own value or `default_config`'s if either is set, otherwise the network's [scheduled gas limit](/configure-prysm/proposer-settings.mdx#the-gas-limit-schedule) or the chain default. Before the fork it returns the value used for MEV-Boost registration. `DELETE` resets the key to `default_config`'s gas limit if one is set (from the settings file or `--suggested-gas-limit`), otherwise removes the key's value so it follows the schedule, and returns `404` if there is nothing to reset.
+`GET`, `POST`, and `DELETE /eth/v1/validator/{pubkey}/gas_limit` read and write the key's `gas_limit` and don't require a builder to be enabled. From the Gloas fork, `GET` returns the gas limit the key signs: its own value or `default_config`'s if either is set; otherwise the network's [scheduled gas limit](/configure-prysm/proposer-settings.mdx#the-gas-limit-schedule) or the chain default. Before the fork, it returns the value used for MEV-Boost registration. `DELETE` resets the key to `default_config`'s gas limit if one is set (from the settings file or `--suggested-gas-limit`), otherwise removes the key's value so it follows the schedule, and returns `404` if there is nothing to reset.
 
 ### Builder configuration
 
