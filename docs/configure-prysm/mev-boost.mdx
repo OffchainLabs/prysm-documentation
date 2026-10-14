@@ -143,7 +143,7 @@ Make sure you are using the correct version that supports the current version of
 
 Update the following configurations and restart the validator client to stop the periodic registration of the validator. 
 - remove the `--enable-builder` flag.
-- remove the `--suggested-gas-limit` flag. It applies whether or not `--enable-builder` is set, and from the Gloas fork onward, it overrides the network gas limit schedule.
+- remove the `--suggested-gas-limit` flag. It sets the registration gas limit whether or not `--enable-builder` is set, and from the Gloas fork onward it can override the network gas limit schedule (see [the gas limit warning](/configure-prysm/proposer-settings.mdx#gas-limit-override)).
 - remove all wanted references of the `builder` field from the associated file/json for the validators you no longer want to register within the `--proposer-settings-file` and `--proposer-settings-url` flag.
 
 With [v2 proposer settings](/configure-prysm/proposer-settings.mdx), set `"builders": []` on the keys you want to unregister. An empty list means the key uses no builders: it isn't registered before the fork and doesn't request bids after it. Deleting the key's `builder` object instead makes it follow `default_config`, the settings for every key without an entry of its own, which may still list builders.
@@ -186,7 +186,7 @@ There are other ways to configure your validator registrations for more granular
 In these cases you would replace the `--suggested-fee-recipient` flag with  `--proposer-settings-file` flag or `--proposer-settings-url` flag.
  - If configuring with the `--proposer-settings-file` flag, provide it with a suitable JSON or YAML file. This file should include the builder's required configuration. For detailed guidance and an example, refer to the [Proposer settings](/configure-prysm/proposer-settings.mdx) reference.
  - If configuring with the `--proposer-settings-url` flag, provide a URL that returns the JSON response with the suitable proposer-settings. A guide and example on this configuration can be found in the [Proposer settings](/configure-prysm/proposer-settings.mdx) reference.
- - If configuring with the `--proposer-settings-file` or `--proposer-settings-url` flag with no builder settings but providing the `--enable-builder` flag instead. Optionally, you can also add `--suggested-gas-limit` to adjust the gas limit sent with registrations; it works with or without `--enable-builder`. `--enable-builder` only applies before the Gloas fork (see [What replaces what](/configure-prysm/proposer-settings.mdx#what-replaces-what)), and `--suggested-gas-limit` overrides the gas limit schedule after it (see [the gas limit warning](/configure-prysm/proposer-settings.mdx#gas-limit-override)).
+ - If configuring with the `--proposer-settings-file` or `--proposer-settings-url` flag with no builder settings but providing the `--enable-builder` flag instead. Optionally, you can also add `--suggested-gas-limit` to adjust the gas limit sent with registrations; it works with or without `--enable-builder`. `--enable-builder` only applies before the Gloas fork (see [What replaces what](/configure-prysm/proposer-settings.mdx#what-replaces-what)), and `--suggested-gas-limit` can override the gas limit schedule after it (see [the gas limit warning](/configure-prysm/proposer-settings.mdx#gas-limit-override)).
  
 :::info
 

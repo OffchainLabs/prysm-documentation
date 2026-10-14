@@ -134,14 +134,16 @@ The same file can also set a gas limit, graffiti, and builder configuration for 
   "fee_recipient": "<WALLET ADDRESS>",
   "gas_limit": "60000000",
   "graffiti": "<GRAFFITI STRING>",
-  "builder": { "builders": [ { "url": "<BUILDER URL>" } ] }
+  "builder": {
+    "builders": [ { "url": "<BUILDER URL>", "max_execution_payment": "<GWEI>" } ]
+  }
 }
 ```
 
 These fields are described on the [Proposer settings](/configure-prysm/proposer-settings.mdx) page, which documents the whole file:
 
 - [`gas_limit`](/configure-prysm/proposer-settings.mdx#options-per-key-and-in-default_config): leave it unset to follow the network's scheduled gas limit. If you set it, the key uses your value instead of the schedule.
-- [`builder`](/configure-prysm/proposer-settings.mdx#the-builder-object): which builders the key requests bids from, and how their bids are valued. See [Configuring builders](/configure-prysm/proposer-settings.mdx#configuring-builders) before setting `max_execution_payment`.
+- [`builder`](/configure-prysm/proposer-settings.mdx#the-builder-object): which builders the key requests bids from, and how their bids are valued. Set `max_execution_payment` on each entry; without it, Prysm counts none of the builder's promised payment and its bids will mostly lose to your own block. See [Configuring builders](/configure-prysm/proposer-settings.mdx#configuring-builders) for how to choose the value.
 - [Migrating from v1 to v2](/configure-prysm/proposer-settings.mdx#migrating-from-v1-to-v2): how to replace the legacy `enabled` field and the `gas_limit` inside `builder` before the Gloas fork.
 
 ## Frequently asked questions
