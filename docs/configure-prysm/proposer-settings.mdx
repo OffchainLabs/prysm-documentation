@@ -190,7 +190,7 @@ Builders are used only where a `builders` list says so: on the key itself, or in
 
 :::warning A gas limit you set overrides the gas limit schedule
 
-From the Gloas fork onward, a `gas_limit` in your settings, per key or in `default_config`, is the gas limit your validator signs into its proposer preferences. `--suggested-gas-limit` sets the `default_config` value when your settings file or URL has no `default_config` of its own; a `default_config` in the file replaces it. Either way, a set value overrides the network's [scheduled gas limit](#the-gas-limit-schedule), so the key keeps it and doesn't pick up scheduled increases. Prysm warns at startup whenever the flag is set, even when the file replaces it, and once per epoch when it signs a preference that differs from the schedule. Unless you want a fixed gas limit, leave `gas_limit` unset and don't use the flag.
+From the Gloas fork onward, a `gas_limit` in your settings, per key or in `default_config`, is the gas limit your validator signs into its proposer preferences. `--suggested-gas-limit` overrides all of them: at startup it sets every key's gas limit, including values from your settings file, URL, or the keymanager API. Either way, a set value overrides the network's [scheduled gas limit](#the-gas-limit-schedule), so the key keeps it and doesn't pick up scheduled increases. Prysm warns at startup when the flag is set, and once per epoch when it signs a preference that differs from the schedule. Unless you want a fixed gas limit, leave `gas_limit` unset and don't use the flag.
 
 :::
 
@@ -222,7 +222,7 @@ The v1 builder fields control MEV-Boost registration, which doesn't exist after 
 | Which builders to use | not possible: `--http-mev-relay` set one relay for every key | `builders[].url`, per key |
 | Accept bids only from specific builders | not possible | `builders[].builder_pubkeys` |
 | Authenticate your requests to a builder | not possible | `builders[].auth_data` (defaults to the URL's hostname) |
-| A gas limit | `builder.gas_limit`, or `--suggested-gas-limit` | `gas_limit` next to `fee_recipient`, or `--suggested-gas-limit` when the file has no `default_config`; either overrides the [gas limit schedule](#the-gas-limit-schedule) from the fork onward, so leave both out to follow it |
+| A gas limit | `builder.gas_limit`, or `--suggested-gas-limit` | `gas_limit` next to `fee_recipient`, or `--suggested-gas-limit` for every key (it replaces any `gas_limit` in the file); both override the [gas limit schedule](#the-gas-limit-schedule) from the fork onward, so leave them out to follow it |
 | Ignore bids below a minimum | beacon node `--min-builder-bid`, for every key | `min_bid`, per builder config or per entry |
 | Favor your local block over builder bids | beacon node `--local-block-value-boost`, for every key | `builder_boost_factor`, per builder config or per entry |
 | Count a builder's promised execution payment | not possible: you relied on the relay | `max_execution_payment`, per builder config or per entry; unset counts none |
@@ -311,14 +311,14 @@ Nothing changes before the fork, except that Prysm warns at startup about deprec
 
 ## How proposer settings are supplied
 
-- **Command-line flags**, which set `default_config` for every key: `--suggested-fee-recipient`, `--suggested-gas-limit`, and the [builder flags](#configuring-gloas-builders-with-flags).
+- **Command-line flags**: `--suggested-fee-recipient` and the [builder flags](#configuring-gloas-builders-with-flags) set `default_config` for every key, and `--suggested-gas-limit` sets every key's gas limit.
 - `--proposer-settings-file=<path>`: a local JSON or YAML file using the schema on this page.
 - `--proposer-settings-url=<url>`: a URL that returns the same schema as JSON (Prysm sends a GET request; YAML is only supported for files).
 - [Keymanager APIs](/apis/keymanager-api.mdx): endpoints for each key's fee recipient, gas limit, graffiti, and builder configuration.
 
 `--proposer-settings-file` and `--proposer-settings-url` can't be combined; the validator client won't start with both. Files and URL responses are parsed strictly: a field name Prysm doesn't recognize, a `version` above `2`, or a `builder_pubkeys` or `auth_data` value that isn't `0x`-hex stops the settings from loading. (`pubkeys`, the old name of `builder_pubkeys`, is the common case.)
 
-A `default_config` in a file or URL replaces the defaults set by flags, including `--suggested-fee-recipient` and `--suggested-gas-limit`, so put those values in the file. With a v1 file, `--suggested-gas-limit` also overwrites the `gas_limit` inside `builder` for every key, as it always has.
+A `default_config` in a file or URL replaces the defaults set by `--suggested-fee-recipient` and the builder flags, so put those values in the file. `--suggested-gas-limit` is the exception: it replaces every gas limit in the file, in `default_config` and on each key, and with a v1 file the `gas_limit` inside `builder` too.
 
 The validator client saves loaded settings to its database, so changes made through the keymanager APIs survive restarts. A file or URL takes priority over the database at startup: a non-empty `proposer_config` replaces all stored per-key settings, and a `default_config` replaces the stored default. If you manage keys through the keymanager APIs and restart with a settings file, those keys are reset to what the file says.
 
@@ -339,7 +339,7 @@ Amounts and gas limits can be written as strings (`"60000000"`) or plain numbers
 | Field | Description |
 |---|---|
 | `fee_recipient` | The Ethereum address that receives priority fees and, after Gloas, builder payments. A per-key value overrides `default_config`, which overrides `--suggested-fee-recipient`. |
-| `gas_limit` | The gas limit your validator asks for in blocks built for it. **New in v2 at this level.** Leave it unset to follow the network's [scheduled gas limit](#the-gas-limit-schedule), or the chain default in your Prysm release when no schedule entry applies (the [command-line options](/configure-prysm/command-line-options.mdx) page shows that default for `--suggested-gas-limit`). Set it only to use a fixed value instead; see [the warning above](#gas-limit-override). In v1, the gas limit was set inside `builder`; that location stops working at the Gloas fork. |
+| `gas_limit` | The gas limit your validator asks for in blocks built for it. **New in v2 at this level.** Leave it unset to follow the network's [scheduled gas limit](#the-gas-limit-schedule), or the chain default in your Prysm release when no schedule entry applies (the [command-line options](/configure-prysm/command-line-options.mdx) page shows that default for `--suggested-gas-limit`). Set it only to use a fixed value instead, and note that `--suggested-gas-limit` replaces it; see [the warning above](#gas-limit-override). In v1, the gas limit was set inside `builder`; that location stops working at the Gloas fork. |
 | `graffiti` | The graffiti string included in blocks proposed by this key. |
 | `builder` | Builder configuration for this key. See below. Leave it out to use the builder configuration from `default_config`. |
 
@@ -389,7 +389,7 @@ From the Gloas fork, a key with no `gas_limit` on the key or in `default_config`
 
 The `builders` list is **replaced, not merged**. A per-key list, including an empty list (`[]`), replaces the default list completely. If a key doesn't set `builders`, it uses the default list, and a key with no `builder` object at all uses the whole `builder` object from `default_config`. So to stop a single key from requesting builder bids, set `"builders": []`.
 
-`gas_limit` works the same way: a per-key value takes priority over `default_config`, which `--suggested-gas-limit` fills only when no settings file or URL provides one. If neither sets it, the network's scheduled gas limit or the chain default applies.
+`gas_limit` works the same way: a per-key value takes priority over `default_config`, and if neither sets it, the network's scheduled gas limit or the chain default applies. `--suggested-gas-limit` replaces both levels for every key.
 
 ## Keymanager APIs
 
@@ -408,7 +408,7 @@ Unknown fields, a `version` above `2`, invalid builder flags, and `builder_pubke
 | "Builders have no max_execution_payment (default 0): execution payment is ignored, so these builders' bids may lose to the local payload." | The listed builders have no `max_execution_payment` on the entry or on any `builder` config they inherit from, so only each bid's `value` counts. Gloas-scheduled networks only; an explicit `0` doesn't trigger it. | Set `max_execution_payment` on each entry (see [Configuring builders](#configuring-builders)), or ignore it if that's what you want. |
 | "Removed N invalid or duplicate builder entries from proposer settings" | Entries had a missing, too long, or unparseable `url`, a non-ASCII hostname, more than 64 entries (the first 64 are kept), more than 64 or wrong-length `builder_pubkeys`, `auth_data` over 4096 bytes, or duplicated another entry. | Fix the entries named in the log's `reasons` field (duplicates are counted but not listed). |
 | "--enable-builder is legacy (pre-gloas) mev-boost content and has no effect after the gloas fork…" | `--enable-builder` is set together with v2 settings. | Remove the flag once your v2 settings say which keys use builders. |
-| "--suggested-gas-limit overrides the network gas limit schedule from the Gloas fork; remove it to follow the schedule" | Logged whenever the flag is set on a network with Gloas scheduled, even when a `default_config` in your settings file or URL replaces the flag's value. Where the flag applies, it fixes your gas limit, so scheduled increases won't apply. A second warning follows if the value is above the highest scheduled limit. | Remove the flag unless you want a fixed gas limit. |
+| "--suggested-gas-limit overrides the network gas limit schedule from the Gloas fork; remove it to follow the schedule" | The flag fixes every key's gas limit, replacing any `gas_limit` in your settings, so scheduled increases won't apply. A second warning follows if the value is above the highest scheduled limit. | Remove the flag unless you want a fixed gas limit. |
 | "Dropped the default builder settings a previous run stored in the validator DB…" (or the same for the default gas limit) | Stored default builders or a default gas limit weren't reused because this run's flags and settings source don't set them. | Pass the flags (or the settings source) on every start. |
 | "…configure Gloas builders, but this network has no Gloas fork scheduled" | Builder flags are set on a network without Gloas. Only `--builder-urls` does anything here (it enables MEV-Boost registration). | Remove the flags, or check that you're on the right network. |
 | "The default_config from --proposer-settings-file replaces the builder defaults set by …" | The settings source and the builder flags both set defaults; the file wins. | Expected. Remove the flags, or remove `default_config` from the source. |
@@ -423,4 +423,4 @@ Set your fee recipient, with a flag or in a file. You don't need `"version": 2`,
 
 #### Can I mix the flags and a v2 file?
 
-Yes, and the file takes priority: a `default_config` in the file replaces all flag defaults, including `--suggested-fee-recipient`, `--suggested-gas-limit`, and the builder flags, so put those values in the file. If the file has no `default_config`, the flags still set the default for every key not listed in `proposer_config`, and `--suggested-gas-limit` then overrides the gas limit schedule after the fork. `--enable-builder` only affects registration before the fork. Prysm logs the `--suggested-gas-limit` warning whenever the flag is set, even when the file replaces its value.
+Yes, and the file takes priority for everything except the gas limit: a `default_config` in the file replaces `--suggested-fee-recipient` and the builder flags, so put those values in the file. `--suggested-gas-limit` applies on top of the file: it replaces every `gas_limit` in it, per key and in `default_config`, and overrides the gas limit schedule after the fork. `--enable-builder` only affects registration before the fork. Prysm warns about both flags.
