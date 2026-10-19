@@ -1,7 +1,9 @@
 import React from 'react';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 
-export const HeaderBadgesWidget = ({ commaDelimitedContributors }) => {
+// fork: name of the fork a page's main content needs (for example "Gloas"). Renders a
+// highlighted "Requires <fork>" badge linking to the page's #requires-<fork> anchor.
+export const HeaderBadgesWidget = ({ commaDelimitedContributors, fork }) => {
 	let githubUsernames = {
 		Radek: "rkapka",
 		Sammy: "saolyn",
@@ -27,6 +29,11 @@ export const HeaderBadgesWidget = ({ commaDelimitedContributors }) => {
 		<BrowserOnly>
 			{() =>
 				<div className="header-badges">
+					{(fork != null ?
+						<a className="header-badge fork-badge" href={`#requires-${fork.toLowerCase()}`} title={`The builder settings on this page need the ${fork} fork`}>
+							<span className="badge-avatar emoji-avatar">🔀</span>
+							<span className="badge-label">Requires {fork}</span>
+						</a> : null)}
 					{(commaDelimitedContributors != null ? commaDelimitedContributors.split(',').map((contributor, index) => buildAuthorBadge(contributor, index)) : null)}
 					<a className="header-badge" href={`https://github.com/OffchainLabs/prysm-documentation/issues/new?title=Docs update request: ${new URL(window.location.href).pathname}&body=Source: ${window.location.href}%0A%0ARequest: (how can we help?)`}>
 						<span className="badge-avatar emoji-avatar">✏️</span>

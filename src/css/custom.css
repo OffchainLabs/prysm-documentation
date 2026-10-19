@@ -588,6 +588,17 @@ header > h1 {
 .header-badges .header-badge .emoji-avatar {
   margin-right: 8px !important;
 }
+.header-badges .header-badge.fork-badge {
+  background-color: #fbe7f1;
+}
+.header-badges .header-badge.fork-badge:hover {
+  background-color: #f6d3e4;
+}
+.header-badges .header-badge.fork-badge .badge-label,
+.header-badges .header-badge.fork-badge:hover .badge-label {
+  color: var(--prysm-pink);
+  font-weight: 600;
+}
 .margin-vert--md {
   margin: 0 !important;
 }
@@ -674,6 +685,16 @@ html[data-theme='dark'] .header-badge:hover .badge-label {
 }
 html[data-theme='dark'] .header-badge .badge-label {
   color: #ddd;
+}
+html[data-theme='dark'] .header-badge.fork-badge {
+  background-color: #4a2238;
+}
+html[data-theme='dark'] .header-badge.fork-badge:hover {
+  background-color: #5a2b45;
+}
+html[data-theme='dark'] .header-badge.fork-badge .badge-label,
+html[data-theme='dark'] .header-badge.fork-badge:hover .badge-label {
+  color: var(--prysm-pink);
 }
 .truncate {
   white-space: nowrap;
