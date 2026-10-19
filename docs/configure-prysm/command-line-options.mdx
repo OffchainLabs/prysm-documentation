@@ -18,14 +18,15 @@ Prysm's client software can be configured using flags and YAML files. This docum
 
 ```
 NAME:
-   beacon-chain - this is a beacon chain implementation for Ethereum
-USAGE:
-   beacon-chain [options] command [command options] [arguments...]
+   beacon-chain - Ethereum beacon node
+   
+VERSION:
+   Prysm/v7.3.0/d01132449756e217d7f6c460e780174c34139b41. Built at: 2026-10-16 15:01:20+00:00
    
 AUTHOR:
+   The Prysm team by Offchain
    
-   
-GLOBAL OPTIONS:
+COMMANDS:
    db                    Defines commands for interacting with the Ethereum Beacon Node database
    generate-auth-secret  creates a random, 32 byte hex string in a plaintext file to be used for authenticating JSON-RPC requests. If no --output-file flag is defined, the file will be created in the current working directory
    completion            Generate shell completion scripts
@@ -37,6 +38,7 @@ cmd OPTIONS:
    
 beacon-chain OPTIONS:
    --api-timeout value                                            Specifies the timeout value for API requests in seconds. (default: 10s)
+   --archive-origin-state value                                   Path to an ssz-encoded beacon state at an epoch boundary slot, used as the oldest state an archive node will hold. Defaults to the genesis state. Requires --enable-archive.
    --batch-verifier-limit value                                   Maximum number of signatures to batch verify at once for beacon attestation p2p gossip. (default: 1000)
    --chain-config-file value                                      Path to a YAML file with chain config values.
    --chain-id value                                               Sets the chain id of the beacon chain (default: 0)
@@ -93,29 +95,36 @@ p2p OPTIONS:
    --relay-node value                                                     The address of relay node. The beacon node will connect to the relay node and advertise their address via the relay node to other peers
    --semi-supernode                                                       Custodies just enough data to serve the blobs and blob sidecars beacon API. Cannot be used with --supernode. (default: false)
    --subscribe-all-subnets                                                Subscribe to all possible attestation and sync subnets. (default: false)
-   --supernode, --subscribe-all-data-subnets                              Custodies all data. Cannot be used with --semi-supernode. (default: false)
+   --supernode                                                            Custodies all data. Cannot be used with --semi-supernode. (default: false)
    
 db OPTIONS:
-   --backfill-batch-size value                                         Number of blocks per backfill batch. A larger number will request more blocks at once from peers, but also consume more system memory to hold batches in memory during processing. This has a multiplicative effect with backfill-worker-count. (default: 32)
-   --backfill-oldest-slot value                                        Specifies the oldest slot that backfill should download. If this value is greater than current_slot - MIN_EPOCHS_FOR_BLOCK_REQUESTS, it will be ignored with a warning log. (default: 0)
-   --backfill-worker-count value                                       Number of concurrent backfill batch requests. A larger number will better utilize network resources, up to a system-dependent limit, but will also consume more system memory to hold batches in memory during processing. Multiply by backfill-batch-size and average block size (~2MB before deneb) to find the right number for your system. This has a multiplicative effect with backfill-batch-size. (default: 2)
-   --beacon-db-pruning                                                 Enables pruning of beacon db beyond MIN_EPOCHS_FOR_BLOCK_REQUESTS duration. This is an opt-in feature, and should only be enabled if operators doesn't require historical data. (default: false)
-   --blob-path value                                                   Location for blob storage. Default location will be a 'blobs' directory next to the beacon db.
-   --blob-retention-epochs value, --extend-blob-retention-epoch value  Override the default blob retention period (measured in epochs). The node will exit with an error at startup if the value is less than the default of 4096 epochs. (default: 4096)
-   --blob-storage-layout value                                         Dictates how to organize the blob directory structure on disk, available options are: flat, by-epoch. (default: "by-epoch", unless a different existing layout is detected)
-   --clear-db                                                          Prompt for clearing any previously stored data at the data directory. (default: false)
-   --data-column-path value                                            Location for data column storage. Default location will be a 'data-columns' directory next to the beacon db.
-   --datadir value                                                     Data directory for the databases. (default: "/root/.eth2")
-   --enable-backfill, --enable-experimental-backfill                   Backfill will only be enabled when this flag is specified on a node using checkpoint sync. (default: false)
-   --force-clear-db                                                    Clears any previously stored data at the data directory. (default: false)
-   --pruner-retention-epochs value                                     Specifies the retention period for the pruner service in terms of epochs. If this value is less than MIN_EPOCHS_FOR_BLOCK_REQUESTS, it will be ignored. (default: 0)
-   --restore-source-file value                                         Filepath to the backed-up database file which will be used to restore the database
-   --restore-target-dir value                                          Target directory of the restored database (default: "/root/.eth2")
-   --slots-per-archive-point value                                     The slot durations of when an archived state gets saved in the beaconDB. (default: 2048)
+   --backfill-batch-size value      Number of blocks per backfill batch. A larger number will request more blocks at once from peers, but also consume more system memory to hold batches in memory during processing. This has a multiplicative effect with backfill-worker-count. (default: 32)
+   --backfill-oldest-slot value     Specifies the oldest slot that backfill should download. If this value is greater than current_slot - MIN_EPOCHS_FOR_BLOCK_REQUESTS, it will be ignored with a warning log. (default: 0)
+   --backfill-worker-count value    Number of concurrent backfill batch requests. A larger number will better utilize network resources, up to a system-dependent limit, but will also consume more system memory to hold batches in memory during processing. Multiply by backfill-batch-size and average block size (~2MB before deneb) to find the right number for your system. This has a multiplicative effect with backfill-batch-size. (default: 2)
+   --beacon-db-pruning              Enables pruning of beacon db beyond MIN_EPOCHS_FOR_BLOCK_REQUESTS duration. This is an opt-in feature, and should only be enabled if operators doesn't require historical data. (default: false)
+   --blob-path value                Location for blob storage. Default location will be a 'blobs' directory next to the beacon db.
+   --blob-retention-epochs value    Override the default blob retention period (measured in epochs). The node will exit with an error at startup if the value is less than the default of 4096 epochs. (default: 4096)
+   --blob-storage-layout value      Dictates how to organize the blob directory structure on disk, available options are: flat, by-epoch. (default: "by-epoch", unless a different existing layout is detected)
+   --clear-db                       Prompt for clearing any previously stored data at the data directory. (default: false)
+   --data-column-path value         Location for data column storage. Default location will be a 'data-columns' directory next to the beacon db.
+   --datadir value                  Data directory for the databases. (default: "/root/.eth2")
+   --enable-backfill                Backfill will only be enabled when this flag is specified on a node using checkpoint sync. (default: false)
+   --force-clear-db                 Clears any previously stored data at the data directory. (default: false)
+   --pruner-retention-epochs value  Specifies the retention period for the pruner service in terms of epochs. If this value is less than MIN_EPOCHS_FOR_BLOCK_REQUESTS, it will be ignored. (default: 0)
+   --restore-source-file value      Filepath to the backed-up database file which will be used to restore the database
+   --restore-target-dir value       Target directory of the restored database (default: "/root/.eth2")
+   --slots-per-archive-point value  The slot durations of when an archived state gets saved in the beaconDB. (default: 2048)
    
 builder OPTIONS:
+   --builder-allowed-failures value              Number of payload delivery failures a builder is allowed before this node blacklists it. (default: 0)
    --builder-bid-timeout value                   Timeout to use when fetching execution payload bids from the builder API, as a duration (e.g. 600ms, 1s). Must be greater than 0. Only effective from the Gloas fork onward. (default: 600ms)
+   --builder-blacklist-period value              Number of epochs a builder stays blacklisted on its first offense. Must be greater than 0. (default: 1)
+   --builder-critical-blacklist-period value     Number of epochs a builder stays blacklisted once it reaches --builder-critical-failures. (default: 256)
+   --builder-critical-failed-builders value      Number of concurrently blacklisted builders that forces this node to fall back to self-building. Must be greater than 0. (default: 7)
+   --builder-critical-failures value             Failure count at which a builder earns the longer blacklist set by --builder-critical-blacklist-period. (default: 2)
+   --builder-failure-backoff-period value        Number of epochs without a failure after which a builder's failure counter resets to zero. (default: 5)
    --builder-header-timeout value                Timeout to use when fetching a block header from the builder API, as a duration (e.g. 1s, 2s, 2500ms). Must be greater than 0. Only effective up to the Fulu fork. (default: 1s)
+   --builder-relay-blacklist-period value        Maximum number of epochs a direct connection endpoint stays banned for serving a builder that failed to reveal a payload. Never exceeds the offending builder's own blacklist. (default: 32)
    --disable-builder-ssz                         Disables SSZ encoding for Builder API requests and responses, using JSON instead. (default: false)
    --http-mev-relay value                        A MEV builder relay string http endpoint, this will be used to interact MEV builder network using API defined in: https://ethereum.github.io/builder-specs/#/Builder
    --local-block-value-boost value               A percentage boost for local block construction as a Uint64. This is used to prioritize local block construction over relay/builder block constructionBoost is an additional percentage to multiple local block value. Use builder block if: builder_bid_value * 100 > local_block_value * (local-block-value-boost + 100) (default: 10)
@@ -169,8 +178,8 @@ log OPTIONS:
 features OPTIONS:
    --blacklist-roots value [ --blacklist-roots value ]  A comma-separatted list of 0x-prefixed hexstrings. Declares blocks with the given blockroots to be invalid. It downscores peers that send these blocks.
    --blob-save-fsync                                    Forces new blob files to be fysnc'd before continuing, ensuring durable blob writes. (default: false)
-   --dev                                                Enables experimental features still in development. These features may not be stable. (default: false)
    --disable-broadcast-slashings                        Disables broadcasting slashings submitted to the beacon node. (default: false)
+   --disable-builder-relay-circuit-breaker              Stops the builder circuit breaker from tracking which builders each direct connection endpoint serves, so a failing builder no longer bans the endpoints serving it. (default: false)
    --disable-grpc-connection-logging                    WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..
                                                           Disables displaying logs for newly connected grpc clients. (default: false)
    --disable-last-epoch-targets                         Deprecated: disables processing of last epoch targets. (default: false)
@@ -180,6 +189,8 @@ features OPTIONS:
    --disable-staking-contract-check                     Disables checking of staking contract deposits when proposing blocks, useful for devnets. (default: false)
    --disable-track-equivocations                        Disables recording proposer equivocations observed on gossip into forkchoice. (default: false)
    --disable-verbose-sig-verification                   Disables identifying invalid signatures if batch verification fails when processing block. (default: false)
+   --enable-archive                                     Turns the node into an archive node: backfills blocks down to the archive origin state (see --archive-origin-state, genesis by default)
+                                                          and then regenerates every historical state into the state-diff tree. (Implies --enable-state-diff and --enable-backfill.) (default: false)
    --enable-discovery-reboot                            Experimental: Enables the discovery listener to rebooted in the event of connectivity issues. (default: false)
    --enable-experimental-attestation-pool               Enables an experimental attestation pool design. (default: false)
    --enable-fast-confirmation                           Enables the fast confirmation rule (FCR) for rapid block confirmation under synchrony assumptions. (default: false)
@@ -188,8 +199,7 @@ features OPTIONS:
    --enable-historical-state-representation             Enables the beacon chain to save historical states in a space efficient manner. (Warning): Once enabled, this feature migrates your database in to a new schema and there is no going back. At worst, your entire database might get corrupted. (default: false)
    --enable-light-client                                Enables the light client support in the beacon node (default: false)
    --enable-proposer-preprocessing                      Enables proposer pre-processing of blocks before proposing. (default: false)
-   --enable-state-diff                                  Enables the experimental state diff feature. (default: false)
-   --holesky                                            Runs Prysm configured for the Holesky test network. (default: false)
+   --enable-state-diff                                  Enables the state diff feature. (default: false)
    --hoodi                                              Runs Prysm configured for the Hoodi test network. (default: false)
    --ignore-unviable-attestations                       Ignores attestations whose target state is not viable with respect to the current head (avoid expensive state replay from lagging attesters). (default: false)
    --mainnet                                            Runs on Ethereum main network. This is the default and can be omitted. (default: true)
@@ -200,22 +210,26 @@ features OPTIONS:
    --sepolia                                            Runs Prysm configured for the Sepolia test network. (default: false)
    --sync-from value                                    Forces the head of the beacon chain to a specific block root. Values can be 'head' or a block root. The block root has to be known to the beacon node and correspond to a block newer than the current finalized checkpoint.
    
-merge OPTIONS:
+deprecated OPTIONS:
+   --dev                                       Enables experimental features still in development. These features may not be stable. (default: false)
+   --enable-experimental-backfill              Deprecated alias of --enable-backfill. (default: false)
+   --extend-blob-retention-epoch value         Deprecated alias of --blob-retention-epochs. (default: 4096)
+   --holesky                                   Runs Prysm configured for the Holesky test network. (default: false)
+   --max-goroutines value                      Deprecated alias of --healthz-max-goroutines. (default: 5000)
+   --subscribe-all-data-subnets                Deprecated alias of --supernode. (default: false)
    --terminal-block-hash-epoch-override value  Sets the block hash epoch to manual overrides the default TERMINAL_BLOCK_HASH_ACTIVATION_EPOCH value. WARNING: This flag should be used only if you have a clear understanding that community has decided to override the terminal block hash activation epoch. Incorrect usage will result in your node experience consensus failure. (default: 0)
    --terminal-block-hash-override value        Sets the block hash to manual overrides the default TERMINAL_BLOCK_HASH value. WARNING: This flag should be used only if you have a clear understanding that community has decided to override the terminal block hash. Incorrect usage will result in your node experience consensus failure.
    --terminal-total-difficulty-override value  Sets the total difficulty to manual overrides the default TERMINAL_TOTAL_DIFFICULTY value. WARNING: This flag should be used only if you have a clear understanding that community has decided to override the terminal difficulty. Incorrect usage will result in your node experience consensus failure.
    
-deprecated OPTIONS:
-   
 debug OPTIONS:
-   --blockprofilerate value                                Turns on block profiling with the given rate. (default: 0)
-   --gc-percent value                                      The percentage of freshly allocated data to live data on which the gc will be run again. (default: 100)
-   --healthz-max-goroutines value, --max-goroutines value  The /healthz endpoint reports the node as unhealthy if the average goroutine count during a 10 slots window exceeds this threshold. (default: 5000)
-   --memprofilerate value                                  Turns on memory profiling with the given rate. (default: 524288)
-   --mutexprofilefraction value                            Turns on mutex profiling with the given rate. (default: 0)
-   --pprof                                                 Enables the pprof HTTP server. (default: false)
-   --pprofaddr value                                       pprof HTTP server listening interface. (default: "127.0.0.1")
-   --pprofport value                                       pprof HTTP server listening port. (default: 6060)
+   --blockprofilerate value        Turns on block profiling with the given rate. (default: 0)
+   --gc-percent value              The percentage of freshly allocated data to live data on which the gc will be run again. (default: 100)
+   --healthz-max-goroutines value  The /healthz endpoint reports the node as unhealthy if the average goroutine count during a 10 slots window exceeds this threshold. (default: 5000)
+   --memprofilerate value          Turns on memory profiling with the given rate. (default: 524288)
+   --mutexprofilefraction value    Turns on mutex profiling with the given rate. (default: 0)
+   --pprof                         Enables the pprof HTTP server. (default: false)
+   --pprofaddr value               pprof HTTP server listening interface. (default: "127.0.0.1")
+   --pprofport value               pprof HTTP server listening port. (default: 6060)
 ```
 
 {/* cli-flags:beacon-chain END */}
@@ -232,15 +246,15 @@ You can use the `--graffiti` validator flag to add a string to your proposed blo
 
 ```
 NAME:
-   validator - Launches an Ethereum validator client that interacts with a beacon chain, starts proposer and attester services, p2p connections, and more.
-
-USAGE:
-   validator [options] command [command options] [arguments...]
+   validator - Ethereum validator client
 
 VERSION:
-  Prysm/v7.2.1/fea24b41265542905352ab45fe2291d8eea010cc. Built at: 2026-10-05 17:34:35+00:00
+   Prysm/v7.3.0/d01132449756e217d7f6c460e780174c34139b41. Built at: 2026-10-16 15:01:20+00:00
 
-global OPTIONS:
+AUTHOR:
+   The Prysm team by Offchain
+   
+COMMANDS:
    wallet                       Defines commands for interacting with Ethereum validator wallets.
    accounts                     Defines commands for interacting with Ethereum validator accounts.
    slashing-protection-history  Defines commands for interacting your validator's slashing protection history.
@@ -364,6 +378,7 @@ misc OPTIONS:
 features OPTIONS:
   --disable-attest-timely                       Disable validator attesting timely after current block processes. See #8185 for more details. (default: false)
   --disable-duties-v2                           Forces use of get duties endpoint instead of v2. (default: false)
+  --disable-duty-aware-shutdown                 Stop the validator client immediately on SIGINT/SIGTERM, instead of waiting for the moment in the slot where a restart would not miss any rewarded duty. (default: false)
   --dynamic-key-reload-debounce-interval value  (Advanced): Specifies the time duration the validator waits to reload new keys if they have changed on disk.
                                                 Can be any type of duration such as 1.5s, 1000ms, 1m. (default: 1s)
   --enable-beacon-rest-api, --enable-rest       (Experimental): Enables the beacon REST API when querying a beacon node. Optional: also enabled implicitly when --beacon-rest-api-provider is set. (default: false)
@@ -372,7 +387,6 @@ features OPTIONS:
                                                   Your validator will still be vulnerable if it is being run in unsafe configurations. (default: false)
   --enable-minimal-slashing-protection          (Experimental): Enables the minimal slashing protection. See EIP-3076 for more details. (default: false)
   --enable-slashing-protection-history-pruning  Enables the pruning of the validator client's slashing protection database. (default: false)
-  --holesky                                     Runs Prysm configured for the Holesky test network. (default: false)
   --hoodi                                       Runs Prysm configured for the Hoodi test network. (default: false)
   --mainnet                                     Runs on Ethereum main network. This is the default and can be omitted. (default: true)
   --sepolia                                     Runs Prysm configured for the Sepolia test network. (default: false)
@@ -381,6 +395,7 @@ features OPTIONS:
                                                 We recommend against this flag unless you are an advanced user. (default: false)
   
 deprecated OPTIONS:
+  --holesky  Runs Prysm configured for the Holesky test network. (default: false)
 ```
 
 {/* cli-flags:validator END */}
@@ -393,10 +408,13 @@ Refer to the [Use `prysmctl`](./prysmctl.mdx) for `prysmctl` download and instal
 
 ```
 NAME:
-   prysmctl-v7.2.1-linux-amd64 - A new cli application
+   prysmctl - Prysm command-line utilities
 
-USAGE:
-   prysmctl-v7.2.1-linux-amd64 [global options] command [command options]
+VERSION:
+   Prysm/v7.3.0/d01132449756e217d7f6c460e780174c34139b41. Built at: 2026-10-16 15:01:20+00:00
+
+AUTHOR:
+   The Prysm team by Offchain
 
 COMMANDS:
    checkpoint-sync, cpt-sync  commands for managing checkpoint sync
@@ -408,7 +426,8 @@ COMMANDS:
    help, h                    Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --help, -h  show help
+   --help, -h     show help
+   --version, -v  print the version
 ```
 
 {/* cli-flags:prysmctl END */}
@@ -421,14 +440,15 @@ Prysm's client stats service is an optional utility that reports process metrics
 
 ```
 NAME:
-   client-stats - daemon to scrape client-stats from prometheus and ship to a remote endpoint
-USAGE:
-   client-stats [options] command [command options] [arguments...]
+   client-stats - Ethereum client stats collector
+   
+VERSION:
+   Prysm/v7.3.0/d01132449756e217d7f6c460e780174c34139b41. Built at: 2026-10-16 15:01:20+00:00
    
 AUTHOR:
+   The Prysm team by Offchain
    
-   
-GLOBAL OPTIONS:
+COMMANDS:
    help, h  Shows a list of commands or help for one command
    
 cmd OPTIONS:
