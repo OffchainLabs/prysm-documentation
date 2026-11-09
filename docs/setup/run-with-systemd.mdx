@@ -20,7 +20,7 @@ The examples use this layout:
 
 ## Before you begin
 
-- Prysm's binaries, installed with the **Binaries** tab of [Install Prysm](/install/#install).
+- Prysm’s binaries are installed with the **Binaries** tab of [Install Prysm](/install/#install).
 
 <When el="besu">
 
@@ -29,17 +29,17 @@ The examples use this layout:
 </When>
 <When el="erigon">
 
-- The `erigon` binary in `/usr/local/bin`. See [Erigon's installation guide](https://docs.erigon.tech/get-started/installation).
+- The `erigon` binary is in `/usr/local/bin`. See [Erigon's installation guide](https://docs.erigon.tech/get-started/installation).
 
 </When>
 <When el="ethrex">
 
-- The `ethrex` binary in `/usr/local/bin`. See [Ethrex's installation guide](https://docs.ethrex.xyz/getting-started/index.html).
+- The `ethrex` binary is in `/usr/local/bin`. See [Ethrex's installation guide](https://docs.ethrex.xyz/getting-started/index.html).
 
 </When>
 <When el="geth">
 
-- The `geth` binary in `/usr/local/bin`. See [Geth's installation guide](https://geth.ethereum.org/downloads).
+- The `geth` binary is in `/usr/local/bin`. See [Geth's installation guide](https://geth.ethereum.org/downloads).
 
 </When>
 <When el="nethermind">
@@ -49,12 +49,12 @@ The examples use this layout:
 </When>
 <When el="reth">
 
-- The `reth` binary in `/usr/local/bin`. See [Reth's installation guide](https://reth.rs/installation/overview).
+- The `reth` binary is in `/usr/local/bin`. See [Reth's installation guide](https://reth.rs/installation/overview).
 
 </When>
 <When role="validator" mev="on">
 
-- The `mev-boost` binary in `/usr/local/bin`. Download it from [MEV-Boost's releases](https://github.com/flashbots/mev-boost/releases).
+- The `mev-boost` binary is in `/usr/local/bin`. Download it from [MEV-Boost's releases](https://github.com/flashbots/mev-boost/releases).
 
 </When>
 
@@ -64,7 +64,7 @@ The examples use this layout:
 
 1. <When conn="jwt">
 
-	**Create one unprivileged user per process, the data directories and the JWT secret.** Only the execution client and beacon node can read the secret, through a shared `ethereum` group:
+	**Create one unprivileged user per process, the data directories, and the JWT secret.** Only the execution client and beacon node can read the secret, through a shared `ethereum` group:
 
 	</When>
 	<When conn="ipc">
@@ -87,7 +87,7 @@ The examples use this layout:
 
 	<When el="erigon">
 
-	`--externalcl` stops Erigon from running its own built-in consensus client. Open port 42069 (TCP and UDP) for its history downloads.
+	`--externalcl` stops Erigon from running its own built-in consensus client—open port 42069 (TCP and UDP) for its history downloads.
 
 	</When>
 	<When el="reth">
@@ -127,7 +127,7 @@ The examples use this layout:
 	</When>
 	<When sync="genesis">
 
-	Syncing from genesis replays every block and takes days rather than minutes. See [Sync from genesis](/setup/genesis-sync/).
+	Syncing from genesis replays every block and takes days, not minutes. See [Sync from genesis](/setup/genesis-sync/).
 
 	</When>
 
@@ -135,7 +135,7 @@ The examples use this layout:
 
 	<When role="validator">
 
-	<Flag name="postpone-shutdown-for-proposals" /> makes a stop or restart wait until no connected validator has a block to propose soon, which can take about 13 minutes; that's why `TimeoutStopSec=900`. If the file still shows `<YOUR_WALLET_ADDRESS>`, enter an address you control under **Options** above, or replace it in the file.
+	<Flag name="postpone-shutdown-for-proposals" /> makes a stop or restart, wait until no connected validator has a block to propose soon, which can take about 13 minutes; that's why `TimeoutStopSec=900`. If the file still shows `<YOUR_WALLET_ADDRESS>`, enter an address you control under **Options** above, or replace it in the file.
 
 	</When>
 
@@ -149,7 +149,7 @@ The examples use this layout:
 	./deposit new-mnemonic --chain={net}
 	```
 
-	The CLI asks how many validators to create and for a withdrawal address. Use an address you control: withdrawals and the stake itself go there when you exit. It also asks you to choose a keystore password; you'll need it in the next step to import the keys into Prysm. Write the 24-word mnemonic down on paper and keep it offline. Anyone who has it controls your validator and its withdrawal. The CLI writes a `validator_keys` folder containing a `deposit_data-*.json` file and one `keystore-m_*.json` per validator. Copy that folder to this machine.
+	The CLI asks how many validators to create and for a withdrawal address. Use an address you control: withdrawals and the stake itself go there when you exit. It also asks you to choose a keystore password; you'll need it in the next step to import the keys into Prysm. Write the 24-word mnemonic down on paper and keep it offline. Anyone who has it controls your validator and can withdraw funds. The CLI writes a `validator_keys` folder containing a `deposit_data-*.json` file and one `keystore-m_*.json` per validator. Copy that folder to this machine.
 
 	</When>
 
@@ -164,7 +164,7 @@ The examples use this layout:
 	unset PW PW2
 	```
 
-	Then import the keys as the `validator` user, from a copy it can read. Replace `<PATH_TO_VALIDATOR_KEYS>` with the path to the `validator_keys` folder: the directory containing all the `keystore-m_*.json` files created in the previous step.
+	Then import the keys as the `validator` user from a copy it can read. Replace `<PATH_TO_VALIDATOR_KEYS>` with the path to the `validator_keys` folder: the directory containing all the `keystore-m_*.json` files created in the previous step.
 
 	```bash
 	sudo cp -r <PATH_TO_VALIDATOR_KEYS> /var/lib/ethereum/validator/import
@@ -259,7 +259,7 @@ The examples use this layout:
 		From genesis, this takes days: the node replays every block since the start of the chain. `sync_distance` shows how many slots it still has to go.
 
 		</When>
-	- `"is_optimistic": false`: the execution client is synced. This takes the longest, from a few hours to a few days depending on your execution client and the network. Until then, the beacon node follows the chain without being able to check the blocks' transactions.
+	- `"is_optimistic": false`: the execution client is synced. This takes the longest, from a few hours to a few days depending on your execution client and the network. Until then, the beacon node follows the chain but can't check the blocks’ transactions.
 
 9. <When role="validator">
 
@@ -270,7 +270,7 @@ The examples use this layout:
 	Upload `deposit_data-*.json` on the [Staking Launchpad](https://launchpad.ethereum.org/) and follow its checks before depositing 32 ETH.
 
 	:::danger[Only use the official launchpad]
-	Scam sites copy the launchpad and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats or emails.
+	Scam sites copy the launchpad and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats, or emails.
 
 	- **Launchpad:** [https://launchpad.ethereum.org/](https://launchpad.ethereum.org/)
 	:::
@@ -281,7 +281,7 @@ The examples use this layout:
 	Upload `deposit_data-*.json` on the [EthStaker console](https://hoodi.console.ethstaker.org/deposit) and deposit 32 Hoodi ETH. Never send real ETH to a testnet deposit contract.
 
 	:::danger[Only use the official console]
-	Scam sites copy the console and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats or emails.
+	Scam sites copy the console and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats, or emails.
 
 	- **Deposit page:** [https://hoodi.console.ethstaker.org/deposit](https://hoodi.console.ethstaker.org/deposit)
 	:::
@@ -378,7 +378,7 @@ sudo chown -R execution:execution /var/lib/ethereum/beacon
 
 </When>
 
-Also check that `ReadWritePaths=` in the unit points at the data directory.
+Also check that `ReadWritePaths=` in the unit points to the data directory.
 
 **The service restarts in a loop.**
 Read the last error:
@@ -401,7 +401,7 @@ These commands undo this page.
 Once the validator service is stopped, your validator misses its duties and loses a little ETH every epoch until it runs again, here or on another machine.
 :::
 
-If you'll run these keys elsewhere, export their slashing protection history before deleting the data. The other validator client needs it to avoid signing something that contradicts what this one already signed:
+If you run these keys elsewhere, export their slashing protection history before deleting the data. The other validator client needs it to avoid signing something that contradicts what this one already signed:
 
 ```bash
 sudo -u validator /usr/local/bin/validator --disable-ephemeral-log-file \
@@ -411,7 +411,7 @@ sudo -u validator /usr/local/bin/validator --disable-ephemeral-log-file \
 sudo cat /tmp/slashing-protection/slashing_protection.json > ~/slashing_protection.json
 ```
 
-This saves `slashing_protection.json` in your home folder. If the export fails with this error, the validator client never reached the beacon node, so it never signed anything and there's nothing to export:
+This saves `slashing_protection.json` in your home folder. If the export fails with this error, the validator client never reached the beacon node, so it never signed anything, and there's nothing to export:
 
 ```text
 genesis validators root is empty, perhaps you are not connected to your beacon node
@@ -425,11 +425,11 @@ Then delete the rest:
 
 <When el="geth erigon reth ethrex">
 
-The binaries in `/usr/local/bin` are left in place; delete them yourself if you don't need them anymore.
+The binaries in `/usr/local/bin` emain; delete them yourself if you no longer need them.
 
 </When>
 <When el="nethermind besu">
 
-The binaries in `/usr/local/bin` and the client's folder in `/opt` are left in place; delete them yourself if you don't need them anymore.
+The binaries in `/usr/local/bin` and the client’s folder in `/opt` remain; delete them yourself if you no longer need them.
 
 </When>

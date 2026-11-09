@@ -11,15 +11,15 @@ import { NETWORKS } from '@site/src/data/networks';
 export const mainnet = NETWORKS.find((n) => n.id === 'mainnet');
 export const hoodi = NETWORKS.find((n) => n.id === 'hoodi');
 
-Exiting takes a validator out of the network permanently. Once the exit is processed, it stops earning rewards and its whole balance is sent to its withdrawal address. There are two ways to exit:
+Exiting permanently removes a validator from the network. Once the exit is processed, it stops earning rewards, and its whole balance is sent to its withdrawal address. There are two ways to exit:
 
 - **With the validator's signing key**, using Prysm. It costs nothing. You can submit the exit right away, or sign it now and submit it later. See [Submit a voluntary exit](#submit-a-voluntary-exit) and [Sign an exit to submit later](#sign-an-exit-to-submit-later).
-- **From the withdrawal address**, with a request sent from your wallet. It doesn't need the signing key, for example when a staking service holds it, but it costs a small fee. See [Exit from your withdrawal address](#exit-from-your-withdrawal-address).
+- **From the withdrawal address**, with a request sent from your wallet. It doesn't need the signing key, for example, when a staking service holds it, but it costs a small fee. See [Exit from your withdrawal address](#exit-from-your-withdrawal-address).
 
 <SetupPicker groups="os net tool" nets="mainnet hoodi" />
 
 :::danger[An exit can't be undone]
-Once submitted, an exit can't be cancelled, and an exited validator can never validate again. Double-check the public keys you select.
+Once submitted, you can’t cancel an exit, and an exited validator can never validate again. Double-check the public keys you select.
 :::
 
 ## Before you begin
@@ -124,7 +124,7 @@ Once submitted, an exit can't be cancelled, and an exited validator can never va
 
    There is one `Voluntary exit was successful` line per key. Open its `url` to follow the exit.
 
-   A key that can't exit yet logs `Could not perform voluntary exit for account ...` with the reason.
+   A key that can't exit logs `Could not perform voluntary exit for account ...` with the reason.
 
 </Steps>
 
@@ -246,16 +246,16 @@ An empty `200` response means the beacon node accepted the exit and shares it wi
 
 ## Exit from your withdrawal address
 
-If you don't have the signing key (for example with a staking service), the withdrawal address of a `0x01` or `0x02` validator can trigger the exit instead. Prysm and your keys are not involved. The request costs a small fee.
+If you don't have the signing key (for example, with a staking service), the withdrawal address of a `0x01` or `0x02` validator can trigger the exit instead. Prysm and your keys are not involved. The request costs a small fee.
 
-The network ignores the request, and doesn't refund the fee, if:
+The network ignores the request, and doesn't refund the fee if:
 
 - the validator has been active for less than 256 epochs (about 27 hours), or is already exiting;
 - a partial withdrawal for this validator is still waiting in the queue.
 
 <When net="mainnet">
 
-Open **Validator actions** on the launchpad (<a href={`${mainnet.launchpad}en/validator-actions`}>{`${mainnet.launchpad}en/validator-actions`}</a>), connect the wallet that controls the withdrawal address, select the validator and choose **Exit validator**.
+Open **Validator actions** on the launchpad (<a href={`${mainnet.launchpad}en/validator-actions`}>{`${mainnet.launchpad}en/validator-actions`}</a>), connect the wallet that controls the withdrawal address, select the validator, and choose **Exit validator**.
 
 </When>
 <When net="hoodi">
@@ -271,7 +271,7 @@ Type the address yourself. Websites that offer to "help" with this step are phis
 ## Sync committees
 
 :::caution[A sync committee duty outlives the exit]
-A sync committee is chosen one period (about 27 hours) in advance, from active validators only. A validator chosen before its exit epoch, for the current or the next period, is still a member after the exit, even one that wasn't in a committee when it exited. It must sign until that period ends, up to about 54 hours after the exit. It's rewarded for each signature and penalized for every slot it misses. The same applies to a slashed validator.
+A sync committee is chosen one period (about 27 hours) in advance, from active validators only. A validator chosen before its exit epoch for the current or next period remains a member after the exit, even if it wasn’t on a committee when it exited. It must sign until that period ends, up to about 54 hours after the exit. It’s rewarded for each signature and penalized for every slot it misses. The same applies to a slashed validator.
 :::
 
 Before you stop the validator client or delete the keys, check that the validator is in neither the current nor the next sync committee. Every command must print `false`:
@@ -349,4 +349,4 @@ curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATO
 
 </When>
 
-Right after submitting, the status may stay `active_ongoing` until a block includes your exit. It then moves through `active_exiting`, `exited_unslashed`, `withdrawal_possible` and finally `withdrawal_done`.
+Right after submitting, the status may stay `active_ongoing` until a block includes your exit. It then moves through `active_exiting`, `exited_unslashed`, `withdrawal_possible`, and finally `withdrawal_done`.

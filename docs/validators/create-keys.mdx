@@ -15,10 +15,10 @@ Each validator needs a signing key and a withdrawal address. You create both wit
 ## Before you begin
 
 - Pick your **withdrawal address**: an Ethereum address you control, ideally in a hardware wallet. Not an exchange address. **It can't be changed later.**
-- Decide how many validators you want (between 32 ETH and 2048 ETH per validator).
+- Decide how many validators you want (32 ETH to 2048 ETH per validator).
 
 :::tip[Use an offline machine if you can]
-The mnemonic controls your validators. The safest place to create it is a computer that is not connected to any network, for example a spare laptop with Wi-Fi off, or a live USB system such as [Tails](https://tails.net). Download and verify the deposit CLI on another machine and copy it over on a USB stick.
+The mnemonic controls your validators. The safest place to create it is a computer that is not connected to any network, for example, a spare laptop with Wi-Fi off, or a live USB system such as [Tails](https://tails.net). Download and verify the deposit CLI on another machine, then copy it to a USB stick.
 :::
 
 ## Regular or compounding
@@ -28,7 +28,7 @@ The mnemonic controls your validators. The safest place to create it is a comput
 | Regular (`0x01`) | Anything above 32 ETH is paid to your withdrawal address automatically |
 | Compounding (`0x02`) | Rewards stay staked and earn more, up to 2048 ETH per validator; you withdraw on request |
 
-Pick regular if you want rewards paid out and one validator per 32 ETH. Pick compounding if you want rewards to compound or one validator with more than 32 ETH. A regular validator can be upgraded to compounding later, but not back.
+Pick regular if you want rewards paid out and one validator per 32 ETH. Pick compounding if you want rewards to compound or one validator with more than 32 ETH. You can upgrade a regular validator to compounding later, but not back.
 
 ## Generate your keys
 
@@ -64,7 +64,7 @@ Pick regular if you want rewards paid out and one validator per 32 ETH. Pick com
 
    </When>
 
-3. **Answer the prompts.** The CLI asks for the mnemonic language, the number of validators, your **withdrawal address** and a **keystore password**. You type this password again when you import the keys into Prysm.
+3. **Answer the prompts.** The CLI asks for the mnemonic language, the number of validators, your **withdrawal address**, and a **keystore password**. You type this password again when you import the keys into Prysm.
 
 4. **Write down the mnemonic.** The CLI shows 24 words, then asks you to type them back. Store them on paper or steel, in more than one safe place, and never type them into a website or an online machine.
 

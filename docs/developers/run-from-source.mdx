@@ -7,7 +7,7 @@ import { Steps } from '@site/src/components/ui';
 import { SetupPicker, When } from '@site/src/components/SetupPicker';
 import Flag from '@site/src/components/Flag';
 
-Run the beacon node and validator client straight from your checkout, so every code change is one command away from a running process. `bazel run` builds the target if needed, then starts it with the arguments you put after `--`.
+Run the beacon node and validator client straight from your checkout, so every code change is one command away from running. `bazel run` builds the target if needed, then starts it with the arguments you put after `--`.
 
 <SetupPicker groups="net" />
 
@@ -19,7 +19,7 @@ The flags are the same as for a normal install, so this page shows only what dif
 - An execution client running with its Engine API on `http://localhost:8551` and a JWT secret file. See [Connect your execution client](/setup/connect-execution-client/).
 
 :::caution[Use a separate data directory]
-Without <Flag name="datadir" />, a development build uses the default data directory (`~/.eth2` on Linux, `~/Library/Eth2` on macOS), the same one an installed Prysm uses. Always pass your own data directory so a test build can't change the database of a node you rely on.
+Without it<Flag name="datadir" />, a development build uses the default data directory (`~/.eth2` on Linux, `~/Library/Eth2` on macOS), the same one an installed Prysm uses. Always pass your own data directory so a test build can't change the database of a node you rely on.
 :::
 
 ## Run a beacon node
@@ -58,7 +58,7 @@ Without <Flag name="datadir" />, a development build uses the default data direc
 `bazel run` starts the binary inside Bazel's runfiles directory, not your shell's current directory. A relative path such as `--datadir=./data` ends up under `bazel-bin`. Use absolute paths, `$HOME`, or a leading `~/`, which Prysm expands itself.
 :::
 
-Long flag lists are easier to keep in a YAML file passed with <Flag name="config-file" /> (see [Use a config file](/reference/cli/#use-a-config-file) for the format). Flags on the command line override the same keys in the file:
+Long flag lists are easier to keep in a YAML file passed with <Flag name="config-file" /> (refer to the [Use a config file](/reference/cli/#use-a-config-file) page for the format). Flags on the command line override the same keys in the file:
 
 ```bash
 bazel run //cmd/beacon-chain -- --config-file=$HOME/prysm-dev/beacon.yaml

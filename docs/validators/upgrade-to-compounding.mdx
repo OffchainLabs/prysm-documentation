@@ -8,15 +8,15 @@ import { SetupPicker, When } from '@site/src/components/SetupPicker';
 
 # Convert a `0x01` validator to `0x02`
 
-A `0x01` validator earns rewards on 32 ETH at most: anything above is paid out to its withdrawal address every few days. A compounding (`0x02`) validator keeps its rewards staked, up to 2048 ETH, so they earn rewards too. To upgrade, send a request **from your withdrawal address**. Prysm and your keys are not involved, and the validator keeps running as before. The upgrade is permanent: you can't switch back to `0x01`.
+A `0x01` validator earns rewards on up to 32 ETH: anything above is paid out to its withdrawal address every few days. A compounding (`0x02`) validator keeps its rewards staked, up to 2048 ETH, so they earn rewards too. To upgrade, send a request **from your withdrawal address**. Prysm and your keys are not involved, and the validator keeps running as before. The upgrade is permanent: you can't switch back to `0x01`.
 
 <SetupPicker groups="os net" nets="mainnet hoodi" />
 
 ## Before you begin
 
 - The validator has `0x01` credentials. If they start with `0x00`, first [convert it to `0x01`](/validators/add-withdrawal-address/).
-- The validator is active and not exiting. A request for a pending, exiting or exited validator is ignored.
-- You control the withdrawal address in a wallet that can connect to a website (for example a hardware wallet through a browser extension), with a little ETH for gas and the request fee.
+- The validator is active and not exiting. The system ignores requests for a pending, exiting, or exited validator.
+- You control the withdrawal address in a wallet that can connect to a website (for example, a hardware wallet through a browser extension), with a little ETH for gas and the request fee.
 
 ## Check your credentials
 
@@ -42,7 +42,7 @@ If they start with `0x01`, follow this page. The last 40 hex characters are the 
 ## Upgrade the validator
 
 :::caution[What changes after the upgrade]
-- Rewards above 32 ETH are no longer paid out automatically. Only balance above 2048 ETH is.
+- Rewards above 32 ETH are no longer paid out automatically. Only balances above 2048 ETH are.
 - Any balance above 32 ETH at the time of the upgrade goes through the deposit queue again before it counts for rewards. When the queue is long, that takes days.
 :::
 
@@ -59,7 +59,7 @@ If they start with `0x01`, follow this page. The last 40 hex characters are the 
 3. **Pick the validator and the upgrade action**, then check the validator index and public key.
    {/* VERIFY: exact label of the upgrade action on the Launchpad Validator actions page */}
 
-4. **Sign and send the transaction** in your wallet. It pays gas plus a small request fee. If the request is invalid (wrong sender, validator not active), the network ignores it and the fee isn't refunded.
+4. **Sign and send the transaction** in your wallet. It pays gas plus a small request fee. If the request is invalid (wrong sender, validator not active), the network ignores it, and it doesn’t refund the fee.
 
 </Steps>
 
@@ -76,7 +76,7 @@ If they start with `0x01`, follow this page. The last 40 hex characters are the 
 
 3. **Select the validators to upgrade**, check their index and public key, then click **Upgrade**.
 
-4. **Sign and send the transaction** in your wallet. It pays gas plus a small request fee. If the request is invalid (wrong sender, validator not active), the network ignores it and the fee isn't refunded.
+4. **Sign and send the transaction** in your wallet. It pays gas plus a small request fee. If the request is invalid (wrong sender, validator not active), the network ignores it, and it doesn’t refund the fee.
 
 </Steps>
 

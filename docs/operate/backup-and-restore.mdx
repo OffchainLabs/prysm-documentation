@@ -6,7 +6,7 @@ description: What to back up for a Prysm validator (mnemonic, keystores, passwor
 import { Aside, Steps } from '@site/src/components/ui';
 import Flag from '@site/src/components/Flag';
 
-The beacon node and execution client can always be rebuilt from the network. What you can't rebuild are your **keys**, their **passwords**, and your **slashing protection history**. Back those up, keep the backup offline, and test it.
+You can always rebuild the beacon node and execution client from the network. You can’t rebuild your **keys**, their **passwords**, or your **slashing protection history**. Back those up, keep the backup offline, and test it.
 
 ## What to back up
 
@@ -71,7 +71,7 @@ Know your validator's data directory (<Flag name="datadir" bin="validator" />) a
 
 <Steps>
 
-1. **Make sure the original validator is off for good.** Stop and disable it, and wait until a block explorer shows missed attestations.
+1. **Make sure the original validator is permanently off.** Stop and disable it, and wait until a block explorer shows missed attestations.
 
 2. **Import the keys** (unzip `backup.zip` first, or use the original keystores):
 

@@ -168,7 +168,7 @@ curl.exe -s http://localhost:3500/eth/v1/node/syncing
 
 </When>
 
-Right after the checkpoint sync, `head_slot` starts near the checkpoint slot and `sync_distance` drops quickly. When `is_syncing` is `false`, the node is following the chain, and the logs show a `Synced new block` line for every block. `is_optimistic: true` means the execution client is still syncing; your validators can't do their duties until it catches up.
+Right after the checkpoint sync, `head_slot` starts near the checkpoint slot, and `sync_distance` drops quickly. When `is_syncing` is `false`, the node is following the chain, and the logs show a `Synced new block` line for every block. `is_optimistic: true` means the execution client is still syncing; your validators can't do their duties until it catches up.
 
 ## Download older blocks (backfill)
 
@@ -278,7 +278,7 @@ The data directory already holds a database. Stop the node and start it once wit
 Error retrieving checkpoint origin state and block
 ```
 
-The provider is down, rate-limited or unreachable. Try another one from the list.
+The provider is down, rate-limited, or unreachable. Try another one from the list.
 
-**The download worked but the node stays behind or has few peers.**
+**The download worked, but the node stays behind or has few peers.**
 Checkpoint sync only sets the starting point. Peers and sync speed depend on your network setup.

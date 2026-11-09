@@ -8,17 +8,17 @@ import { SetupPicker, When } from '@site/src/components/SetupPicker';
 import Flag from '@site/src/components/Flag';
 import MevBoostCommand from '@site/src/components/MevBoostCommand';
 
-With [MEV-Boost](https://github.com/flashbots/mev-boost), your validator can propose blocks built by external **builders**, who bid for the right to fill your block. Bids reach you through **relays**. MEV-Boost runs next to your beacon node, asks your relays for the best bid, and Prysm uses it if it pays more than the block your own execution client builds. Most mainnet blocks are built this way.
+With [MEV-Boost](https://github.com/flashbots/mev-boost), your validator can propose blocks built by external builders, who bid for the right to fill your block. Bids reach you through **relays**. MEV-Boost runs alongside your beacon node, asks your relays for the best bid, and Prysm uses it if it pays more than the block your execution client builds. Most mainnet blocks are built this way.
 
 <SetupPicker groups="os net" nets="mainnet hoodi" />
 
 :::note[Until the Gloas fork]
-This page applies until your network forks into Gloas. From then on, your beacon node gets bids from builders itself, and MEV-Boost is optional. See [Use builders after Gloas (ePBS)](/validators/builders/).
+This page applies until your network forks into Gloas. After that, your beacon node gets bids from builders itself, and MEV-Boost is optional. See [Use builders after Gloas (ePBS)](/validators/builders/).
 :::
 
 ## Before you begin
 
-- A synced execution client, beacon node and validator client. Your execution client stays required: Prysm always builds a local block too, as a fallback.
+- A synced execution client, beacon node, and validator client. Your execution client stays required: Prysm always builds a local block too, as a fallback.
 - A [fee recipient](/validators/fee-recipient/). Builders pay it.
 
 :::caution[What you trust]
@@ -35,9 +35,9 @@ The command below uses every working relay from the [EthStaker relay list]({rela
 
 - **Filtering policy.** Some relays exclude transactions from sanctioned addresses; others don't.
 - **Operator and track record.** Who runs it, and how it behaved during past incidents.
-- **Diversity.** Several relays from different operators limit the impact of one failing.
+- **Diversity.** Several relays from different operators limit the impact of a single failure.
 
-To add a relay, take its URL from the relay's own documentation, for the right network. A relay URL looks like `https://0x<RELAY_PUBKEY>@<RELAY_HOST>`.
+To add a relay, get its URL from the relay’s documentation for the right network. A relay URL looks like `https://0x<RELAY_PUBKEY>@<RELAY_HOST>`.
 
 ## Set up MEV-Boost
 
@@ -81,13 +81,13 @@ bid × builder_boost_factor > local_value × (100 + local-block-value-boost)
 - <Flag name="local-block-value-boost" /> (beacon node, default `10`) adds a percentage in favor of your local block.
 - `builder_boost_factor` is a percentage the validator client can send with each block request (default `100`, neutral; `0` means always local). Prysm's validator client sends the neutral value, so with Prysm you tune <Flag name="local-block-value-boost" /> instead. Other validator clients connected to a Prysm beacon node may send their own.
 
-**Example.** With the defaults, the local block is worth 0.050 ETH and the best bid is 0.054 ETH. The bid side is 0.054 × 100 = 5.4, the local side 0.050 × 110 = 5.5, so Prysm proposes the local block. A bid of 0.056 ETH (5.6) wins. With `--local-block-value-boost=0`, any bid above 0.050 ETH wins.
+**Example.** With the defaults, the local block is worth 0.050 ETH, and the best bid is 0.054 ETH. The bid side is 0.054 × 100 = 5.4, the local side 0.050 × 110 = 5.5, so Prysm proposes the local block. A bid of 0.056 ETH (5.6) wins. With `--local-block-value-boost=0`, any bid above 0.050 ETH wins.
 
 ## When Prysm builds its own block
 
 For each proposal, the beacon node asks MEV-Boost for a bid and builds a local block at the same time. It proposes the local block when:
 
-- **MEV-Boost fails or is too slow.** No valid bid within <Flag name="builder-header-timeout" /> (1 second). The beacon node proposes the local block, so a broken MEV-Boost costs you MEV, not the proposal. It logs:
+- **MEV-Boost fails or is too slow.** There is no valid bid within <Flag name="builder-header-timeout" /> (1 second). The beacon node proposes the local block, so a broken MEV-Boost costs you MEV, not the proposal. It logs:
 
   ```text
   Could not get builder payload
@@ -101,7 +101,7 @@ For each proposal, the beacon node asks MEV-Boost for a bid and builds a local b
 
 - **The bid is too low.** Below <Flag name="min-builder-bid" /> (Gwei, default 0), or not enough above the local block (see [Local boost and builder boost factor](#local-boost-and-builder-boost-factor)).
 
-In each case the log explains the choice with a line starting:
+In each case, the log explains the choice with a line starting:
 
 ```text
 Proposer: using local execution payload because ...
@@ -139,7 +139,7 @@ Proposer: using local execution payload because ...
   Received header with bid
   ```
 
-  If it doesn't then log why it uses the local block (see [When Prysm builds its own block](#when-prysm-builds-its-own-block)), the builder's block was used. On a block explorer, a builder block usually ends with a payment transaction to your fee recipient.
+  If it doesn't, then log why it uses the local block (see [When Prysm builds its own block](#when-prysm-builds-its-own-block)), the builder's block was used. On a block explorer, a builder block usually ends with a payment transaction to your fee recipient.
 
 ## Troubleshooting
 

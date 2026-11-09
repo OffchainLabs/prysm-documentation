@@ -31,7 +31,7 @@ The first byte of the withdrawal credentials sets their type:
 
 - **`0x00`** is the original format. Convert it to `0x01` once, with a message signed from your mnemonic (a BLS-to-execution change). The change is permanent, so pick the address carefully. See [Convert a `0x00` validator to `0x01`](/validators/add-withdrawal-address/).
 - **`0x01`** is the common choice. Rewards above 32 ETH are paid out every few days and don't compound.
-- **`0x02`** lets the balance grow up to 2,048 ETH so rewards compound, and lets you merge several validators into one. You can deposit with `0x02` directly, or convert a `0x01` validator with a request from its withdrawal address. There is no direct path from `0x00` to `0x02`: go through `0x01` first.
+- **`0x02`** lets the balance grow up to 2,048 ETH so rewards compound, and lets you merge several validators into one. You can deposit directly with `0x02`, or convert a `0x01` validator with a request from its withdrawal address. There is no direct path from `0x00` to 0x02: go through `0x01` first.
 
 See [Convert a `0x01` validator to `0x02`](/validators/upgrade-to-compounding/) and [Merge several validators into one](/validators/consolidate/).
 
@@ -46,7 +46,7 @@ See [Convert a `0x01` validator to `0x02`](/validators/upgrade-to-compounding/) 
 Two conclusions:
 
 1. **Set `0x01` or `0x02` credentials pointing to an address you control well.** Until you do, your mnemonic is the only thing between an attacker and your stake.
-2. **Protect the withdrawal address like the stake itself.** It can exit, withdraw and consolidate your validator.
+2. **Protect the withdrawal address like the stake itself.** It can exit, withdraw, and consolidate your validator.
 
 See the [Security checklist](/security/) for the practical steps.
 

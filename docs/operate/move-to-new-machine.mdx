@@ -35,7 +35,7 @@ On Windows, run them in your WSL terminal.
 
 - The new machine meets the [system requirements](/get-started/system-requirements/) and has Prysm and an execution client installed.
 - Access to the keys on the old machine, or the original keystores and their password.
-- Your validator indices or public keys, so you can check them on a block explorer.
+- * Your validator indices or public keys so that you can check them on a block explorer.
 
 ## Move your validators
 
@@ -69,12 +69,12 @@ On Windows, run them in your WSL terminal.
 	</When>
 	<When os="unix" svc="none">
 
-	Remove whatever starts it on its own, such as a cron job, a `tmux` session or a script.
+	1. Remove whatever starts it automatically, such as a cron job, a `tmux` session, or a script.
 
 	</When>
 	<When os="win" svc="none">
 
-	Remove whatever starts it on its own, such as a scheduled task or a startup script.
+	Remove whatever starts automatically, such as a scheduled task or a startup script.
 
 	</When>
 
@@ -123,7 +123,7 @@ On Windows, run them in your WSL terminal.
 	</When>
 	<When os="unix" svc="none">
 
-	- **Nothing will restart it:** no cron job, `tmux` session or script starts it.
+	- **Nothing will restart it:** no cron job, `tmux` session, or script starts it.
 
 	</When>
 	<When os="win" svc="none">
@@ -198,7 +198,7 @@ On Windows, run them in your WSL terminal.
 	  --wallet-password-file=/var/lib/ethereum/validator/wallet-password.txt
 	```
 
-	Select the keys you are moving. Afterwards, this must not show them:
+	Select the keys you are moving. Afterward, this must not show them:
 
 	```bash
 	sudo -u validator /usr/local/bin/validator accounts list \
@@ -222,7 +222,7 @@ On Windows, run them in your WSL terminal.
 	  --accept-terms-of-use
 	```
 
-	Select the keys you are moving. Afterwards, this must not show them:
+	Select the keys you are moving. Afterward, this must not show them:
 
 	```bash
 	docker compose run --rm --no-deps validator accounts list \
@@ -245,7 +245,7 @@ On Windows, run them in your WSL terminal.
 	  --wallet-dir=<OLD_WALLET_DIR>
 	```
 
-	Select the keys you are moving. Afterwards, this must not show them:
+	Select the keys you are moving. Afterward, this must not show them:
 
 	```bash
 	./prysm.sh validator accounts list --wallet-dir=<OLD_WALLET_DIR>
@@ -263,7 +263,7 @@ On Windows, run them in your WSL terminal.
 	  --wallet-dir=<OLD_WALLET_DIR>
 	```
 
-	Select the keys you are moving. Afterwards, this must not show them:
+	Select the keys you are moving. Afterward, this must not show them:
 
 	```powershell
 	.\prysm.bat validator accounts list --wallet-dir=<OLD_WALLET_DIR>

@@ -9,7 +9,7 @@ import Flag from '@site/src/components/Flag';
 
 <SetupPicker groups="os net" />
 
-A slasher watches the blocks and attestations of every validator on the network and catches the ones that break the rules: two different blocks for the same slot, two conflicting votes for the same epoch, or two votes where one surrounds the other. When it finds one, it turns the two signed messages into a proof. Once a block includes that proof, the offending validator is slashed.
+A slasher watches the blocks and attestations of every validator on the network and catches the ones that break the rules: two different blocks for the same slot, two conflicting votes for the same epoch, or two votes where one surrounds the other. When it finds one, it turns the two signed messages into a proof. Once a block includes that proof, the network slashes the offending validator.
 
 A slasher protects the **network**, not your own validators. Your validators are protected by the slashing protection built into the validator client.
 
@@ -17,7 +17,7 @@ A slasher protects the **network**, not your own validators. Your validators are
 
 - **The network needs only a few.** One honest slasher that sees an offense is enough.
 - **It earns you nothing.** Running a slasher is unpaid. The protocol rewards the validator that proposes the block including the proof of the offense, not the node that found it.
-- **It's expensive.** The slasher keeps a history for every validator on the network, so the beacon node uses a lot more disk, disk I/O, memory and CPU. On a home staking machine it can slow the beacon node enough to hurt your own validators.
+- **It's expensive.** The slasher keeps a history for every validator on the network, so the beacon node uses much more disk, disk I/O, memory, and CPU. On a home staking machine, it can slow the beacon node enough to hurt your own validators.
 
 Run one if you operate infrastructure with spare capacity (a staking pool, a data center, an explorer). Home stakers are usually better off without it.
 
@@ -99,7 +99,7 @@ INFO slasher: Reading last epoch written for each validator...
 INFO slasher: Finished retrieving last epoch written per validator elapsed=...
 ```
 
-After that, every slot it logs `Start processing queued attestations`, `Done processing queued attestations` and `Processing queued blocks for slashing detection`. Once it holds more than 4096 epochs of history, it also logs `Pruning old attestations and proposals for slasher` as it deletes the oldest data.
+After that, every slot it logs `Start processing queued attestations`, `Done processing queued attestations`, and `Processing queued blocks for slashing detection`. Once it holds more than 4096 epochs of history, it also logs `Pruning old attestations and proposals for slasher` as it deletes the oldest data.
 
 When it catches an offense, you see one of:
 

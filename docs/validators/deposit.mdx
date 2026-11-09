@@ -9,7 +9,7 @@ import { NETWORKS } from '@site/src/data/networks';
 
 export const mainnet = NETWORKS.find((n) => n.id === 'mainnet');
 
-Your validator exists once its ETH is deposited into the **deposit contract** together with your deposit data.
+Your validator is created once you deposit ETH into the deposit contract along with your deposit data.
 
 <SetupPicker groups="os net" nets="mainnet hoodi" />
 
@@ -44,7 +44,7 @@ Use the official **EthStaker console**: it checks your `deposit_data-*.json` fil
 <When net="mainnet">
 
 :::danger[Only use the official launchpad]
-Scam sites copy the launchpad and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats or emails.
+Scam sites copy the launchpad and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats, or emails.
 
 - **Launchpad:** <a href={mainnet.launchpad}>{mainnet.launchpad}</a>
 - **Deposit contract:** <code>{mainnet.depositContract}</code>
@@ -54,9 +54,9 @@ Before you sign, check that the transaction goes to exactly this contract addres
 
 </When>
 <When net="hoodi">
-
+deposits aren’t processed
 :::danger[Only use the official console]
-Scam sites copy the console and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats or emails.
+Scam sites copy the console and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats, or emails.
 
 - **Deposit page:** [https://hoodi.console.ethstaker.org/deposit](https://hoodi.console.ethstaker.org/deposit)
 :::
@@ -114,14 +114,14 @@ After the deposit transaction is included, the beacon chain processes it, adds y
 
 - With no queue, on a healthy, finalizing network, this takes about 10 epochs (about an hour).
 - When many people stake at once, deposits wait in a queue, which can take days or weeks.
-- When the network doesn't finalize, which is extremely rare, deposits aren't processed and validators aren't activated until finality resumes.
+- When the network doesn't finalize, which is extremely rare, deposits aren't processed, and validators aren't activated until finality resumes.
 
 </When>
 <When net="hoodi">
 
 - With no queue, on a healthy, finalizing network, this takes about 10 epochs (about an hour).
 - When many people stake at once, deposits wait in a queue, which can take days or weeks.
-- When the network doesn't finalize, deposits aren't processed and validators aren't activated until finality resumes.
+- When the network doesn't finalize, deposits aren't processed, and validators aren't activated until finality resumes.
 
 </When>
 

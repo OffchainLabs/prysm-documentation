@@ -8,7 +8,7 @@ import { SetupPicker, When } from '@site/src/components/SetupPicker';
 
 # Convert a `0x00` validator to `0x01`
 
-Validators created without a withdrawal address have `0x00` credentials. They earn rewards like any other validator, but nothing can be sent to an Ethereum address: neither the rewards nor, after an exit, the balance. To fix this, sign a change with your **mnemonic** in the deposit CLI, then submit it with `prysmctl`. It turns the validator into a regular (`0x01`) validator, with the withdrawal address you choose. You can do this once per validator.
+Validators created without a withdrawal address have `0x00` credentials. They earn rewards like any other validator, but you can't send anything to an Ethereum address: neither rewards nor, after an exit, the balance. To fix this, sign a change with your **mnemonic** in the deposit CLI, then submit it with `prysmctl`. It turns the validator into a regular (`0x01`) validator, with the withdrawal address you choose. You can do this once per validator.
 
 <SetupPicker groups="os net" nets="mainnet hoodi" />
 
@@ -60,7 +60,7 @@ Use an address you control, never an exchange address, and compare every charact
    - `--validator_indices`: each validator's index on the beacon chain, as shown by the command above or a block explorer.
    - `--bls_withdrawal_credentials_list`: each validator's current `0x00` credentials, from the command above.
 
-   The CLI takes one key per validator, starting at `--validator_start_index`, and pairs them in order: key `start` with the first validator and first credentials, key `start + 1` with the second, and so on. So list validators in the order their keys appear in the mnemonic. If the keys aren't consecutive (for example `0`, `1` and `5`), run the command once for each consecutive run of keys. If a key doesn't match its credentials, the CLI stops with an error and signs nothing.
+   The CLI takes one key per validator, starting at `--validator_start_index`, and pairs them in order: key `start` with the first validator and first credentials, key `start + 1` with the second, and so on. So list validators in the order their keys appear in the mnemonic. If the keys aren't consecutive (for example, `0`, `1` and `5`), run the command once for each consecutive run of keys. If a key doesn't match its credentials, the CLI stops with an error and signs nothing.
 
 3. **Sign the change** from the extracted folder:
 

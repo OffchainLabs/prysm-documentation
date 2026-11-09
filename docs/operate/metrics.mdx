@@ -5,7 +5,7 @@ description: The Prysm beacon node exposes Prometheus metrics. Choose where they
 
 import Flag from '@site/src/components/Flag';
 
-The Prysm beacon node exposes [Prometheus](https://prometheus.io/) metrics out of the box, at `http://127.0.0.1:8080/metrics`. Point any Prometheus server at this endpoint to scrape them.
+The Prysm beacon node exposes [Prometheus](https://prometheus.io/) metrics out of the box at `http://127.0.0.1:8080/metrics`. Point any Prometheus server at this endpoint to scrape them.
 
 ## Flags
 
@@ -23,7 +23,7 @@ curl -s http://127.0.0.1:8080/metrics | grep '^beacon_finalized_epoch'
 
 ## Grafana dashboard
 
-[Download the beacon node dashboard](pathname:///docs/assets/grafana-dashboards/beacon_node.json) and import it in [Grafana](https://grafana.com/) 13 or later, with your Prometheus as the data source. It only uses metrics the beacon node exposes.
+[Download the beacon node dashboard](pathname:///docs/assets/grafana-dashboards/beacon_node.json) and import it into [Grafana](https://grafana.com/) 13 or later, with your Prometheus as the data source. It only uses metrics the beacon node exposes.
 
 Name the Prometheus scrape job `beacon`: the system and replay panels filter on `job="beacon"`.
 
@@ -41,7 +41,7 @@ CPU, heap and stack memory, garbage collection time, and goroutines of the beaco
 
 ### Networking
 
-Peers by direction, transport and client, mesh peers per gossip topic against their targets, and gossip messages ignored or rejected.
+Peers by direction, transport, and client; mesh peers per gossip topic against their targets; and gossip messages ignored or rejected.
 
 ![Networking tab](/images/beacon-node-dashboard/networking.png)
 
@@ -77,12 +77,12 @@ Beacon state count, state cache hit rates, head state defragmentation, and inter
 
 ### Backfill
 
-Progress of the download of historical blocks and data column sidecars after a checkpoint sync.
+Progress of downloading historical blocks and data column sidecars after a checkpoint sync.
 
 ![Backfill tab](/images/beacon-node-dashboard/backfill.png)
 
 ### Replay
 
-Heap memory and block processing time compared with the same series shifted back by the dashboard's **Offset** variable, for example to compare before and after an upgrade.
+Heap memory and block processing time compared with the same series shifted back by the dashboard's **Offset** variable, for example, to compare before and after an upgrade.
 
 ![Replay tab](/images/beacon-node-dashboard/replay.png)

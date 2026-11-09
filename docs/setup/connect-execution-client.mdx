@@ -7,13 +7,13 @@ import { Aside, Steps } from '@site/src/components/ui';
 import { SetupPicker, When } from '@site/src/components/SetupPicker';
 import Flag from '@site/src/components/Flag';
 
-Prysm needs an execution layer client (EL) such as Geth or Nethermind running next to it: the EL checks the transactions in every block. The two connect on port 8551 by default and prove who they are with a shared secret file, the JWT secret.
+Prysm needs an execution layer client (EL), such as Geth or Nethermind, running alongside it; the EL checks transactions in every block. The two connect on port 8551 by default and prove who they are with a shared secret file, the JWT secret.
 
 <SetupPicker />
 
 ## Before you begin
 
-- The Prysm launcher script, and a folder for each program and for the data. The programs live in `consensus` and `execution`, and everything the clients store goes into `data`, one folder per network. The commands on this page use this layout:
+- The Prysm launcher script and a folder for each program and for the data. The programs live in `consensus` and `execution`, and everything the clients store goes into `data`, one folder per network. The commands on this page use this layout:
 
 	<When os="unix">
 
@@ -76,7 +76,7 @@ Prysm needs an execution layer client (EL) such as Geth or Nethermind running ne
 
 	See [Install Prysm](/install/) for the other install methods and for verifying the download.
 
-- Enough disk for the EL. See [System requirements](/get-started/system-requirements/).
+- Enough disk space for the EL. See [System requirements](/get-started/system-requirements/).
 
 ## Connect the two clients
 
@@ -117,7 +117,7 @@ Prysm needs an execution layer client (EL) such as Geth or Nethermind running ne
 
 	</When>
 
-	The file holds 64 hex characters, and the same secret serves every network. Running the command again replaces the secret, so don't: you'd have to restart both clients with the new file.
+	The file holds 64 hex characters, and the same secret serves every network. Running the command again replaces the secret, so don't; you'd have to restart both clients with the new file.
 
 	</When>
 
@@ -205,7 +205,7 @@ Prysm needs an execution layer client (EL) such as Geth or Nethermind running ne
 
 	</When>
 
-	**Always pass `--externalcl`.** Without it, Erigon runs its own built-in consensus client (Caplin) and you'd have two consensus clients driving one EL.
+	**Always pass `--externalcl`.** Without it, Erigon runs its own built-in consensus client (Caplin), and you'd have two consensus clients driving one EL.
 
 	</When>
 	<When el="ethrex">
@@ -350,12 +350,12 @@ Prysm needs an execution layer client (EL) such as Geth or Nethermind running ne
 
 	</When>
 
-	**Pass `--full`.** Reth runs an archive node by default, which needs far more disk than a staking node does.
+	**Pass `--full`.** Reth runs an archive node by default, which needs far more disk space than a staking node.
 
 	</When>
 	<When conn="jwt">
 
-	Always give the EL an **absolute path** to the secret. Most clients create a new secret when the path doesn't exist, which Prysm then doesn't know.
+	Always give the EL an **absolute path** to the secret. Most clients create a new secret when the path doesn’t exist, and Prysm then doesn’t know it.
 
 	</When>
 
@@ -373,7 +373,7 @@ Prysm needs an execution layer client (EL) such as Geth or Nethermind running ne
 	  --beacon-db-pruning
 	```
 
-	At startup Prysm logs:
+	At startup, Prysm logs:
 
 	```text
 	INFO execution: Finished reading JWT secret from /home/<USER>/ethereum/data/jwt.hex
@@ -392,7 +392,7 @@ Prysm needs an execution layer client (EL) such as Geth or Nethermind running ne
 	  --beacon-db-pruning
 	```
 
-	At startup Prysm logs:
+	At startup, Prysm logs:
 
 	```text
 	INFO execution: Finished reading JWT secret from C:\Users\<USER>\ethereum\data\jwt.hex
@@ -426,7 +426,7 @@ Prysm needs an execution layer client (EL) such as Geth or Nethermind running ne
 
 	The checkpoint sync URL is one of several community endpoints; any one you trust works.
 
-	<Flag name="beacon-db-pruning" /> deletes blocks and states older than about 5 months, the oldest data other nodes can still ask for, so the database stops growing. Leave it out if you need the full history.
+	<Flag name="beacon-db-pruning" /> deletes blocks and states older than about five months; the oldest data other nodes can still ask for, so the database stops growing. Leave it out if you need the full history.
 
 	**Running validators?** Also add:
 
@@ -434,7 +434,7 @@ Prysm needs an execution layer client (EL) such as Geth or Nethermind running ne
 	--postpone-shutdown-for-proposals
 	```
 
-	When you stop or restart the beacon node, it then waits until your validators' upcoming block proposals are done. See [Don't restart just before a proposal](/install/update/#dont-restart-just-before-a-proposal).
+	When you stop or restart the beacon node, it then waits until your validators' upcoming block proposals are done. For more information refer to the [Don't restart just before a proposal](/install/update/#dont-restart-just-before-a-proposal) page.
 
 </Steps>
 
@@ -489,7 +489,7 @@ Prysm and the EL read different secrets. Check the EL's startup log for the path
 wanted chain ID 560048, got 1
 ```
 
-The two clients are on different networks, here Prysm on Hoodi and the EL on mainnet. Start both with the same network.
+The two clients are on different networks; here, Prysm is on Hoodi and the EL on mainnet. Start both on the same network.
 
 **Prysm can't read the JWT secret.** Prysm logs:
 

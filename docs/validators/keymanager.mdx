@@ -7,7 +7,7 @@ import { Steps } from '@site/src/components/ui';
 import { SetupPicker, When } from '@site/src/components/SetupPicker';
 import Flag from '@site/src/components/Flag';
 
-The **Keymanager API** lets you change a running validator client without restarting it: add or remove keys, set a fee recipient, gas limit or graffiti per key, and sign voluntary exits. It's a standard API that every consensus client implements, so staking tools built for it work with Prysm. This page uses `curl`. The full specification is at [ethereum.github.io/keymanager-APIs](https://ethereum.github.io/keymanager-APIs/).
+The **Keymanager API** lets you change a running validator client without restarting it: add or remove keys, set a fee recipient, gas limit, or graffiti per key, and sign voluntary exits. It's a standard API that every consensus client implements, so staking tools built for it work with Prysm. This page uses `curl`. The full specification is at [ethereum.github.io/keymanager-APIs](https://ethereum.github.io/keymanager-APIs/).
 
 <SetupPicker groups="os" />
 
@@ -137,7 +137,7 @@ curl.exe -s -X POST `
 
 The API expects the keystore as a string holding the file contents, not as a JSON object: that's what `--rawfile` does. To check the body before sending it, run the `jq` part alone.
 
-**For a key that has already signed**, anywhere, also send its slashing protection history (see [Move your slashing protection history](/validators/slashing-protection-history/)):
+**For a key that has already signed** anywhere, also send its slashing protection history (see [Move your slashing protection history](/validators/slashing-protection-history/)):
 
 <When os="unix">
 
@@ -307,7 +307,7 @@ jq -r '.slashing_protection' delete-response.json | Set-Content -Encoding ascii 
 
 </When>
 
-The status is `deleted`, `not_active`, `not_found` or `error`. Import `slashing_protection.json` wherever the key runs next.
+The status is `deleted`, `not_active`, `not_found`, or `error`. Import `slashing_protection.json` wherever the key runs next.
 
 :::caution
 Removing a key doesn't exit the validator. It stays active and loses balance until something signs for it again. To stop for good, [exit the validator](#sign-a-voluntary-exit).
@@ -317,7 +317,7 @@ Removing a key doesn't exit the validator. It stays active and loses balance unt
 
 With a remote signer (<Flag name="validators-external-signer-url" bin="validator" />), the keys live in the signer, and the validator only needs their public keys. Use `/eth/v1/remotekeys` instead of `/eth/v1/keystores`. See [Use a remote signer](/validators/remote-signer/).
 
-Without a remote signer, `GET` returns an empty list and `POST` and `DELETE` fail. Adding keys also needs <Flag name="validators-external-signer-key-file" bin="validator" />, where Prysm saves them; without it, each key comes back with the status `error`.
+Without a remote signer, `GET` returns an empty list and `POST` and `DELETE` fail. Adding keys also needs <Flag name="validators-external-signer-key-file" bin="validator" />, where Prysm saves them; without it, each key returns a status `error`.
 
 <When os="unix">
 
@@ -364,7 +364,7 @@ curl.exe -s -H "Authorization: Bearer $TOKEN" "$API/eth/v1/remotekeys" | jq
 
 ## Remove remote signer keys
 
-You can remove keys from the key file only. Keys from <Flag name="validators-external-signer-public-keys" bin="validator" />, a list or a URL, show `readonly: true`, and removing one returns `error`: it would come back on the next reload. If such a key is also in the key file, Prysm removes it from the file, and the key keeps validating.
+You can remove keys only from the key file. Keys from <Flag name="validators-external-signer-public-keys" bin="validator" />, a list, or a URL showing `readonly: true`, and removing one returns `error`: it would come back on the next reload. If such a key is also in the key file, Prysm removes it from the file, and the key keeps validating.
 
 <When os="unix">
 
@@ -396,7 +396,7 @@ Removing a key doesn't exit the validator. It stays active and loses balance unt
 
 ## Set per-key settings
 
-The fee recipient, gas limit and graffiti endpoints work the same way: `POST` sets the value for one key, `GET` reads it and `DELETE` resets it, so the key uses the default again.
+The fee recipient, gas limit, and graffiti endpoints work the same way: `POST` sets the value for one key, `GET` reads it and, `DELETE` resets it, so the key uses the default again.
 
 Set the fee recipient:
 
@@ -476,9 +476,9 @@ curl.exe -s -X POST `
 
 </When>
 
-The graffiti can be at most 32 bytes: a longer one is rejected with `400`. Success returns an empty `202`, and `DELETE` an empty `204`.
+Graffiti can be at most 32 bytes; longer graffiti is rejected with `400`. Success returns an empty `202`, and `DELETE` returns an empty `204`.
 
-Read a value back, here the fee recipient:
+Read a value back; here, the fee recipient:
 
 <When os="unix">
 
@@ -549,7 +549,7 @@ curl.exe -s -H "Authorization: Bearer $TOKEN" `
 
 </When>
 
-The response has `min_bid`, `builder_boost_factor`, `max_execution_payment` and a `builders` list, with the same fields as a version 2 proposer settings file; see [Use builders after Gloas (ePBS)](/validators/builders/). `auth_data` and `builder_pubkeys` are `0x` hex. You can edit it and send it back with `POST`, which replaces the key's whole builder config:
+The response has `min_bid`, `builder_boost_factor`, `max_execution_payment`, and a `builders` list, with the same fields as a version 2 proposer settings file; see [Use builders after Gloas (ePBS)](/validators/builders/). `auth_data` and `builder_pubkeys` are `0x` hex. You can edit it and send it back with `POST`, which replaces the key's whole builder config:
 
 <When os="unix">
 

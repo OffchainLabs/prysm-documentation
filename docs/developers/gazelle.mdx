@@ -5,7 +5,7 @@ description: "Regenerate Prysm's BUILD.bazel files and deps.bzl with Gazelle aft
 
 import { Steps } from '@site/src/components/ui';
 
-Bazel only compiles what a package's `BUILD.bazel` lists, so every Go file, import and dependency must appear there. You rarely edit these files by hand: [Gazelle](https://github.com/bazelbuild/bazel-gazelle) generates them from your Go code, and CI fails a pull request whose `BUILD.bazel` files or `deps.bzl` are out of date.
+Bazel only compiles what a package's `BUILD.bazel` lists, so every Go file, import, and dependency must appear there. You rarely edit these files by hand: [Gazelle](https://github.com/bazelbuild/bazel-gazelle) generates them from your Go code, and CI fails a pull request whose `BUILD.bazel` files or `deps.bzl` are out of date.
 
 ## When you need it
 
@@ -75,7 +75,7 @@ Bazel doesn't read `go.mod`. It gets each Go module from a `go_repository` rule 
 </Steps>
 
 :::note
-The pull request template says that pull requests updating dependencies or the Go version are not accepted; file an issue instead.
+The pull request template says pull requests that update dependencies or the Go version aren't accepted; file an issue instead.
 :::
 
 ## Stop Gazelle from changing something

@@ -6,7 +6,7 @@ description: How to pass Prysm flags on the command line or in a YAML config fil
 import Flag from '@site/src/components/Flag';
 import { SetupPicker, When } from '@site/src/components/SetupPicker';
 
-You configure Prysm with command-line flags, optionally loaded from a YAML file. Prysm doesn't read flags from environment variables. This page covers how to pass flags and the ones most people set; the generated references list every flag with its default.
+You configure Prysm with command-line flags, optionally loaded from a YAML file. Prysm doesn’t read flags from environment variables. This page covers how to pass flags and the ones most people set; the generated reference list includes every flag and its default.
 
 <SetupPicker groups="os net" />
 
@@ -41,7 +41,7 @@ Put flags after the binary name, or after the component name when you use the la
 
 <When>
 
-- Write values as `--name=value`. It's unambiguous and it's the only form that works for booleans.
+- Write values as `--name=value`. It's unambiguous, and it's the only form that works for booleans.
 - A boolean flag is on when present (`--{net}`). Turn it off with `--name=false`, not `--name false`.
 - List flags, such as <Flag name="peer" />, can be repeated or take comma-separated values.
 - Run a binary with `--help` to see the flags your installed version supports.
@@ -89,7 +89,7 @@ p2p-max-peers: 70
 
 </When>
 
-**A flag on the command line wins over the same key in the file**, so this node runs with 100 peers. Keep one shared base file and override values per machine.
+**A command-line flag overrides the same key in the file**, so this node runs with 100 peers. Keep one shared base file and override values per machine.
 
 {/* Verified: cmd/flags.go LoadFlagsFromConfig uses urfave/cli v2 altsrc, which only applies a file value when the flag isn't set on the command line. 2026-09. */}
 
@@ -164,4 +164,4 @@ Use the same network flag, `--{net}`, on both the beacon node and the validator 
 
 ## Feature flags
 
-Feature flags turn on behavior that isn't the default yet, or turn off a new default. Most operators need none; use one only when the release notes or the Prysm team recommend it, and test it on Hoodi first. At startup the node logs `Enabled feature flag` or `Disabled feature flag` for each one you set, and flags change between [releases](https://github.com/OffchainLabs/prysm/releases), so review them when you update.
+Feature flags enable behavior that isn’t the default yet, or disable a new default. Most operators need none; use one only when the release notes or the Prysm team recommend it, and test it on Hoodi first. At startup, the node logs `Enabled feature flag` or `Disabled feature flag` for each one you set, and flags change between [releases](https://github.com/OffchainLabs/prysm/releases), so review them when you update.

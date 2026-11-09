@@ -43,7 +43,7 @@ Get-ChildItem <DATADIR> -Directory | ForEach-Object {
 
 A [checkpoint-synced](/setup/checkpoint-sync/) node only has blocks from its checkpoint onward, so it starts small. Even so, Prysm keeps every block it receives unless you turn on pruning.
 
-**Blob data grows with your validators.** Each node stores a share of every block's blob data. A node with no validators stores the minimum; each 32 ETH of validator balance attached to the node adds a little more. With blocks at the target of 14 blobs, the 18-day window holds about 31 GB for a node with a few validators and about 490 GB for a node that stores everything (a supernode). Blocks can carry up to 21 blobs, so in the worst case these grow by half. Bandwidth scales the same way.
+**Blob data grows with your validators.** Each node stores a share of every block's blob data. A node with no validators stores the minimum; each 32 ETH of validator balance attached to the node adds a little more. With blocks targeting 14 blobs, the 18-day window holds about 31 GB for a node with a few validators and about 490 GB for a node that stores everything (a supernode). Blocks can carry up to 21 blobs, so in the worst case these grow by half. Bandwidth scales the same way.
 
 ## Choose how much to keep
 
@@ -112,7 +112,7 @@ Use this to move to a bigger or faster disk.
 
 	</When>
 
-3. **Point the beacon node at the new location** with <Flag name="datadir" />, in its command, config file or service unit.
+3. **Point the beacon node at the new location** with <Flag name="datadir" />, in its command, config file, or service unit.
 
 	<When os="unix">
 
@@ -150,7 +150,7 @@ When the disk is full, the beacon node can't write and stops following the chain
 1. **Stop the beacon node.**
 2. **Free space.** Usual suspects: the execution client's database, log files written with `--log-file` (Prysm doesn't rotate those), old Docker images, and old backups on the same disk.
 3. **Start the beacon node again** and watch the logs.
-4. **If it fails with database errors, resync from scratch.** Start it once with <Flag name="force-clear-db" /> and a <Flag name="checkpoint-sync-url" />. It deletes the beacon database and blob data, then syncs again in minutes. Remove `--force-clear-db` afterwards, or the node wipes itself on every restart.
+4. **If it fails with database errors, resync from scratch.** Start it once with <Flag name="force-clear-db" /> and a <Flag name="checkpoint-sync-url" />. It deletes the beacon database and blob data, then syncs again in minutes. Remove `--force-clear-db` afterward, or the node wipes itself on every restart.
 
 :::caution
 The validator client also has a `--force-clear-db` flag. On the validator, it deletes the **slashing protection database**. Never use it there to free space.

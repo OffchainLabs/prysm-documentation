@@ -8,7 +8,7 @@ import Flag from '@site/src/components/Flag';
 import PrysmVersion from '@site/src/components/PrysmVersion';
 import PrysmVersionCommand from '@site/src/components/PrysmVersionCommand';
 
-Prysm ships as three programs: `beacon-chain` (the beacon node), `validator` (the validator client) and `prysmctl` (a command-line toolbox). Every install method gives you the same programs from the same release, currently <PrysmVersion includeLink />.
+Prysm ships as three programs: `beacon-chain` (the beacon node), `validator` (the validator client), and `prysmctl` (a command-line toolbox). Every install method gives you the same programs from the same release; the current is <PrysmVersion includeLink />.
 
 | Method | Use it when | Updates |
 | --- | --- | --- |
@@ -32,7 +32,7 @@ The launcher script downloads the release binary for your machine, verifies its 
 
 <Steps>
 
-1. Install GnuPG, which the script needs to check signatures. On Debian or Ubuntu:
+1. Install GnuPG which the script needs to check signatures. On Debian or Ubuntu:
 
    ```bash
    sudo apt install gnupg
@@ -96,11 +96,11 @@ Each [GitHub release](https://github.com/OffchainLabs/prysm/releases) has one fi
    brew install gnupg
    ```
 
-2. Download the beacon node, validator and prysmctl, with their checksum and signature files:
+2. Download the beacon node, validator, and prysmctl, with their checksum and signature files:
 
    <PrysmVersionCommand template={`VERSION={version}\nOS=$(uname -s | tr '[:upper:]' '[:lower:]')\nARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')\nmkdir -p ~/prysm-download && cd ~/prysm-download\nfor BIN in beacon-chain validator prysmctl; do\n  for EXT in "" .sha256 .sig; do\n    curl -fLO "https://github.com/OffchainLabs/prysm/releases/download/$VERSION/$BIN-$VERSION-$OS-$ARCH$EXT"\n  done\ndone`} />
 
-   Run the next steps in the same terminal: they reuse `VERSION`, `OS` and `ARCH`.
+   Run the next steps in the same terminal: they reuse `VERSION`, `OS` and, `ARCH`.
 
 3. Verify them:
 
@@ -182,7 +182,7 @@ You need 64-bit Windows 10 or later.
 <Tabs syncKey="runner">
 <TabItem label="prysm.bat">
 
-The launcher script downloads the release binary, checks its SHA-256 checksum and starts it. It keeps the binaries in a `dist` folder in the current folder. Use **Command Prompt** (not as Administrator).
+The launcher script downloads the release binary, checks its SHA-256 checksum, and starts it. It keeps the binaries in a `dist` folder in the current folder. Use **Command Prompt** (not as Administrator).
 
 <Steps>
 
@@ -193,7 +193,7 @@ The launcher script downloads the release binary, checks its SHA-256 checksum an
    cd %USERPROFILE%\ethereum\consensus
    ```
 
-2. Download the script, and turn on colored output in the console:
+2. Download the script and turn on colored output in the console:
 
    ```bat
    curl.exe https://raw.githubusercontent.com/OffchainLabs/prysm/master/prysm.bat --output prysm.bat
@@ -211,7 +211,7 @@ The launcher script downloads the release binary, checks its SHA-256 checksum an
 
 </Steps>
 
-Run any program through the script, from the `consensus` folder:
+Run any program through the script from the `consensus` folder:
 
 ```bat
 prysm.bat beacon-chain <FLAGS>
@@ -233,9 +233,9 @@ Each [GitHub release](https://github.com/OffchainLabs/prysm/releases) has one `.
 
 <Steps>
 
-1. Install [Gpg4win](https://www.gpg4win.org/), to check signatures, then open a new PowerShell window.
+1. Install [Gpg4win](https://www.gpg4win.org/) to check signatures, then open a new PowerShell window.
 
-2. Download the beacon node, validator and prysmctl, with their checksum and signature files:
+2. Download the beacon node, validator, and prysmctl, with their checksum and signature files:
 
    <PrysmVersionCommand lang="powershell" template={`$VERSION = "{version}"\nNew-Item -ItemType Directory -Force $HOME\\prysm-download | Out-Null\ncd $HOME\\prysm-download\nforeach ($BIN in "beacon-chain", "validator", "prysmctl") {\n  foreach ($EXT in "", ".sha256", ".sig") {\n    curl.exe -fLO "https://github.com/OffchainLabs/prysm/releases/download/$VERSION/$BIN-$VERSION-windows-amd64.exe$EXT"\n  }\n}`} />
 
@@ -314,11 +314,11 @@ If you see `BAD signature`, a different fingerprint, or a checksum that doesn't 
 
 ### What the launcher scripts check
 
-`prysm.sh` downloads each binary with its `.sha256` and `.sig`, checks both, and imports the signing key the first time. On success it prints `Verified ... has been signed by Prysmatic Labs.` If a check fails, it stops with `Failed to verify Prysm binary.`
+`prysm.sh` downloads each binary with its `.sha256` and `.sig`, checks both, and imports the signing key the first time. On success, it prints `Verified ... has been signed by Prysmatic Labs.` If a check fails, it stops with `Failed to verify Prysm binary.`
 
 Know the limits:
 
-- The binary, checksum, signature and key all come from the same server. The checks catch corrupted or tampered downloads, not a compromised server. Importing and checking the key yourself first closes most of that gap.
+- The binary, checksum, signature, and key all come from the same server. The checks catch corrupted or tampered downloads, not a compromised server. Importing and checking the key yourself first closes most of that gap.
 - `prysm.bat` checks only the checksum, not the signature. Use the Windows **Binaries** method for the stronger check.
 - Never set `PRYSM_ALLOW_UNVERIFIED_BINARIES=1` on a validator. It turns every check off.
 

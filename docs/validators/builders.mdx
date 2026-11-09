@@ -10,7 +10,7 @@ import Flag from '@site/src/components/Flag';
 The Gloas fork brings proposer-builder separation into the protocol (ePBS). Your beacon node then gets bids from builders itself: no MEV-Boost needed. It compares them with the block your own execution client builds, and proposes the best one. You list the builders, usually relays, in your validator client's proposer settings.
 
 :::note[When this applies]
-Gloas is live on Sepolia since October 6, 2026. On Hoodi and mainnet, it isn't scheduled yet, and these settings take effect once the fork happens there. You can add them now: before the fork, Prysm keeps using MEV-Boost as described in [Use MEV-Boost](/validators/mev-boost/).
+Gloas has been live on Sepolia since October 6, 2026. On Hoodi and mainnet, it isn't scheduled yet, and these settings take effect once the fork happens there. You can add them now: before the fork, Prysm keeps using MEV-Boost as described in [Use MEV-Boost](/validators/mev-boost/).
 :::
 
 <SetupPicker groups="os net" nets="mainnet hoodi" />
@@ -79,12 +79,12 @@ From the fork on, <Flag name="http-mev-relay" /> on the beacon node and <Flag na
 	</TabItem>
 	</Tabs>
 
-	Write amounts in Gwei, as quoted strings: `10000000` is 0.01 ETH and `250000000` is 0.25 ETH.
+	Write amounts in Gwei, as quoted strings: `10000000` is 0.01 ETH, and `250000000` is 0.25 ETH.
 
-	A bid can pay you in two parts: a trustless payment, backed by the builder's stake, and a trusted payment, which you get only if the builder delivers the block. `max_execution_payment` caps how much of the trusted part counts when Prysm compares bids. In this file:
+	A bid can pay you in two parts: a trustless payment backed by the builder’s stake, and a trusted payment you get only if the builder delivers the block. `max_execution_payment` caps how much of the trusted part counts when Prysm compares bids. In this file:
 
-	- **Relay 1** uses the whole-key cap, `0`: only the trustless payment counts.
-	- **Relay 2** sets its own cap: up to 0.25 ETH of trusted payment counts on top of the trustless payment.
+	- **Relay 1** uses the whole-key cap; `0`: only the trustless payment counts.
+	- **Relay 2** sets its own cap: up to 0.25 ETH of trusted payment counts in addition to the trustless payment.
 	- **Bids from the peer-to-peer network** use the whole-key cap, `0`, like relay 1.
 
 	For example, relay 1 offers 0.04 ETH trustless plus 0.06 ETH trusted: it counts as 0.04 ETH. Relay 2 offers 0.03 ETH trustless plus 0.5 ETH trusted: it counts as 0.03 + 0.25 = 0.28 ETH. Both are above `min_bid` (0.01 ETH), so Prysm compares them with your own block, at `builder_boost_factor` `100`, and proposes the one worth the most. If your own block is worth 0.05 ETH, relay 2's bid wins.
@@ -95,7 +95,7 @@ From the fork on, <Flag name="http-mev-relay" /> on the beacon node and <Flag na
 	--proposer-settings-file=<PATH_TO_PROPOSER_SETTINGS_FILE>
 	```
 
-	Restart the validator client after each edit. Leave out <Flag name="enable-builder" bin="validator" />: before the fork, the `builders` list already registers your keys with MEV-Boost.
+	Restart the validator client after each edit. Leave out <Flag name="enable-builder" bin="validator" />: before the fork; the `builders` list already registers your keys with MEV-Boost.
 
 </Steps>
 
@@ -110,19 +110,19 @@ From the fork on, <Flag name="http-mev-relay" /> on the beacon node and <Flag na
 | `auth_data` | the URL's hostname | Tells a sidecar which relay a request is for. See [Route a relay through Commit-Boost](#route-a-relay-through-commit-boost). |
 | `builder_pubkeys` | any | The builder public keys you accept bids from behind this `url`, as `0x` hex. |
 
-`min_bid`, `builder_boost_factor` and `max_execution_payment` can be set for the whole key, under `builder`, or for one entry, which overrides it. Bids gossiped on the peer-to-peer network don't come from an entry, so they use the whole-key values. A file holds up to 64 entries per key.
+`min_bid`, `builder_boost_factor`, and `max_execution_payment` can be set for the whole key, under `builder`, or for one entry, which overrides it. Bids gossiped on the peer-to-peer network don't come from an entry, so they use the whole-key values. A file holds up to 64 entries per key.
 
 **Different settings per key.** Add a `builder` section under the key in `proposer_config`. Each setting you leave out comes from `default_config`. A key's `builders` list replaces the default list rather than adding to it, and `"builders": []` means no listed builder at all for that key.
 
-**Build only your own blocks.** Set `builder_boost_factor` to `0` for the whole key, with no builders listed. Peer-to-peer bids still arrive, but never win.
+**Build only your own blocks.** Set `builder_boost_factor` to `0` for the whole key when no builders are listed. Peer-to-peer bids still arrive, but never win.
 
-**Same settings for all validators, without a file.** Use <Flag name="builder-urls" bin="validator" />, <Flag name="builder-min-bid" bin="validator" />, <Flag name="builder-boost-factor" bin="validator" /> and <Flag name="builder-max-execution-payment" bin="validator" />. They apply to this run only, and a settings file's `default_config` replaces them whole.
+**Use the same settings for all validators, without a file.** Use <Flag name="builder-urls" bin="validator" />, <Flag name="builder-min-bid" bin="validator" />, <Flag name="builder-boost-factor" bin="validator" /> and <Flag name="builder-max-execution-payment" bin="validator" />. They apply to this run only, and a settings file's `default_config` replaces them whole.
 
 ## How much trusted payment to count
 
 Your beacon node values each bid at `value + min(execution_payment, max_execution_payment)`.
 
-- **With `0`, the default,** it counts only the trustless payment, backed by the builder's stake. If the builder doesn't deliver, you're still paid. But builders rarely lock up enough stake to back large bids, so you may miss out on the rare high-value slots that make up much of what proposers earn.
+- **With `0`, the default,** it counts only the trustless payment, backed by the builder's stake. If the builder doesn't deliver, you're still paid. But builders rarely lock up enough stake to back large bids,  so you may miss rare high-value slots that make up much of what proposers earn.
 - **With a high cap,** you count trusted payments as MEV-Boost does today, and you trust the builder or relay to deliver the block.
 
 There's no single right value. Operators proposing often average out both risks; a solo staker proposing a few times a year feels each one more. If you list a relay both directly and through a sidecar, give both entries the same cap: the relay keeps one per key and slot.
@@ -137,7 +137,7 @@ WARN proposer: Builders have no max_execution_payment (default 0): execution pay
 
 You can keep a sidecar such as [Commit-Boost](https://commit-boost.github.io/commit-boost-client/get_started/epbs) for what it adds, like bid streaming. Your beacon node sends it bid requests, and `auth_data` tells it which relay each one is for. Leave `auth_data` out of a direct entry: Prysm derives it from the URL's hostname. An entry that points at the sidecar needs it set to the **relay's** hostname, encoded as `0x` hex.
 
-The hostname is the address in lowercase, without `https://`, the key before `@`, the port or the path: for `https://0xabc…@relay.example.org`, it's `relay.example.org`. Encode it:
+The hostname is the address in lowercase, without `https://`, the key before `@`, the port, or the path: for `https://0xabc…@relay.example.org`, it's `relay.example.org`. Encode it:
 
 <When os="unix">
 
@@ -206,4 +206,4 @@ WARN proposer: Proposer settings contain deprecated v1 builder fields (enabled, 
 
 Your file still has a `builder.enabled` or `builder.gas_limit` from the MEV-Boost setup. Rewrite it as above before the fork.
 
-**A key ignores your file's builder settings.** A file with a `proposer_config` section replaces the per-key settings saved through the Keymanager API at each restart. Manage per-key builder settings in one place: the file, or the [Keymanager API](/validators/keymanager/).
+**A key ignores your file's builder settings.** A file with a `proposer_config` section replaces the per-key settings saved through the Keymanager API at each restart. Manage per-key builder settings in one place: the file or the [Keymanager API](/validators/keymanager/).

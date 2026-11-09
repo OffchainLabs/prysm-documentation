@@ -19,7 +19,7 @@ Never run the old and new validator clients with the same keys at the same time.
 
 - Your keystore files and their password, or your mnemonic to regenerate them.
 - Plan the execution client: one execution client serves one beacon node. Either run a second one while the new beacon node syncs, or move your existing one to the new beacon node (same `jwt.hex`) and accept the downtime.
-- If both beacon nodes run on the same machine, they need different P2P ports. Prysm uses TCP 13000, UDP 12000 and UDP 13000; most other clients use 9000. See [Ports, peers and router setup](/setup/networking/).
+- If both beacon nodes run on the same machine, they need different P2P ports. Prysm uses TCP 13000, UDP 12000, and UDP 13000; most other clients use 9000. See [Ports, peers and router setup](/setup/networking/).
 
 ## Switch to Prysm
 
@@ -255,4 +255,4 @@ Never run the old and new validator clients with the same keys at the same time.
 
 - The new validator client reports your keys as active and submits attestations within a few epochs (longer with doppelganger protection).
 - A block explorer shows attestations again.
-- Once it has run for a day, remove the old client's keys and data, and its services, so it can't start by accident.
+- Once it has run for a day, remove the old client’s keys, data, and services so it can’t start by accident.

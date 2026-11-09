@@ -31,8 +31,7 @@ curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATO
 
 </When>
 
-The start tells you the type (`0x00`, `0x01` or `0x02`), and the last 40 hex characters are the withdrawal address. Once set, the withdrawal address can't be changed.
-
+The start indicates the type (`0x00`, `0x01`, or `0x02`), and the last 40 hex characters are the withdrawal address. Once set, you can’t change the withdrawal address.
 ## Automatic withdrawals
 
 You don't need to do anything. The network goes through all validators in turn and pays out what each one has to withdraw:
@@ -43,7 +42,7 @@ You don't need to do anything. The network goes through all validators in turn a
 | `0x01…` (regular) | Everything above 32 ETH | The full balance |
 | `0x02…` (compounding) | Everything above 2048 ETH | The full balance |
 
-On mainnet a full round takes several days, so expect a payment every few days to a week or more. After an exit, the full balance is paid in the first round once the validator is withdrawable, about 27 hours after its exit epoch.
+On mainnet, a full round takes several days, so expect a payment every few days to a week or more. After an exit, the full balance is paid in the first round once the validator is withdrawable, about 27 hours after its exit epoch.
 
 <When>
 
@@ -51,7 +50,7 @@ To see your withdrawals, look under "withdrawals" for your validator or address 
 
 </When>
 
-**No withdrawals arrive?** Check the credentials: nothing is withdrawn from a `0x00` validator. A new `0x01` validator has little above 32 ETH to pay out. A `0x02` validator pays nothing automatically until it exceeds 2048 ETH: use a partial withdrawal instead.
+**No withdrawals arrive?** Check the credentials: nothing is withdrawn from a `0x00` validator. A new `0x01` validator has a little above 32 ETH to pay out. A `0x02` validator pays nothing automatically until it exceeds 2048 ETH: use a partial withdrawal instead.
 
 ## Manual withdrawals
 
@@ -67,7 +66,7 @@ A `0x01` validator can't make manual withdrawals. See [Convert a `0x01` validato
 
 <When net="mainnet">
 
-Open **Validator actions** on the Staking Launchpad: `https://launchpad.ethereum.org/en/validator-actions`. Connect the wallet that controls the withdrawal address, select the validator and choose **Request partial withdrawal**.
+Open **Validator actions** on the Staking Launchpad: `https://launchpad.ethereum.org/en/validator-actions`. Connect the wallet that controls the withdrawal address, select the validator, and choose **Request partial withdrawal**.
 
 </When>
 <When net="hoodi">

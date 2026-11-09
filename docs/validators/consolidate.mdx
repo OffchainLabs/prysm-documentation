@@ -8,7 +8,7 @@ import { SetupPicker, When } from '@site/src/components/SetupPicker';
 
 # Merge several validators into one
 
-A consolidation moves the whole balance of one validator (the **source**) into another (the **target**), then exits the source. The target is a compounding (`0x02`) validator: it keeps up to 2048 ETH staked, so several validators can become one. To consolidate, send a request **from the source's withdrawal address**. Prysm and your keys are not involved. A consolidation is permanent: the source can't be reactivated.
+A consolidation moves the whole balance of one validator (the **source**) into another (the **target**), then exits the source. The target is a compounding (`0x02`) validator: it keeps up to 2048 ETH staked so that several validators can become one. To consolidate, send a request **from the source's withdrawal address**. Prysm and your keys are not involved. A consolidation is permanent: the source can't be reactivated.
 
 <SetupPicker groups="os net" nets="mainnet hoodi" />
 
@@ -18,9 +18,9 @@ A consolidation moves the whole balance of one validator (the **source**) into a
 - The source has `0x01` or `0x02` credentials. If it starts with `0x00`, first [convert it to `0x01`](/validators/add-withdrawal-address/).
 - Both validators are active and not exiting, and the source has been active for at least 256 epochs (about 27 hours).
 - The source has no partial withdrawal waiting in the queue.
-- You control the source's withdrawal address in a wallet that can connect to a website (for example a hardware wallet through a browser extension), with a little ETH for gas and the request fee.
+- You control the source's withdrawal address in a wallet that can connect to a website (for example, a hardware wallet through a browser extension), with a little ETH for gas and the request fee.
 
-If one of these isn't met, the network ignores the request and the fee isn't refunded.
+If any of these aren’t met, the network ignores the request and doesn’t refund the fee.
 
 ## Check your credentials
 
@@ -81,7 +81,7 @@ The network doesn't check who owns the target. If you consolidate into someone e
 
 2. **Connect the wallet** that controls the source's withdrawal address. The console lists its validators.
 
-3. **Select the target** with **Select Target Validator**. Only active `0x02` validators can be picked. To pick a validator that isn't yours, paste its full public key: the console marks it with a warning.
+3. **Select the target** with **Select Target Validator**. You can only pick active `0x02` validators. To pick a validator that isn't yours, paste its full public key; the console marks it with a warning.
 
 4. **Select the sources**, check their index and public key, then click **Consolidate Selected**.
 
@@ -94,7 +94,7 @@ The network doesn't check who owns the target. If you consolidate into someone e
 {/* Mainnet verified against ethereum/staking-launchpad (dev branch, src/pages/Actions), 2026-10; Hoodi against ethstaker/staker-console (src/pages/Consolidate, src/modals/TargetValidatorSelectionModal), 2026-10; consolidation rules against prysm beacon-chain/core/requests/consolidations.go */}
 
 :::caution[Keep the source running]
-The source still has duties until its balance has moved to the target, including sync committee duties, which can continue after it has exited. Keep it in your validator client until its status is `withdrawal_done`, or it loses balance.
+The source still has duties until its balance moves to the target, including sync committee duties, which can continue after it exits. Keep it in your validator client until its status is withdrawal_done, or it loses balance.
 :::
 
 ## Check that it works
@@ -140,4 +140,4 @@ curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/pending_consolidatio
 
 </When>
 
-When many validators are exiting or consolidating, the exit can take days. Once the balance has moved, the target's balance includes the source's.
+When many validators exit or consolidate, the exit can take days. Once the balance has moved, the target’s balance includes the source’s.

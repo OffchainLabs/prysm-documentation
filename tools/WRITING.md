@@ -4,25 +4,25 @@ Read this before writing any page. It is the contract every writer follows, so p
 
 ## Audience and goal
 
-Readers are **node operators and stakers** (most), and **developers** (the Developers section). They arrive with a task: install Prysm, connect Geth, add validators, fix a problem. Every page answers "what do I do, and how do I know it worked?" Explain *why* only as much as helps them decide or avoid a mistake; deep background belongs in Learn.
+Readers are **node operators and stakers** (most), and **developers** (the Developers section). They arrive with a task: install Prysm, connect Geth, add validators, fix a problem. Every page answers "what do I do, and how do I know it worked?" Explain only as much as helps them decide or avoid a mistake; deep background belongs in Learn.
 
 ## Keep it simple (the user-first rules)
 
-The site is for people who run Prysm, not people who build it. These rules win over anything else in this guide.
+The site is for people who run Prysm, not people who build it. These rules win trump everything else in this guide.
 
 - **Command first.** The first step with a command should appear within the first screen. Background goes after the steps, or in one sentence before them.
-- **No internals.** No protocol mechanics, spec constants, Engine API method names, database layouts, p2p internals or Go/Bazel details. If a user needs a concept to make a decision, give it in one or two plain sentences and link to Learn.
+- **No internals.** No protocol mechanics, spec constants, Engine API method names, database layouts, p2p internals, or Go/Bazel details. If a user needs a concept to make a decision, give it in one or two plain sentences and link to Learn.
 - **Only the flags that matter.** Show the 2–5 flags a user actually sets for the task, with their defaults. Link the rest to the generated reference (`/reference/cli/<bin>/`). Never copy flag tables from the reference.
 - **One page per task.** Variants (OS, network, execution client, runner) are tabs on one page, not separate pages.
 - **Length.** Aim for 400–900 words per how-to page, under 600 for overview pages. If a page runs long, cut explanation, not steps.
-- **Every how-to ends with "Check that it works".** Give the real log line, command or metric that proves success.
+- **Every how-to ends with "Check that it works".** Give the real log line, command, or metric that proves success.
 - **Link to pages, not anchors, on pages you don't own.** Other writers may rename headings.
 
 ## Voice
 
 - Second person, active voice, present tense. "Start the beacon node", not "The beacon node should be started".
 - Plain words. Say what something does. No marketing ("powerful", "seamless", "robust"), no filler ("simply", "just", "easily", "in order to").
-- Sentence case for titles and headings. No title case, no ALL CAPS labels.
+- Sentence case for titles and headings. Don't use title case, no ALL CAPS labels.
 - Short paragraphs (1–4 sentences). Prefer lists and tables for anything the reader scans.
 - Be specific: real flag names, real ports, real file paths, real log lines.
 - British/American: use American spelling.
@@ -86,7 +86,7 @@ import Flag from '@site/src/components/Flag';
 import PrysmVersion from '@site/src/components/PrysmVersion';
 ```
 
-- `<Flag name="checkpoint-sync-url" />` → linked `--checkpoint-sync-url` (beacon-chain by default). `bin="validator"` or `bin="prysmctl"` for others; `value="..."` renders `--name=value`. **The build fails if the flag doesn't exist**, which is intended. Use it in prose; inside code blocks write flags normally.
+- `<Flag name="checkpoint-sync-url" />` → linked `--checkpoint-sync-url` (beacon-chain by default). `bin="validator"` or `bin="prysmctl"` for others; `value="..."` renders `--name=value`. **The build fails if the flag doesn't exist**, which is intended. Use it in prose; inside code blocks, write flags normally.
 - `<PrysmVersion />` → current release (`v7.2.0`). Never hard-code the current version.
 - Asides: `:::note`, `:::tip`, `:::caution`, `:::danger` (with `[Title]` optional). Use `danger` only for loss of funds or slashing.
 - `<FileTree>` for directory layouts.
@@ -106,10 +106,10 @@ For a simple diagram, write inline SVG in a React component under `src/component
 ## Accuracy rules (non-negotiable)
 
 1. **Prysm flags:** every flag you mention must exist in `src/data/cli-*.json` (the `<Flag>` component enforces this in prose). Read the flag's implementation in `../prysm` (`/Users/manu/OffchainLabs/prysm`, at release v7.2.0 plus a few commits) when behavior matters: defaults, interactions, units.
-2. **Prysm behavior:** confirm claims in the source, not in the old docs. The old docs are a source of *topics*, not facts. They contain mistakes (e.g. they claimed YAML config overrides CLI flags; the opposite is true).
+2. **Prysm behavior:** confirm claims in the source, not in the old docs. The old docs are a source of *topics*, not facts. They contain mistakes (e.g., they claimed YAML config overrides CLI flags; the opposite is true).
 3. **Other software** (execution clients, MEV-Boost, Web3Signer, deposit CLI): check flags and behavior against the project's official docs or source on GitHub for the current release (use WebFetch/WebSearch). Note the version you checked in an MDX comment near the command: `{/* Verified against Geth v1.16.x docs, 2026-09 */}`.
 4. **If you can't verify something**, don't guess. Leave `{/* VERIFY: what and why */}` next to it and list it in your report.
-5. Never invent log lines, metrics, URLs, version numbers or benchmark figures.
+5. Never invent log lines, metrics, URLs, version numbers, or benchmark figures.
 
 ## Source material
 
@@ -117,14 +117,14 @@ For a simple diagram, write inline SVG in a React component under `src/component
 - Older v1 pages: `archive/v1-pages/` if present.
 - Original Docusaurus docs: `/Users/manu/OffchainLabs/prysm-documentation/docs/`.
 - Images: `public/images/` (reference as `/images/<file>`).
-- Prysm source: `/Users/manu/OffchainLabs/prysm`. **Read only; never modify it, never run the beacon node or validator against a real network, never write to `~/Library/Eth2` or other default data dirs.** Running `--help` or unit-level `go run` tools is fine.
+- Prysm source: `/Users/manu/OffchainLabs/prysm`. **Read-only; never modify it, never run the beacon node or validator against a real network, never write to `~/Library/Eth2` or other default data dirs.** Running `--help` or unit-level `go run` tools is fine.
 
 ## Working rules
 
 - Write only the pages your assignment owns (see the `owner` column in `tools/ia.mjs`), plus new files under `src/components/diagrams/` or `src/data/flag-notes/` if your assignment says so. Replace the whole stub file, including its frontmatter.
 - Every page needs a real `description` (one sentence, used by search and link cards).
 - Don't edit `docusaurus.config.ts`, `tools/ia.mjs`, `src/css/`, existing components, or other writers' pages. If you need a new page or a change there, say so in your report.
-- **Verify with a build:** `npm run build` must exit 0 (it fails on broken links, broken anchors and unknown `<Flag>` names). If several people build at once, build a private copy instead, because Docusaurus writes a shared `.docusaurus/` folder:
+- **Verify with a build:** `npm run build` must exit 0 (it fails on broken links, broken anchors, and unknown `<Flag>` names). If several people build at once, build a private copy instead, because Docusaurus writes a shared `.docusaurus/` folder:
   ```bash
   rsync -a --delete --exclude node_modules --exclude build --exclude .docusaurus --exclude archive ./ /tmp/<you>/site/
   ln -sfn "$PWD/node_modules" /tmp/<you>/site/node_modules

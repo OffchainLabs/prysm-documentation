@@ -7,7 +7,7 @@ import { Aside, Steps } from '@site/src/components/ui';
 import { SetupPicker, When } from '@site/src/components/SetupPicker';
 import Flag from '@site/src/components/Flag';
 
-A beacon node can also start from the very first state of the chain, the genesis state, and replay every block since. That takes days on mainnet, against minutes with [checkpoint sync](/setup/checkpoint-sync/).
+A beacon node can also start from the very first state of the chain, the genesis state, and replay every block since. That takes days on mainnet, compared with minutes [checkpoint sync](/setup/checkpoint-sync/).
 
 <Aside type="tip" title="Use checkpoint sync unless you have a reason not to">
 A checkpoint-synced node follows the same chain and runs validators just as well. Syncing from genesis only costs you time, unless one of the reasons below applies.
@@ -164,7 +164,7 @@ On proof of stake, a node that's been offline longer than the weak subjectivity 
 	--postpone-shutdown-for-proposals
 	```
 
-	When you stop or restart the beacon node, it then waits until your validators' upcoming block proposals are done. See [Don't restart just before a proposal](/install/update/#dont-restart-just-before-a-proposal).
+	When you stop or restart the beacon node, it then waits until your validators' upcoming block proposals are done. Refer to the [Don't restart just before a proposal](/install/update/#dont-restart-just-before-a-proposal) page.
 
 3. **Watch the logs.** Once it has peers, the node logs its progress every few seconds:
 

@@ -9,8 +9,8 @@ Prysm has no Dockerfile. Bazel builds the container images straight from the com
 
 ## Before you begin
 
-- [Build with Bazel](/developers/build/) works on your machine.
-- Docker (or Podman) installed and running. `bazel run` on an image tarball loads it with `docker load`, or `podman load` if Docker isn't installed.
+- The [Build with Bazel](/developers/build/) quickstart works on your machine.
+- Docker (or Podman) installed and running. `bazel run` on an image tarball; load it with `docker load`, or `podman load` if Docker isn't installed.
 
 ## Build and load an image
 
@@ -21,7 +21,7 @@ Prysm has no Dockerfile. Bazel builds the container images straight from the com
    <Tabs>
    <TabItem label="arm64">
 
-   For Apple silicon Macs and other arm64 machines:
+   For Apple Silicon Macs and other arm64 machines:
 
    ```bash
    bazel run //cmd/beacon-chain:oci_image_tarball --platforms=@io_bazel_rules_go//go/toolchain:linux_arm64_cgo
@@ -83,7 +83,7 @@ docker load --input <FILE>
 
 ## Image targets
 
-`cmd/beacon-chain`, `cmd/validator` and `cmd/prysmctl` each define the same targets:
+`cmd/beacon-chain`, `cmd/validator`, and `cmd/prysmctl` each define the same targets:
 
 | Target | What it builds |
 | --- | --- |
@@ -105,7 +105,7 @@ The tarballs are tagged `latest` in these repositories:
 
 - A distroless Debian 11 base with the C runtime (`gcr.io/prysmaticlabs/distroless/cc-debian11`, pinned by digest in `WORKSPACE`), plus `bash` and `coreutils`.
 - An `/etc/passwd` with `root` (UID 0) and `nonroot` (UID 1001). The image doesn't set a user, so containers run as root unless you pass `--user`.
-- The binary at `/beacon-chain`, `/validator` or `/prysmctl`, which is also the entrypoint. A symlink keeps the old path `/app/cmd/<NAME>/<NAME>` working.
+- The binary is at `/beacon-chain`, `/validator`, or `/prysmctl`, which is also the entrypoint. A symlink keeps the old path `/app/cmd/<NAME>/<NAME>` working.
 
 Because the entrypoint is the binary, arguments to `docker run` go straight to it.
 

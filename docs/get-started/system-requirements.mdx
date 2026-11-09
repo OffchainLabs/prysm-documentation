@@ -5,7 +5,7 @@ description: The CPU, memory, disk, network and operating system you need to run
 
 import Flag from '@site/src/components/Flag';
 
-A node is an execution client and a Prysm beacon node on the same machine. Size the machine for both. Adding a validator client costs little on its own, but the recommended figures for validators are higher because a validator needs its node to keep up at all times.
+A node is an execution client and a Prysm beacon node on the same machine. Size the machine for both. Adding a validator client costs little on its own, but recommended validator figures are higher because a validator needs its node to keep up at all times.
 
 ## Hardware
 
@@ -31,7 +31,7 @@ The recommended columns follow [EIP-7870](https://eips.ethereum.org/EIPS/eip-787
 | Prysm beacon node, synced from genesis with pruning disabled | About 1 TB |
 | Execution client | Varies by client and mode. Check your client's documentation. |
 
-The execution client's database grows every day, and ethereum.org expects a 2 TB disk to fill up around 2027. Buy 4 TB if you can, and keep both clients on the same fast disk. The beacon node's blob storage stays roughly constant, because it deletes old blobs automatically. Running with <Flag name="supernode" /> or <Flag name="semi-supernode" /> stores more.
+The execution client's database grows every day, and ethereum.org expects a 2 TB disk to fill up around 2027. If you can, buy 4 TB and keep both clients on the same fast disk. The beacon node’s blob storage stays roughly constant, because it deletes old blobs automatically. Running with <Flag name="supernode" /> or <Flag name="semi-supernode" /> stores more.
 
 ## Operating systems
 

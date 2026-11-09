@@ -14,7 +14,7 @@ Most staking losses come from a few causes: a leaked mnemonic, a wrong withdrawa
 ## Protect your keys
 
 - [ ] **Generate keys offline.** Run the key generation tool on a machine that is disconnected from the network, and copy only the keystores and `deposit_data` file off it. See [Create validator keys](/validators/create-keys/).
-- [ ] **Keep the mnemonic on paper or metal, offline.** No photos, cloud notes, password managers or email. Never type it into a networked computer. Nobody legitimate ever asks for it, including Prysm maintainers.
+- [ ] **Keep the mnemonic on paper or metal, offline.** No photos, cloud notes, password managers, or email. Never type it into a networked computer. Nobody legitimate ever asks for it, including Prysm maintainers.
 - [ ] **Set a withdrawal address you control.** Use an address from a hardware wallet or multisig, never an exchange deposit address, and set it when you create keys. After the deposit, check on a block explorer that the withdrawal credentials end with that address.
 - [ ] **Use strong, unique keystore and wallet passwords.** Anyone who copies a keystore can try passwords offline.
 - [ ] **Lock down the password file.** <Flag name="wallet-password-file" bin="validator" /> stores the wallet password in plain text. Make it readable only by the account that runs the validator client:
@@ -44,7 +44,7 @@ Most staking losses come from a few causes: a leaked mnemonic, a wrong withdrawa
 
 ## Never get slashed
 
-- [ ] **Run each key in exactly one validator client.** No backup or failover copies.
+- [ ] **Run each key in exactly one validator client**—no backup or failover copies.
 - [ ] **When you move keys, stop the old validator, wait at least 2 epochs, and bring the slashing protection history along.** See [Move to a new machine](/operate/move-to-new-machine/).
 - [ ] **Turn on doppelganger protection** with <Flag name="enable-doppelganger" bin="validator" /> when you start a validator after a move.
 
@@ -64,7 +64,7 @@ Every Prysm API listens on `127.0.0.1` by default. Keep it that way.
 | 8551 | Execution&nbsp;client | Engine API | Controls your execution client. Keep it on localhost or a private network. |
 | 8545 | Execution&nbsp;client | JSON-RPC API | Anyone can use your execution client, and load it with requests. |
 
-- [ ] **Open only the P2P ports to the internet:** TCP 13000, UDP 12000 and UDP 13000 for Prysm, and your execution client's P2P port. See [Ports](/reference/ports/).
+- [ ] **Open only the P2P ports to the internet:** TCP 13000, UDP 12000, and UDP 13000 for Prysm, and your execution client's P2P port. See [Ports](/reference/ports/).
 - [ ] **Reach APIs from another machine only through an SSH tunnel or a VPN.** Never bind an API to `0.0.0.0` on a machine with a public IP. For example, to reach the Beacon API from your laptop, run on the laptop:
 
   ```bash
@@ -97,12 +97,12 @@ Get-NetTCPConnection -State Listen | Where-Object LocalPort -in 3500,4000,7500,8
 
 </When>
 
-Every line must show `127.0.0.1` or `::1` (or a private IP), not `0.0.0.0`, `::` or `*`.
+Every line must show `127.0.0.1`, or `::1` (or a private IP), not `0.0.0.0`, `::`, or `*`.
 
 ## Lock down the host
 
-- [ ] **Use a dedicated machine** that runs only your node software. No browsing, email or games.
-- [ ] **Use SSH keys only.** Disable password logins, after confirming key login works in a second session:
+- [ ] **Use a dedicated machine** that runs only your node software—no browsing, email, or games.
+- [ ] **Use SSH keys only.** Disable password logins after confirming key login works in a second session:
 
   <When os="unix">
 
@@ -169,12 +169,12 @@ Every line must show `127.0.0.1` or `::1` (or a private IP), not `0.0.0.0`, `::`
   </When>
 
   On a home network, forward only the P2P ports on your router, and don't use the router's DMZ.
-- [ ] **Run each client as its own unprivileged user** (`execution`, `beacon`, `validator`), never as root or an administrator. See [Run with systemd](/setup/run-with-systemd/).
+- [ ] **Run each client as its own unprivileged user** (`execution`, `beacon`, `validator`), never as root or an administrator. Refer to the [Run with systemd](/setup/run-with-systemd/) page for more information.
 - [ ] **Encrypt backups** and store them off the machine. Don't sync the live validator directory to a cloud drive.
 
 ## Install and update safely
 
-- [ ] **Verify every download** against its signature or checksum. See [How verification works](/install/#how-verification-works). Do the same for the rest of your stack (execution client, MEV-Boost, remote signer, deposit CLI): download each from its official release page and follow that project's own verification steps.
+- [ ] **Verify every download** against its signature or checksum. Read the [How verification works](/install/#how-verification-works) page for more details. Do the same for the rest of your stack (execution client, MEV-Boost, remote signer, deposit CLI): download each from its official release page and follow that project's own verification steps.
 - [ ] **Turn on automatic OS security updates, and make sure your node starts on boot.**
 
   <When os="unix">
@@ -195,14 +195,14 @@ Every line must show `127.0.0.1` or `::1` (or a private IP), not `0.0.0.0`, `::`
   </When>
   <When os="win">
 
-  Keep Windows Update on, in **Settings** > **Windows Update**. It restarts the machine to install updates, so make sure the execution client, beacon node and validator client start again after a restart.
+  Keep Windows Update on, in **Settings** > **Windows Update**. It restarts the machine to install updates, so make sure the execution client, beacon node, and validator client start again after a restart.
 
   </When>
 - [ ] **Update Prysm and your execution client promptly** when a release is marked as a security or high-priority update. See [Update and roll back](/install/update/).
 - [ ] **Watch for problems.** Set up [dashboards and alerts](/operate/metrics/), and rehearse migrations and restores on Hoodi.
 
 <Aside type="caution" title="Watch out for scams">
-Fake support staff in Discord DMs, fake launchpads and "validator tools" that ask for your mnemonic are common. Prysm maintainers never contact you first by DM and never ask for your mnemonic or keys. Deposit only through the official launchpad.
+Fake support staff in Discord DMs, fake launchpads, and "validator tools" that ask for your mnemonic are common. Prysm maintainers never contact you first by DM and never ask for your mnemonic or keys. Deposit only through the official launchpad.
 </Aside>
 
 ## Report a vulnerability

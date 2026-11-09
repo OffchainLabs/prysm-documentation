@@ -7,14 +7,14 @@ import { SetupPicker, When } from '@site/src/components/SetupPicker';
 import Flag from '@site/src/components/Flag';
 import TopologyDiagram from '@site/src/components/diagrams/TopologyDiagram';
 
-With a remote signer, the Prysm validator client never holds private keys. It sends each signing request to [Web3Signer](https://docs.web3signer.consensys.io/), which holds the keys, checks its own slashing protection database and returns the signature. Use it when keys must live on a separate, hardened host or in a cloud key vault or HSM.
+With a remote signer, the Prysm validator client never holds private keys. It sends each signing request to [Web3Signer](https://docs.web3signer.consensys.io/), which holds the keys, checks its slashing-protection database, and returns the signature. Use it when keys must live on a separate, hardened host, in a cloud key vault, or in an HSM.
 
 <SetupPicker groups="os net" nets="mainnet hoodi" />
 
 ## Before you begin
 
 - A synced beacon node. See the [Quickstart](/get-started/quickstart/).
-- Your validator keystores, and their slashing protection history if they signed anywhere before.
+- Your validator keystores and their slashing-protection history if they signed anywhere before.
 - A [fee recipient](/validators/fee-recipient/).
 
 <TopologyDiagram variant="remote-signer" />
@@ -111,7 +111,7 @@ Add them to your validator client command and restart it:
 Replace the placeholders with your `0x`-prefixed public keys. Keep Web3Signer on the same host or LAN: every duty waits for a signature. The validator client still keeps its own slashing protection database, so you get two layers of protection.
 
 :::danger[Move slashing protection history with the keys]
-If the keys ever signed anywhere else, import that client's slashing protection history into Web3Signer and into Prysm before anything signs, and make sure the old client can never run the keys again. See [Move your slashing protection history](/validators/slashing-protection-history/).
+If the keys ever signed anywhere else, import that client's slashing protection history into Web3Signer and into Prysm before anything signs, and make sure the old client can never run the keys again. Refer tp tje [Move your slashing protection history](/validators/slashing-protection-history/) page.
 :::
 
 ## Check that it works

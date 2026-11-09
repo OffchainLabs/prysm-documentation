@@ -9,14 +9,14 @@ import Flag from '@site/src/components/Flag';
 
 <SetupPicker groups="os net" />
 
-An archive node answers questions about any past slot quickly, for explorers, indexers and research. You don't need one to stake. It needs far more disk than a staking node; see [Disk space](/setup/storage/) for what a regular node uses.
+An archive node quickly answers questions about any past slot for explorers, indexers, and research. You don’t need one to stake. It needs far more disk space than a staking node; see [Disk space](/setup/storage/) for what a regular node uses.
 
 The node starts from a [checkpoint](/setup/checkpoint-sync/), so it follows the chain within minutes. In the background, it then downloads every block back to genesis and rebuilds every historical state.
 
 ## Before you begin
 
 - A connected execution client, with the folder layout from [Connect your execution client](/setup/connect-execution-client/).
-- A beacon node data directory that's **empty**. Archive mode needs a database created with it; it can't convert an existing one.
+- * A beacon node data directory that’s **empty**. Archive mode needs a database; it can’t convert an existing one.
 - A checkpoint sync provider: your own synced beacon node, or a public endpoint from the community [checkpoint sync endpoints list](https://eth-clients.github.io/checkpoint-sync-endpoints/).
 
 ## Set it up
@@ -92,7 +92,7 @@ The node starts from a [checkpoint](/setup/checkpoint-sync/), so it follows the 
 	INFO archive: Archive state regeneration in progress completion=…% originSlot=0 regeneratedThroughSlot=… targetSlot=…
 	```
 
-	On mainnet, both phases take days. The node follows the chain the whole time, and a restart carries on where it stopped. When it's done, Prysm logs:
+	1. On mainnet, both phases take days. The node follows the chain the whole time, and a restart resumes where it left off. When it’s done, Prysm logs:
 
 	```text
 	INFO archive: Archive state regeneration finished; all historical states are available regeneratedThroughSlot=…
@@ -119,7 +119,7 @@ curl.exe -s http://localhost:3500/eth/v1/beacon/states/1000/root
 
 </When>
 
-Once regeneration has finished, it returns a root at once, for any slot back to genesis. Compare it with the same query on another archive node or a block explorer.
+Once regeneration finishes, it returns a root for any slot back to genesis. Compare it with the same query on another archive node or a block explorer.
 
 ## Good to know
 

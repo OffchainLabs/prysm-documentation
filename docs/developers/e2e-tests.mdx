@@ -5,13 +5,13 @@ description: "Run Prysm's end-to-end tests, which start a private network of Get
 
 import { Steps } from '@site/src/components/ui';
 
-The end-to-end (E2E) tests in `testing/endtoend/` start a complete private network from the binaries you built: a boot node, a Geth execution chain, two Prysm beacon nodes and their validators. They run it for several epochs and, at each epoch, run evaluators that check peers connect, validators attest, the chain finalizes and forks activate. Run the relevant test locally when your change touches how components interact.
+The end-to-end (E2E) tests in `testing/endtoend/` start a complete private network from the binaries you built: a boot node, a Geth execution chain, two Prysm beacon nodes, and their validators. They run it for several epochs and, at each epoch, run evaluators that check peers connect, validators attest, the chain finalizes, and forks activate. Run the relevant test locally when your change touches how components interact.
 
 ## Before you begin
 
-- [Build with Bazel](/developers/build/) works on your machine.
-- Time. The first run also builds Geth and fetches Web3Signer, and a run lasts many minutes.
-- No other beacon node, validator or Geth on the machine competing for ports or CPU.
+- The [Build with Bazel](/developers/build/) quickstart works on your machine.
+- Time. The first run also builds Geth and fetches Web3Signer; it can take a while.
+- No other beacon node, validator, or Geth on the machine competing for ports or CPU.
 
 ## Test targets
 
@@ -47,7 +47,7 @@ Each target sets its preset with `eth_network`, so you don't need `--config=mini
    bazel test //testing/endtoend:go_default_test --test_filter='TestEndToEnd_MinimalConfig$' --test_output=streamed
    ```
 
-   Without `--test_filter`, every test in the target runs. The target is split into two shards, so with a filter one shard may have nothing to run.
+   Without `--test_filter`, every test in the target runs. The target is split into two shards, so with a filter, one shard may have nothing to run.
 
 2. Watch the evaluators. The test prints one subtest per evaluator and epoch, with `PASS` or `FAIL`.
 
@@ -72,7 +72,7 @@ E2E chains use short slots, but a run still takes real time:
 | Minimal (8 slots of 10 seconds) | 80 seconds | `TestEndToEnd_MinimalConfig` runs 10 epochs: about 13 minutes plus startup. |
 | Mainnet (32 slots of 6 seconds) | 192 seconds | `TestEndToEnd_MainnetConfig_MultiClient` runs 8 epochs: about 26 minutes plus startup. |
 
-The target's `size` sets Bazel's timeout: 15 minutes for `large`, 60 minutes for `enormous`. Mainnet-preset runs take longer than 15 minutes, so raise the timeout for them, for example `--test_timeout=3600`.
+The target’s `size` sets Bazel’s timeout: 15 minutes for `large` targets, 60 minutes for `enormous` ones. Mainnet-preset runs take longer than 15 minutes, so raise the timeout for them —for example, `--test_timeout=3600`.
 
 {/* VERIFY: mainnet E2E targets are size = "large" (900 s timeout) but run 8 to 16 epochs of 192 s; check how CI avoids the timeout. */}
 

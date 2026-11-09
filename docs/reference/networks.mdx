@@ -5,9 +5,9 @@ description: The Ethereum networks Prysm supports, with live slot and epoch, upc
 
 import NetworkTable from '@site/src/components/NetworkTable';
 
-Prysm has built-in configuration for these networks. Select one with its flag, such as `--hoodi`, on **both** the beacon node and the validator client. Your execution client must be on the same network.
+Prysm has built-in configuration for these networks. Select one with its flag (e.g., `--hoodi`) on **both** the beacon node and the validator client. Your execution client must be on the same network.
 
-Slot, epoch and fork below are computed live in your browser from each network's genesis time: one slot every 12 seconds, 32 slots per epoch.
+Slot, epoch, and fork below are computed live in your browser from each network’s genesis time: one slot every 12 seconds, 32 slots per epoch.
 
 <NetworkTable />
 
@@ -23,4 +23,4 @@ To join a network that Prysm doesn't have built in, pass its configuration expli
   --contract-deployment-block=0
 ```
 
-Most devnets publish `config.yaml`, `genesis.ssz` and bootnode ENRs in their repository. The same `--chain-config-file` must be passed to the validator client.
+Most devnets publish `config.yaml`, `genesis.ssz`, and bootnode ENRs in their repository. The same `--chain-config-file` must be passed to the validator client.

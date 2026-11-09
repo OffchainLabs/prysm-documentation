@@ -8,7 +8,7 @@ import { SetupPicker, When } from '@site/src/components/SetupPicker';
 
 <SetupPicker groups="devos" />
 
-Prysm pins its Bazel version in the `.bazelversion` file at the root of the repository (currently `7.4.1`). [Bazelisk](https://github.com/bazelbuild/bazelisk) is a small launcher that reads this file, downloads that exact Bazel release and runs it. Install Bazelisk as `bazel` and you never manage Bazel versions by hand.
+Prysm pins its Bazel version in the `.bazelversion` file at the root of the repository (currently `7.4.1`). [Bazelisk](https://github.com/bazelbuild/bazelisk) is a small launcher that reads this file, downloads that exact Bazel release, and runs it. Install Bazelisk as bazel, and you never manage Bazel versions by hand.
 
 ## Before you begin
 
@@ -16,7 +16,7 @@ Prysm pins its Bazel version in the `.bazelversion` file at the root of the repo
 
 - A clone of the repository. See [Overview](/developers/).
 
-The repository registers a hermetic C toolchain on Linux, so the system compiler isn't used.
+The repository registers a hermetic C toolchain on Linux, so it doesn't use the system compiler.
 
 </When>
 <When devos="macos">
@@ -76,7 +76,7 @@ You don't need to install Go for Bazel builds. Bazel downloads the Go SDK set in
 
 </Steps>
 
-Bazelisk picks the version from the `.bazelversion` of the directory you run it in, so a branch that bumps Bazel switches automatically on your next command. Outside a Bazel workspace it falls back to the latest Bazel release, which is why `bazel version` must run inside the clone.
+Bazelisk picks the version from the `.bazelversion` of the directory you run it in, so a branch that bumps Bazel switches automatically on your next command. Outside a Bazel workspace, it falls back to the latest Bazel release, which is why `bazel version` must run inside the clone.
 
 ## Check that it works
 

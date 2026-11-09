@@ -7,7 +7,7 @@ Run the unit tests for the code you change before you open a pull request. Each 
 
 ## Before you begin
 
-- [Build with Bazel](/developers/build/) works on your machine.
+- The [Build with Bazel](/developers/build/) quickstart works on your machine.
 - Run every command from the root of the clone.
 
 ## Run tests
@@ -64,7 +64,7 @@ Pass a regular expression to `--test_filter`. Bazel hands it to Go's `-test.run`
 bazel test //beacon-chain/sync:go_default_test --test_filter='TestStatusRPCHandler_ReturnsHelloMessage$'
 ```
 
-A prefix runs a group of tests, for example every test in `rpc_status_test.go` whose name starts with `TestStatusRPCHandler`:
+A prefix runs a group of tests, for example, every test in `rpc_status_test.go` whose name starts with `TestStatusRPCHandler`:
 
 ```bash
 bazel test //beacon-chain/sync:go_default_test --test_filter='^TestStatusRPCHandler'
@@ -106,4 +106,4 @@ bazel-testlogs/beacon-chain/sync/go_default_test/test.log
 bazel-testlogs/beacon-chain/sync/go_default_test/test.xml
 ```
 
-Targets split with `shard_count` (such as `//beacon-chain/sync:go_default_test`, which has four shards) have one directory per shard, for example `shard_1_of_4/test.log`.
+Targets split with `shard_count` (such as `//beacon-chain/sync:go_default_test`, which has four shards) have one directory per shard, for example, `shard_1_of_4/test.log`.

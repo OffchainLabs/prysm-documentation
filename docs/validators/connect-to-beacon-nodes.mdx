@@ -81,17 +81,17 @@ Keep the two machines on the same local network: every duty waits on the beacon 
 
 ### Several validator clients on one beacon node
 
-Several validator clients can share one beacon node. Give each its own wallet, data directory, HTTP API port and metrics port.
+Several validator clients can share one beacon node. Give each its own wallet, data directory, HTTP API port, and metrics port.
 
 <TopologyDiagram variant="multi-vc" />
 
 :::danger[Never load the same key in two validator clients]
-Their slashing protection databases are separate, so the key would get slashed.
+Their slashing-protection databases are separate so that the key would get slashed.
 :::
 
 ## Several beacon nodes
 
-Give the validator client a comma-separated list of beacon nodes so it keeps working while one of them is down, restarting or updating. Your keys still run in **one** validator client with one slashing protection database, so this adds no slashing risk. It is not the same as running your keys twice, which you must never do (see [Avoid slashing](/validators/avoid-slashing/)).
+Give the validator client a comma-separated list of beacon nodes so it keeps working while one is down, restarting, or updating. Your keys still run in **one** validator client with one slashing protection database, so this adds no slashing risk. It is not the same as running your keys twice, which you must never do (see [Avoid slashing](/validators/avoid-slashing/)).
 
 <When api="grpc">
 
@@ -118,7 +118,7 @@ The validator client uses one node at a time, and the others wait as backups (**
 
 </When>
 
-It uses the first node. Every slot it checks that the current node is up and synced. If not, it moves to the next node in the list and stays there; it doesn't switch back when the first node recovers. A switch logs:
+It uses the first node. Every slot, it checks that the current node is up and synced. If not, it moves to the next node in the list and stays there; it doesn't switch back when the first node recovers. A switch logs:
 
 ```text
 WARN fallback: Switched to responsive beacon node current=<BEACON_2_IP>:4000 previous=<BEACON_1_IP>:4000 tried=[<BEACON_1_IP>:4000]
@@ -151,10 +151,10 @@ The validator client uses all nodes at the same time (**active-active**):
 </When>
 
 - It listens to the event stream of every node, so it learns about a new block from whichever node sees it first.
-- It sends attestations, blocks and other signed messages to every node. A submission succeeds as soon as one node accepts it.
-- For time-critical data (what to attest to, the block to propose) it asks every node at once and takes the answer from a node that already has the newest block. If none catches up in time, it uses the first valid answer so the duty still happens.
+- It sends attestations, blocks, and other signed messages to every node. A submission succeeds as soon as one node accepts it.
+- For time-critical data (what to attest to, the block to propose), it asks every node at once and takes the answer from a node that already has the newest block. If none catches up in time, it uses the first valid answer so the duty still happens.
 - Other requests go to the nodes in the order listed, until one answers.
-- It counts as healthy while at least one node is synced.
+- It counts as healthy as long as one node is synced.
 
 </When>
 
@@ -168,12 +168,12 @@ INFO node: Multiple beacon nodes configured: enabling --stateless so block produ
 
 ### Several validator clients on several beacon nodes
 
-Several validator clients can share the same beacon nodes. Give each one the same list of beacon nodes, and its own wallet, data directory, HTTP API port and metrics port, as with [one beacon node](#several-validator-clients-on-one-beacon-node).
+Several validator clients can share the same beacon nodes. Give each one the same list of beacon nodes, and its own wallet, data directory, HTTP API port, and metrics port, as with [one beacon node](#several-validator-clients-on-one-beacon-node).
 
 <TopologyDiagram variant="multi-vc-several-bn" />
 
 :::danger[Never load the same key in two validator clients]
-Their slashing protection databases are separate, so the key would get slashed.
+Their slashing protection databases are separate so the key would get slashed.
 :::
 
 ## Check that it works
@@ -201,4 +201,4 @@ With one beacon node, `count=1`. Then, in the next epochs, watch for:
 INFO client: Submitted new attestations blockRoot=<ROOT> committeeIndices=[<INDEX>] pubkeys=[<PUBKEY>] sinceSlotStartTime=<DELAY> slot=<SLOT> sourceEpoch=<EPOCH> sourceRoot=<ROOT> targetEpoch=<EPOCH> targetRoot=<ROOT>
 ```
 
-With several nodes, stop one of them: the validator client keeps attesting.
+With several nodes, stop one of them; the validator client keeps attesting.

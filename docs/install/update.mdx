@@ -48,7 +48,7 @@ Then stop each program (Ctrl-C, and wait for it to exit) and start it again with
 
 <PrysmVersionCommand template={`export USE_PRYSM_VERSION={version}\n./prysm.sh beacon-chain <YOUR_FLAGS>`} />
 
-On Windows, `prysm.bat` also fetches the latest release when it starts. Pin with `set USE_PRYSM_VERSION=<VERSION>`.
+On Windows, `prysm.bat` also fetches the latest release when it starts. Pin it with `set USE_PRYSM_VERSION=<VERSION>`.
 
 </TabItem>
 <TabItem label="Binaries">
@@ -87,7 +87,7 @@ docker compose up -d beacon
 docker compose up -d validator
 ```
 
-With plain `docker run`, stop and remove the old container, then run the same command with the new tag. Your data lives in the mounted volume, so nothing is lost.
+With plain `docker run`, stop and remove the old container, then run the same command with the new tag. Your data lives in the mounted volume, so that you won't lose anything.
 
 </TabItem>
 </Tabs>
@@ -106,7 +106,7 @@ WARN node: Postponing shutdown: a connected validator client has an upcoming blo
 
 It then waits until the proposal is done, which can take up to about 13 minutes. Send the stop signal a second time to stop at once. Give your service manager a long enough stop timeout, such as `stop_grace_period: 15m` in Docker Compose or `TimeoutStopSec=900` in systemd.
 
-The validator client does something similar on its own, without a flag. When you stop it, it first finishes the current slot's attestations, sync committee messages and block proposals. If too little of the slot is left to restart before the next slot's duties, it also waits for those. It waits at most 8 seconds and logs:
+The validator client does something similar on its own, without a flag. When you stop it, it first finishes the current slot’s attestations, sync committee messages, and block proposals. If too little of the slot is left to restart before the next slot’s duties, it also waits for those. It waits at most 8 seconds and logs:
 
 ```text
 INFO client: Waiting for the rewarded duties of the slot to be done before shutting down. Interrupt again to shut down immediately slot=12345678
@@ -130,7 +130,7 @@ It returns something like `{"data":{"version":"Prysm/v7.2.0-03f3712 (linux amd64
 
 ## Roll back
 
-Roll back when a new release misbehaves on your setup and a fix isn't out yet. Use the same steps as an update, with the older release: validator first, then the beacon node.
+Roll back when a new release misbehaves on your setup, and a fix isn't out yet. Use the same steps as an update, with the older release: validator first, then the beacon node.
 
 - **Read the release notes of the release you're leaving.** They say when a downgrade needs special steps. Patch releases (same major and minor number) can usually be swapped either way.
 - **Never roll back past a hard fork your network has already activated.** An older release doesn't know the new rules and can't follow the chain.

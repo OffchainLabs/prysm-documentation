@@ -37,7 +37,7 @@ When adding a page, add it to `tools/ia.mjs`; `node tools/ia-stubs.mjs` creates 
 
 ## Updating the CLI reference
 
-The flag reference is generated from Prysm's source, so it never drifts from the release. The `update-cli-reference` GitHub workflow does this every Monday from the latest Prysm release and opens a PR when anything changed. To do it by hand, generate from the exact release tag, not from `develop`:
+The flag reference is generated from Prysm's source, so it never drifts from the release. The `update-cli-reference` GitHub workflow does this every Monday from the latest Prysm release and opens a PR when anything changes. To do it by hand, generate from the exact release tag, not from `develop`:
 
 ```bash
 mkdir -p /tmp/prysm-release && git -C ../prysm archive v7.2.0 | tar -x -C /tmp/prysm-release
