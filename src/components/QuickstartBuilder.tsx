@@ -13,6 +13,7 @@ import './QuickstartBuilder.css';
 
 const checkpoints: Record<string, string> = Object.fromEntries(NETWORKS.map((n) => [n.id, n.checkpointSyncUrl]));
 const launchpads: Record<string, string> = Object.fromEntries(NETWORKS.map((n) => [n.id, n.launchpad ?? '']));
+const explorers: Record<string, string> = Object.fromEntries(NETWORKS.map((n) => [n.id, n.explorer]));
 const HOODI_CONSOLE_DEPOSIT = `${NETWORKS.find((n) => n.id === 'hoodi')?.stakerConsole ?? ''}deposit`;
 
 type Key = 'os' | 'net' | 'el' | 'conn' | 'role' | 'sync' | 'mev' | 'fee';
@@ -392,7 +393,7 @@ function build(s: State) {
 		notes,
 		syncing: `${curl} http://localhost:3500/eth/v1/node/syncing`,
 		validatorStatus: `${curl} -s http://localhost:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_PUBKEY>`,
-		explorer: net === 'mainnet' ? 'https://beaconcha.in' : `https://${net}.beaconcha.in`,
+		explorer: explorers[net] ?? explorers.mainnet,
 		checks: `${curl} -s http://localhost:3500/eth/v1/node/syncing\n${curl} -s http://localhost:3500/eth/v1/node/peer_count`,
 	};
 }
