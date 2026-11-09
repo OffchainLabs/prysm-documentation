@@ -1,0 +1,157 @@
+---
+title: "Deposit for a new validator"
+description: "Send your validator deposit through the official Staking Launchpad, avoid phishing sites, and follow the validator until it is active."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import { NETWORKS } from '@site/src/data/networks';
+
+export const mainnet = NETWORKS.find((n) => n.id === 'mainnet');
+
+Your validator exists once its ETH is deposited into the **deposit contract** together with your deposit data.
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+<When net="mainnet">
+
+Use the official **Staking Launchpad**: it checks your `deposit_data-*.json` file and sends the transaction from your wallet.
+
+</When>
+<When net="hoodi">
+
+Use the official **EthStaker console**: it checks your `deposit_data-*.json` file and sends the transaction from your wallet.
+
+</When>
+
+## Before you begin
+
+<When net="mainnet">
+
+- Have your `deposit_data-*.json` file. See [Create validator keys](/validators/create-keys/).
+- Have your node ready: execution client and beacon node synced, keys imported, fee recipient set. A validator that activates while your node is down loses balance. See [Import keys](/validators/import-keys/).
+- Have a wallet (browser extension or hardware wallet) with the deposit amount plus gas.
+
+</When>
+<When net="hoodi">
+
+- Have your `deposit_data-*.json` file. See [Create validator keys](/validators/create-keys/).
+- Have your node ready: execution client and beacon node synced, keys imported, fee recipient set. A validator that activates while your node is down loses balance. See [Import keys](/validators/import-keys/).
+- Have a wallet (browser extension or hardware wallet) with the deposit amount plus gas. Get Hoodi ETH for free from a faucet, such as the [Google Cloud Hoodi faucet](https://cloud.google.com/application/web3/faucet/ethereum/hoodi) or the [pk910 Hoodi PoW faucet](https://hoodi-faucet.pk910.de/). A faucet only needs an address: never give one your mnemonic or private key.
+
+</When>
+
+<When net="mainnet">
+
+:::danger[Only use the official launchpad]
+Scam sites copy the launchpad and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats or emails.
+
+- **Launchpad:** <a href={mainnet.launchpad}>{mainnet.launchpad}</a>
+- **Deposit contract:** <code>{mainnet.depositContract}</code>
+
+Before you sign, check that the transaction goes to exactly this contract address. You can compare it with [ethereum.org](https://ethereum.org/en/staking/deposit-contract/).
+:::
+
+</When>
+<When net="hoodi">
+
+:::danger[Only use the official console]
+Scam sites copy the console and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats or emails.
+
+- **Deposit page:** [https://hoodi.console.ethstaker.org/deposit](https://hoodi.console.ethstaker.org/deposit)
+:::
+
+</When>
+
+Never send ETH to the deposit contract with a plain transfer or from an exchange. A deposit needs the signed data from your file.
+
+<When net="mainnet">
+
+## Deposit through the launchpad
+
+<Steps>
+
+1. **Open the launchpad** (address above) and read through its checklist.
+
+2. **Choose your clients.** Select Prysm and your execution client. This only tailors the launchpad's instructions.
+
+3. **Upload `deposit_data-*.json`.** The launchpad checks the network, amounts, signatures, and that the keys weren't deposited before. If it rejects the file, don't work around it; the usual cause is keys made for another network.
+
+4. **Connect your wallet** and check that it's on the same network as the launchpad.
+
+5. **Send the deposit.** The launchpad creates one transaction per validator. In your wallet, check that each goes to the deposit contract above and that the amount matches (32 ETH for a standard validator).
+
+6. **Keep the transaction hashes** the launchpad shows at the end.
+
+</Steps>
+
+</When>
+<When net="hoodi">
+
+## Deposit through the console
+
+<Steps>
+
+1. **Open the console** (address above) and read through its checklist.
+
+2. **Upload `deposit_data-*.json`.** The console checks the network, amounts, signatures, and that the keys weren't deposited before. If it rejects the file, don't work around it; the usual cause is keys made for another network.
+
+3. **Connect your wallet** and check that it's on the same network as the console.
+
+4. **Send the deposit.** The console sends one transaction for all your validators. In your wallet, check that the total amount matches (32 ETH per standard validator).
+
+5. **Keep the transaction hash** the console shows at the end.
+
+</Steps>
+
+</When>
+
+## How long until it's active
+
+After the deposit transaction is included, the beacon chain processes it, adds your validator, and then activates it.
+
+<When net="mainnet">
+
+- With no queue, on a healthy, finalizing network, this takes about 10 epochs (about an hour).
+- When many people stake at once, deposits wait in a queue, which can take days or weeks.
+- When the network doesn't finalize, which is extremely rare, deposits aren't processed and validators aren't activated until finality resumes.
+
+</When>
+<When net="hoodi">
+
+- With no queue, on a healthy, finalizing network, this takes about 10 epochs (about an hour).
+- When many people stake at once, deposits wait in a queue, which can take days or weeks.
+- When the network doesn't finalize, deposits aren't processed and validators aren't activated until finality resumes.
+
+</When>
+
+<When>
+
+You can see the current entry queue on a block explorer such as <a href="{explorer}">{"{explorer}"}</a>. Keep your node running the whole time: once active, your validator has duties from its first epoch.
+
+</When>
+
+## Check that it works
+
+Ask your own beacon node about the validator:
+
+<When os="unix">
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_PUBKEY> | jq '.data.status'
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_PUBKEY>
+```
+
+</When>
+
+| Status | Meaning |
+| --- | --- |
+| None (the response says `Unknown validator`) | The deposit isn't processed yet. Wait. |
+| `pending_initialized` or `pending_queued` | Deposit processed, waiting for activation. |
+| `active_ongoing` | Active. Check that your validator attests. |

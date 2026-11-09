@@ -1,0 +1,170 @@
+---
+title: "Use MEV-Boost"
+description: "Let external block builders pay for your proposals through MEV-Boost: choose relays, run MEV-Boost, set the Prysm flags, and understand when Prysm builds its own block instead."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+import MevBoostCommand from '@site/src/components/MevBoostCommand';
+
+With [MEV-Boost](https://github.com/flashbots/mev-boost), your validator can propose blocks built by external **builders**, who bid for the right to fill your block. Bids reach you through **relays**. MEV-Boost runs next to your beacon node, asks your relays for the best bid, and Prysm uses it if it pays more than the block your own execution client builds. Most mainnet blocks are built this way.
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+:::note[Until the Gloas fork]
+This page applies until your network forks into Gloas. From then on, your beacon node gets bids from builders itself, and MEV-Boost is optional. See [Use builders after Gloas (ePBS)](/validators/builders/).
+:::
+
+## Before you begin
+
+- A synced execution client, beacon node and validator client. Your execution client stays required: Prysm always builds a local block too, as a fallback.
+- A [fee recipient](/validators/fee-recipient/). Builders pay it.
+
+:::caution[What you trust]
+Your validator signs a builder's block before seeing its transactions. If the relay then fails to publish the block, you miss the proposal. Relays also decide which transactions reach your blocks. Use relays you trust, and more than one. Building locally, without MEV-Boost, is always a valid choice.
+:::
+
+## Choose relays
+
+<When>
+
+The command below uses every working relay from the [EthStaker relay list]({relays}) for your network. Prysm doesn't recommend relays: the list describes each one, so remove any you don't want to use. Compare them on:
+
+</When>
+
+- **Filtering policy.** Some relays exclude transactions from sanctioned addresses; others don't.
+- **Operator and track record.** Who runs it, and how it behaved during past incidents.
+- **Diversity.** Several relays from different operators limit the impact of one failing.
+
+To add a relay, take its URL from the relay's own documentation, for the right network. A relay URL looks like `https://0x<RELAY_PUBKEY>@<RELAY_HOST>`.
+
+## Set up MEV-Boost
+
+<Steps>
+
+1. **Install and start MEV-Boost** from its [releases](https://github.com/flashbots/mev-boost/releases) (or the `flashbots/mev-boost` Docker image), with your relays:
+
+   {/* Verified against MEV-Boost v1.12 README, 2026-09. Prysm behavior checked against v7.2.0 source. */}
+   <MevBoostCommand />
+
+   `-color` keeps the log colors even when the output isn't a terminal, such as in Docker or a service. MEV-Boost listens on `localhost:18550`. Run it as a service like your other components; its README has an example.
+
+2. **Point the beacon node at MEV-Boost.** Add <Flag name="http-mev-relay" /> to your beacon node command and restart it:
+
+   ```text
+   --http-mev-relay=http://127.0.0.1:18550
+   ```
+
+   The beacon node logs:
+
+   ```text
+   INFO builder: Builder has been configured endpoint=http://127.0.0.1:18550
+   ```
+
+3. **Register your validators.** Add <Flag name="enable-builder" bin="validator" /> to your validator client command and restart it. The validator client needs a fee recipient, set with <Flag name="suggested-fee-recipient" bin="validator" /> or a [proposer settings file](/validators/fee-recipient/).
+
+   The validator tells the relays, through the beacon node and MEV-Boost, which fee recipient and gas limit each key wants. It repeats this every epoch.
+
+</Steps>
+
+To use MEV-Boost for some keys only, leave out <Flag name="enable-builder" bin="validator" /> and set `builder.enabled` per key in a [proposer settings file](/validators/fee-recipient/). The flag turns the builder on for every key, overriding the file.
+
+## Local boost and builder boost factor
+
+Prysm uses the builder block only if:
+
+```text
+bid × builder_boost_factor > local_value × (100 + local-block-value-boost)
+```
+
+- <Flag name="local-block-value-boost" /> (beacon node, default `10`) adds a percentage in favor of your local block.
+- `builder_boost_factor` is a percentage the validator client can send with each block request (default `100`, neutral; `0` means always local). Prysm's validator client sends the neutral value, so with Prysm you tune <Flag name="local-block-value-boost" /> instead. Other validator clients connected to a Prysm beacon node may send their own.
+
+**Example.** With the defaults, the local block is worth 0.050 ETH and the best bid is 0.054 ETH. The bid side is 0.054 × 100 = 5.4, the local side 0.050 × 110 = 5.5, so Prysm proposes the local block. A bid of 0.056 ETH (5.6) wins. With `--local-block-value-boost=0`, any bid above 0.050 ETH wins.
+
+## When Prysm builds its own block
+
+For each proposal, the beacon node asks MEV-Boost for a bid and builds a local block at the same time. It proposes the local block when:
+
+- **MEV-Boost fails or is too slow.** No valid bid within <Flag name="builder-header-timeout" /> (1 second). The beacon node proposes the local block, so a broken MEV-Boost costs you MEV, not the proposal. It logs:
+
+  ```text
+  Could not get builder payload
+  ```
+
+- **The chain is missing blocks.** A circuit breaker stops using builders after <Flag name="max-builder-consecutive-missed-slots" /> (default 3) missed slots in a row, or <Flag name="max-builder-epoch-missed-slots" /> (default 5) missed slots in the last 32. It resets on its own, and logs:
+
+  ```text
+  Circuit breaker activated ...
+  ```
+
+- **The bid is too low.** Below <Flag name="min-builder-bid" /> (Gwei, default 0), or not enough above the local block (see [Local boost and builder boost factor](#local-boost-and-builder-boost-factor)).
+
+In each case the log explains the choice with a line starting:
+
+```text
+Proposer: using local execution payload because ...
+```
+
+## Check that it works
+
+- **Validator:** none of these warnings:
+
+  ```text
+  Failed to register validator on builder
+  Beacon node does not utilize a custom builder via the --http-mev-relay flag. Validator registration skipped.
+  ```
+
+- **Relays:** most relays show your registration by public key:
+
+  <When os="unix">
+
+  ```bash
+  curl -s "https://<RELAY_HOST>/relay/v1/data/validator_registration?pubkey=<VALIDATOR_PUBKEY>"
+  ```
+
+  </When>
+  <When os="win">
+
+  ```powershell
+  curl.exe -s "https://<RELAY_HOST>/relay/v1/data/validator_registration?pubkey=<VALIDATOR_PUBKEY>"
+  ```
+
+  </When>
+
+- **Proposals:** when your validator proposes, the beacon node logs:
+
+  ```text
+  Received header with bid
+  ```
+
+  If it doesn't then log why it uses the local block (see [When Prysm builds its own block](#when-prysm-builds-its-own-block)), the builder's block was used. On a block explorer, a builder block usually ends with a payment transaction to your fee recipient.
+
+## Troubleshooting
+
+**The validator logs:**
+
+```text
+Beacon node does not utilize a custom builder via the --http-mev-relay flag
+```
+
+The validator has the builder enabled but the beacon node has no <Flag name="http-mev-relay" />.
+
+**The beacon node logs at startup:**
+
+```text
+Failed to check builder status
+```
+
+MEV-Boost isn't running, listens elsewhere, or can't reach any relay. Check its logs.
+
+**Every proposal uses the local block.** The beacon node logs why for each proposal (see [When Prysm builds its own block](#when-prysm-builds-its-own-block)): a low bid, the boost, the circuit breaker, or a timeout.
+
+**Missed proposal after signing a builder block.** The relay didn't publish it in time. Check the relay's status and consider dropping it.
+
+Don't raise <Flag name="builder-header-timeout" />: a slow builder delays your block, which can get it orphaned.
+
+## Stop using MEV-Boost
+
+Remove <Flag name="enable-builder" bin="validator" /> (and `builder` sections in proposer settings) from the validator, remove <Flag name="http-mev-relay" /> from the beacon node, restart both, then stop MEV-Boost.

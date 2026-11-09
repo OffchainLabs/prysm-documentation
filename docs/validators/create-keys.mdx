@@ -1,0 +1,114 @@
+---
+title: "Create validator keys"
+description: "Generate a mnemonic, validator keystores and a deposit data file with the EthStaker deposit CLI."
+---
+
+import { Steps, FileTree } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+Each validator needs a signing key and a withdrawal address. You create both with the [EthStaker deposit CLI](https://github.com/ethstaker/ethstaker-deposit-cli), which writes a 24-word mnemonic, one keystore file per validator, and a deposit data file for the Staking Launchpad.
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+{/* Verified against ethstaker-deposit-cli v1.3.0 (latest stable) docs and source, 2026-09. v1.3.1 is a pre-release. */}
+
+## Before you begin
+
+- Pick your **withdrawal address**: an Ethereum address you control, ideally in a hardware wallet. Not an exchange address. **It can't be changed later.**
+- Decide how many validators you want (between 32 ETH and 2048 ETH per validator).
+
+:::tip[Use an offline machine if you can]
+The mnemonic controls your validators. The safest place to create it is a computer that is not connected to any network, for example a spare laptop with Wi-Fi off, or a live USB system such as [Tails](https://tails.net). Download and verify the deposit CLI on another machine and copy it over on a USB stick.
+:::
+
+## Regular or compounding
+
+| Type | What happens to rewards |
+| --- | --- |
+| Regular (`0x01`) | Anything above 32 ETH is paid to your withdrawal address automatically |
+| Compounding (`0x02`) | Rewards stay staked and earn more, up to 2048 ETH per validator; you withdraw on request |
+
+Pick regular if you want rewards paid out and one validator per 32 ETH. Pick compounding if you want rewards to compound or one validator with more than 32 ETH. A regular validator can be upgraded to compounding later, but not back.
+
+## Generate your keys
+
+<Steps>
+
+1. **Download the deposit CLI** for your platform from the [releases page](https://github.com/ethstaker/ethstaker-deposit-cli/releases) and check its SHA-256 sum against the `.sha256` file next to it.
+
+   <When os="unix">
+
+   Extract the archive. It contains the `deposit` executable.
+
+   </When>
+   <When os="win">
+
+   Extract the archive. It contains the `deposit.exe` executable.
+
+   </When>
+
+2. **Run `new-mnemonic`** from the extracted folder:
+
+   <When os="unix">
+
+   ```bash
+   ./deposit new-mnemonic --chain={net}
+   ```
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   .\deposit.exe new-mnemonic --chain={net}
+   ```
+
+   </When>
+
+3. **Answer the prompts.** The CLI asks for the mnemonic language, the number of validators, your **withdrawal address** and a **keystore password**. You type this password again when you import the keys into Prysm.
+
+4. **Write down the mnemonic.** The CLI shows 24 words, then asks you to type them back. Store them on paper or steel, in more than one safe place, and never type them into a website or an online machine.
+
+5. **Check the success message:**
+
+   ```text
+   Success!
+   Your keys can be found at: <FOLDER>/validator_keys
+   ```
+
+</Steps>
+
+:::danger[The mnemonic is the master key]
+Anyone with your mnemonic can sign with your validators. If you lose it and your keystores, you can't recover the validators.
+:::
+
+## What you get
+
+<FileTree>
+- validator_keys/
+  - keystore-m_12381_3600_0_0_0-\<TIMESTAMP\>.json one keystore per validator, encrypted with your keystore password
+  - deposit_data-\<TIMESTAMP\>.json one entry per validator, uploaded to the launchpad
+</FileTree>
+
+- The **keystores** go to your validator machine.
+- The **deposit data** file contains no secrets.
+
+Back up the keystores and their password. They're enough to run the validators; the mnemonic is enough to recreate everything.
+
+## Add more validators later
+
+Run `existing-mnemonic`. When the CLI asks for the starting index, enter the number of keys you already have, so it doesn't recreate them:
+
+<When os="unix">
+
+```bash
+./deposit existing-mnemonic --chain={net}
+```
+
+</When>
+<When os="win">
+
+```powershell
+.\deposit.exe existing-mnemonic --chain={net}
+```
+
+</When>

@@ -1,0 +1,104 @@
+---
+title: Back up and restore
+description: What to back up for a Prysm validator (mnemonic, keystores, passwords, slashing protection, configuration), how to make the backup, and how to restore it without getting slashed.
+---
+
+import { Aside, Steps } from '@site/src/components/ui';
+import Flag from '@site/src/components/Flag';
+
+The beacon node and execution client can always be rebuilt from the network. What you can't rebuild are your **keys**, their **passwords**, and your **slashing protection history**. Back those up, keep the backup offline, and test it.
+
+## What to back up
+
+| Item | Where it is | Why | When |
+| --- | --- | --- | --- |
+| **Mnemonic** (24 words) | Paper or metal, offline. Never on the node. | Recreates every validator key. | Once, when you create keys. |
+| **Validator keystores** | `keystore-*.json` from key generation, or exported from the Prysm wallet (below) | Restore without typing the mnemonic. | When you add keys. |
+| **Passwords** | Password manager | Keystores and the wallet are useless without them. | When they change. |
+| **Slashing protection history** | Exported JSON (below) | Stops a restored validator from signing something that conflicts with what it already signed. | Before a migration. |
+| **Configuration** | Config file (<Flag name="config-file" />), proposer settings file, systemd units or `docker-compose.yml` | Rebuilds your setup, including fee recipient and MEV-Boost settings. | When you change them. |
+
+You don't need to back up the beacon database: [checkpoint sync](/setup/checkpoint-sync/) rebuilds it in minutes. You don't need `jwt.hex` either; you can generate a new one and point both clients at it.
+
+<Aside type="danger" title="A backup is a second copy of your keys">
+Anyone with your keystores and their password can run your validator next to yours and get it slashed. Encrypt backups, keep them offline, and never start a validator from a backup while the original might still be running.
+</Aside>
+
+## Before you begin
+
+Know your validator's data directory (<Flag name="datadir" bin="validator" />) and wallet directory (<Flag name="wallet-dir" bin="validator" />). Service setups use `/var/lib/ethereum/validator`. The defaults are:
+
+| | Linux | macOS | Windows |
+| --- | --- | --- | --- |
+| `--datadir` | `~/.eth2` | `~/Library/Eth2` | `%LOCALAPPDATA%\Eth2` |
+| `--wallet-dir` | `~/.eth2validators/prysm-wallet-v2` | `~/Library/Eth2Validators/prysm-wallet-v2` | `%LOCALAPPDATA%\Eth2Validators\prysm-wallet-v2` |
+
+## Make a backup
+
+<Steps>
+
+1. **Export slashing protection.** You can do this while the validator runs, but the file only contains what was signed up to that moment.
+
+   ```bash
+   ./prysm.sh validator slashing-protection-history export \
+     --datadir=<VALIDATOR_DATADIR> \
+     --slashing-protection-export-dir=<BACKUP_DIR>
+   ```
+
+   You should see:
+
+   ```text
+   INFO historycmd: Successfully wrote <BACKUP_DIR>/slashing_protection.json. You can import this file using Prysm's validator slashing-protection-history import command in another machine
+   ```
+
+2. **Back up the keys.** If you still have the original `keystore-*.json` files, back those up. Otherwise, export them from the wallet:
+
+   ```bash
+   ./prysm.sh validator accounts backup \
+     --wallet-dir=<WALLET_DIR> \
+     --backup-dir=<BACKUP_DIR>
+   ```
+
+   The command asks for the wallet password, which keys to include, and a **new password for the backup**. It writes `<BACKUP_DIR>/backup.zip`. Store the backup password with your other passwords.
+
+3. **Copy your configuration files** into the backup.
+
+4. **Encrypt the backup and move it off the node**, for example to an encrypted USB drive. Delete the unencrypted copy.
+
+</Steps>
+
+## Restore
+
+<Steps>
+
+1. **Make sure the original validator is off for good.** Stop and disable it, and wait until a block explorer shows missed attestations.
+
+2. **Import the keys** (unzip `backup.zip` first, or use the original keystores):
+
+   ```bash
+   ./prysm.sh validator accounts import \
+     --keys-dir=<KEYSTORES_DIR> \
+     --wallet-dir=<WALLET_DIR>
+   ```
+
+3. **Import slashing protection** before the validator starts, into the same `--datadir` the validator will use:
+
+   ```bash
+   ./prysm.sh validator slashing-protection-history import \
+     --datadir=<VALIDATOR_DATADIR> \
+     --slashing-protection-json-file=<BACKUP_DIR>/slashing_protection.json
+   ```
+
+4. **Start the beacon node** with checkpoint sync, wait until it is synced, then **start the validator**.
+
+</Steps>
+
+## Check that it works
+
+- This shows the public keys you expect:
+
+  ```bash
+  ./prysm.sh validator accounts list --wallet-dir=<WALLET_DIR>
+  ```
+
+- The validator logs `Validator activated` for each key, then `Submitted new attestations` within an epoch or two. See [Is my node healthy?](/operate/check-health/)

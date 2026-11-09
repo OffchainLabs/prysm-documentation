@@ -1,0 +1,353 @@
+---
+title: Install Prysm
+description: Install the Prysm beacon node and validator client with the prysm.sh launcher, the release binaries or the Docker images, on Linux, macOS or Windows.
+---
+
+import { Steps, Tabs, TabItem } from '@site/src/components/ui';
+import Flag from '@site/src/components/Flag';
+import PrysmVersion from '@site/src/components/PrysmVersion';
+import PrysmVersionCommand from '@site/src/components/PrysmVersionCommand';
+
+Prysm ships as three programs: `beacon-chain` (the beacon node), `validator` (the validator client) and `prysmctl` (a command-line toolbox). Every install method gives you the same programs from the same release, currently <PrysmVersion includeLink />.
+
+| Method | Use it when | Updates |
+| --- | --- | --- |
+| **Launcher script** (`prysm.sh`, `prysm.bat`) | You run Prysm from a terminal, as in the [Quickstart](/get-started/quickstart/). | On every restart, unless you pin a version |
+| **Binaries** | You run Prysm as a systemd service and want updates only when you choose. | When you replace the files |
+| **Docker** | You run your node in containers or Docker Compose. | When you change the image tag |
+
+Not sure? Use the launcher script.
+
+## Install
+
+Pick your operating system, then an install method. Each path ends with a check that the programs run.
+
+<Tabs syncKey="os">
+<TabItem label="Linux, macOS">
+
+<Tabs syncKey="runner">
+<TabItem label="prysm.sh">
+
+The launcher script downloads the release binary for your machine, verifies its checksum and signature, and starts it. It keeps the binaries in a `dist` folder next to itself.
+
+<Steps>
+
+1. Install GnuPG, which the script needs to check signatures. On Debian or Ubuntu:
+
+   ```bash
+   sudo apt install gnupg
+   ```
+
+   On macOS:
+
+   ```bash
+   brew install gnupg
+   ```
+
+2. Create the folder layout used across these docs:
+
+   ```bash
+   mkdir -p ~/ethereum/consensus ~/ethereum/execution
+   cd ~/ethereum/consensus
+   ```
+
+3. Download the script and make it executable:
+
+   ```bash
+   curl https://raw.githubusercontent.com/OffchainLabs/prysm/master/prysm.sh --output prysm.sh
+   chmod +x prysm.sh
+   ```
+
+4. Download and verify the beacon node and validator, then print their versions:
+
+   ```bash
+   ./prysm.sh beacon-chain --version
+   ./prysm.sh validator --version
+   ```
+
+   Each prints a line naming the release, such as `beacon-chain version Prysm/<VERSION>/<COMMIT>`.
+
+</Steps>
+
+Run any program through the script, from the `consensus` folder:
+
+```bash
+./prysm.sh beacon-chain <FLAGS>
+./prysm.sh validator <FLAGS>
+./prysm.sh prysmctl <COMMAND>
+```
+
+</TabItem>
+<TabItem label="Binaries">
+
+Each [GitHub release](https://github.com/OffchainLabs/prysm/releases) has one file per program and platform, named `<program>-<version>-<os>-<arch>`, with a `.sha256` checksum and a `.sig` signature. The commands below pick the right platform for your machine.
+
+<Steps>
+
+1. Install GnuPG, to check signatures. On Debian or Ubuntu:
+
+   ```bash
+   sudo apt install gnupg
+   ```
+
+   On macOS:
+
+   ```bash
+   brew install gnupg
+   ```
+
+2. Download the beacon node, validator and prysmctl, with their checksum and signature files:
+
+   <PrysmVersionCommand template={`VERSION={version}\nOS=$(uname -s | tr '[:upper:]' '[:lower:]')\nARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')\nmkdir -p ~/prysm-download && cd ~/prysm-download\nfor BIN in beacon-chain validator prysmctl; do\n  for EXT in "" .sha256 .sig; do\n    curl -fLO "https://github.com/OffchainLabs/prysm/releases/download/$VERSION/$BIN-$VERSION-$OS-$ARCH$EXT"\n  done\ndone`} />
+
+   Run the next steps in the same terminal: they reuse `VERSION`, `OS` and `ARCH`.
+
+3. Verify them:
+
+   ```bash
+   shasum -a 256 -c *.sha256
+   curl -fsSL https://prysmaticlabs.com/releases/pgp_keys.asc | gpg --import
+   for SIG in *.sig; do gpg --verify "$SIG" "${SIG%.sig}"; done
+   ```
+
+   Every file must report `OK`, and every signature must be a `Good signature` from key `0AE0051D647BA3C1A917AF4072E33E4DF1A5036E`.
+
+4. Install them under their plain names:
+
+   ```bash
+   sudo mkdir -p /usr/local/bin
+   for BIN in beacon-chain validator prysmctl; do
+     sudo install -m 0755 "$BIN-$VERSION-$OS-$ARCH" "/usr/local/bin/$BIN"
+   done
+   ```
+
+5. Check that they run:
+
+   ```bash
+   beacon-chain --version
+   validator --version
+   ```
+
+</Steps>
+
+Linux amd64 also has a faster `beacon-chain-<version>-modern-linux-amd64` build for CPUs with the ADX instruction set. To check, run the following; it prints `adx` if your CPU has it:
+
+```bash
+grep -o -m1 adx /proc/cpuinfo
+```
+
+With `prysm.sh`, set `USE_PRYSM_MODERN=true` to use it.
+
+</TabItem>
+<TabItem label="Docker">
+
+Official images are multi-architecture (`linux/amd64` and `linux/arm64`):
+
+| Program | Image |
+| --- | --- |
+| Beacon node | `gcr.io/offchainlabs/prysm/beacon-chain` |
+| Validator | `gcr.io/offchainlabs/prysm/validator` |
+| prysmctl | `gcr.io/offchainlabs/prysm/cmd/prysmctl` |
+
+<Steps>
+
+1. Pull the current release:
+
+   <PrysmVersionCommand template={`docker pull gcr.io/offchainlabs/prysm/beacon-chain:{version}\ndocker pull gcr.io/offchainlabs/prysm/validator:{version}`} />
+
+2. Check that it runs:
+
+   <PrysmVersionCommand template={`docker run --rm gcr.io/offchainlabs/prysm/beacon-chain:{version} --version`} />
+
+3. Pin the image by digest. The images aren't signed, but a digest names the exact image content and, unlike a tag, can't be moved:
+
+   <PrysmVersionCommand template={`docker inspect --format '{{index .RepoDigests 0}}' gcr.io/offchainlabs/prysm/beacon-chain:{version}`} />
+
+   Then refer to the image as `gcr.io/offchainlabs/prysm/beacon-chain:<VERSION>@sha256:<DIGEST>` in `docker run` or `docker-compose.yml`. Do the same for the validator image.
+
+</Steps>
+
+Use a release tag such as <PrysmVersion />, and change it on purpose when you update. `stable` follows the latest release. `latest` is a development build, not a release: don't run it on a real network.
+
+The image's entrypoint is the program, so anything after the image name is passed to it as flags. Mount a volume for <Flag name="datadir" />, or the data is lost when the container is removed.
+
+</TabItem>
+</Tabs>
+
+</TabItem>
+<TabItem label="Windows">
+
+You need 64-bit Windows 10 or later.
+
+<Tabs syncKey="runner">
+<TabItem label="prysm.bat">
+
+The launcher script downloads the release binary, checks its SHA-256 checksum and starts it. It keeps the binaries in a `dist` folder in the current folder. Use **Command Prompt** (not as Administrator).
+
+<Steps>
+
+1. Create the folder layout used across these docs:
+
+   ```bat
+   mkdir %USERPROFILE%\ethereum\consensus %USERPROFILE%\ethereum\execution
+   cd %USERPROFILE%\ethereum\consensus
+   ```
+
+2. Download the script, and turn on colored output in the console:
+
+   ```bat
+   curl.exe https://raw.githubusercontent.com/OffchainLabs/prysm/master/prysm.bat --output prysm.bat
+   reg add HKCU\Console /v VirtualTerminalLevel /t REG_DWORD /d 1
+   ```
+
+3. Download the beacon node and validator, then print their versions:
+
+   ```bat
+   prysm.bat beacon-chain --version
+   prysm.bat validator --version
+   ```
+
+   Each prints `SHA256 Hash Match!`, then a line naming the release.
+
+</Steps>
+
+Run any program through the script, from the `consensus` folder:
+
+```bat
+prysm.bat beacon-chain <FLAGS>
+prysm.bat validator <FLAGS>
+```
+
+`prysm.bat` doesn't support `prysmctl`: install it with the **Binaries** method.
+
+:::caution
+`prysm.bat` checks the SHA-256 checksum only, not the GPG signature. For the stronger check, use the **Binaries** method.
+:::
+
+</TabItem>
+<TabItem label="Binaries">
+
+Each [GitHub release](https://github.com/OffchainLabs/prysm/releases) has one `.exe` per program, named `<program>-<version>-windows-amd64.exe`, with a `.sha256` checksum and a `.sig` signature. Use **PowerShell** (not as Administrator), and run every step in the same window.
+
+{/* VERIFY: PowerShell and Gpg4win commands below have not been run on a Windows machine. */}
+
+<Steps>
+
+1. Install [Gpg4win](https://www.gpg4win.org/), to check signatures, then open a new PowerShell window.
+
+2. Download the beacon node, validator and prysmctl, with their checksum and signature files:
+
+   <PrysmVersionCommand lang="powershell" template={`$VERSION = "{version}"\nNew-Item -ItemType Directory -Force $HOME\\prysm-download | Out-Null\ncd $HOME\\prysm-download\nforeach ($BIN in "beacon-chain", "validator", "prysmctl") {\n  foreach ($EXT in "", ".sha256", ".sig") {\n    curl.exe -fLO "https://github.com/OffchainLabs/prysm/releases/download/$VERSION/$BIN-$VERSION-windows-amd64.exe$EXT"\n  }\n}`} />
+
+3. Check the checksums:
+
+   ```powershell
+   foreach ($SUM in Get-ChildItem *.sha256) {
+     $FILE = $SUM.BaseName
+     $EXPECTED = (Get-Content $SUM).Split(" ")[0]
+     $ACTUAL = (Get-FileHash $FILE -Algorithm SHA256).Hash
+     if ($ACTUAL -eq $EXPECTED) { "$($FILE): OK" } else { "$($FILE): FAILED" }
+   }
+   ```
+
+   Every file must report `OK`.
+
+4. Check the signatures:
+
+   ```powershell
+   curl.exe -fsSL https://prysmaticlabs.com/releases/pgp_keys.asc -o pgp_keys.asc
+   gpg --import pgp_keys.asc
+   foreach ($SIG in Get-ChildItem *.sig) { gpg --verify $SIG.Name $SIG.BaseName }
+   ```
+
+   Every signature must be a `Good signature` from key `0AE0051D647BA3C1A917AF4072E33E4DF1A5036E`.
+
+5. Install them under their plain names:
+
+   ```powershell
+   New-Item -ItemType Directory -Force C:\ethereum\bin | Out-Null
+   foreach ($BIN in "beacon-chain", "validator", "prysmctl") {
+     Copy-Item "$BIN-$VERSION-windows-amd64.exe" "C:\ethereum\bin\$BIN.exe"
+   }
+   ```
+
+6. Check that they run:
+
+   ```powershell
+   C:\ethereum\bin\beacon-chain.exe --version
+   C:\ethereum\bin\validator.exe --version
+   ```
+
+</Steps>
+
+</TabItem>
+</Tabs>
+
+</TabItem>
+</Tabs>
+
+## How verification works
+
+Your node runs software that can sign with your validator keys, so check that every Prysm binary is the file Prysm's maintainers released and that nobody changed it on the way. Each [GitHub release](https://github.com/OffchainLabs/prysm/releases) has, for every binary, a `.sha256` file with its checksum and a `.sig` file with its GPG signature. Releases are signed with this key:
+
+```text
+0AE0 051D 647B A3C1 A917  AF40 72E3 3E4D F1A5 036E
+```
+
+The same fingerprint is in [`prysm.sh`](https://github.com/OffchainLabs/prysm/blob/develop/prysm.sh) and in the Prysm [security.txt](https://github.com/OffchainLabs/prysm/blob/develop/.well-known/security.txt). Compare it with at least one of them rather than trusting this page alone.
+
+### Reading the gpg output
+
+For each file, gpg prints something like:
+
+```text
+gpg:                using RSA key 0AE0051D647BA3C1A917AF4072E33E4DF1A5036E
+gpg: Good signature from "Preston Van Loon <preston@pvl.dev>" [unknown]
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 0AE0 051D 647B A3C1 A917  AF40 72E3 3E4D F1A5 036E
+```
+
+You need both `Good signature` **and** the fingerprint above. The `WARNING` is expected: it only means you haven't signed the key yourself. `gpg --verify` accepts a good signature from any key in your keyring, so a good signature from a different key is not a valid Prysm release.
+
+If you see `BAD signature`, a different fingerprint, or a checksum that doesn't match, stop. Don't run the file. Download it again from the GitHub release page and, if it still fails, ask in the [Prysm Discord](https://discord.gg/qEZK94mFXP).
+
+### What the launcher scripts check
+
+`prysm.sh` downloads each binary with its `.sha256` and `.sig`, checks both, and imports the signing key the first time. On success it prints `Verified ... has been signed by Prysmatic Labs.` If a check fails, it stops with `Failed to verify Prysm binary.`
+
+Know the limits:
+
+- The binary, checksum, signature and key all come from the same server. The checks catch corrupted or tampered downloads, not a compromised server. Importing and checking the key yourself first closes most of that gap.
+- `prysm.bat` checks only the checksum, not the signature. Use the Windows **Binaries** method for the stronger check.
+- Never set `PRYSM_ALLOW_UNVERIFIED_BINARIES=1` on a validator. It turns every check off.
+
+## Terms of use
+
+The first time you start the beacon node or validator, Prysm asks you to accept its terms of use. Type `accept`, or pass <Flag name="accept-terms-of-use" /> when nothing can answer the prompt (services, containers).
+
+## Troubleshooting
+
+```text
+gpg is not available. Either install it or run with PRYSM_ALLOW_UNVERIFIED_BINARIES=1.
+```
+
+Install GnuPG and run the command again. Don't turn verification off.
+
+```text
+Starting prysm requires an internet connection...
+```
+
+The script couldn't look up the latest release. Check your connection and any firewall or antivirus that blocks `curl`. To start offline, pin a version you've already downloaded with `USE_PRYSM_VERSION`.
+
+```text
+Failed to verify Prysm binary.
+```
+
+The download is incomplete or corrupted. Delete that version's files from `dist` and run the script again. Antivirus software that quarantines files in `dist` also causes this, mostly on Windows.
+
+```text
+32-bit ARM is not supported. Please install a 64-bit operating system.
+```
+
+Prysm needs a 64-bit OS. On a Raspberry Pi, install a 64-bit image.

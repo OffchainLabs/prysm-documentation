@@ -1,0 +1,100 @@
+---
+title: "Withdraw ETH from a validator"
+description: "How automatic withdrawals pay out your validator's balance, and how to request a partial withdrawal from your withdrawal address."
+---
+
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+Withdrawals send ETH from your validator to its **withdrawal address**. There are two types of withdrawals:
+
+- **Automatic**, which the network pays without a transaction or gas.
+- **Manual**, which you request from your withdrawal address.
+
+What your validator can get depends on its **withdrawal credentials**.
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+To see your credentials, ask your beacon node:
+
+<When os="unix">
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX_OR_PUBKEY> | jq '.data.validator.withdrawal_credentials'
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX_OR_PUBKEY> | jq '.data.validator.withdrawal_credentials'
+```
+
+</When>
+
+The start tells you the type (`0x00`, `0x01` or `0x02`), and the last 40 hex characters are the withdrawal address. Once set, the withdrawal address can't be changed.
+
+## Automatic withdrawals
+
+You don't need to do anything. The network goes through all validators in turn and pays out what each one has to withdraw:
+
+| Credentials | While active | After exit |
+| --- | --- | --- |
+| `0x00…` (legacy) | Nothing, until you [add a withdrawal address](/validators/add-withdrawal-address/) | Nothing, until you add a withdrawal address |
+| `0x01…` (regular) | Everything above 32 ETH | The full balance |
+| `0x02…` (compounding) | Everything above 2048 ETH | The full balance |
+
+On mainnet a full round takes several days, so expect a payment every few days to a week or more. After an exit, the full balance is paid in the first round once the validator is withdrawable, about 27 hours after its exit epoch.
+
+<When>
+
+To see your withdrawals, look under "withdrawals" for your validator or address on a block explorer such as <a href="{explorer}">{"{explorer}"}</a>.
+
+</When>
+
+**No withdrawals arrive?** Check the credentials: nothing is withdrawn from a `0x00` validator. A new `0x01` validator has little above 32 ETH to pay out. A `0x02` validator pays nothing automatically until it exceeds 2048 ETH: use a partial withdrawal instead.
+
+## Manual withdrawals
+
+A `0x02` validator can withdraw part of its balance with a request sent **from your withdrawal address**, as long as 32 ETH stays. If you ask for more than the balance above 32 ETH, you get only that. The validator keeps running as before. Prysm and your keys are not involved.
+
+- The validator must be active, not exiting, and active for at least 256 epochs (about 27 hours).
+- Each request costs a small fee. If the request is invalid, the network ignores it and doesn't refund the fee.
+- The withdrawal goes through the exit queue, then waits 256 epochs. Expect at least a day, and longer when the queue is busy.
+
+A `0x01` validator can't make manual withdrawals. See [Convert a `0x01` validator to `0x02`](/validators/upgrade-to-compounding/).
+
+### Send the request
+
+<When net="mainnet">
+
+Open **Validator actions** on the Staking Launchpad: `https://launchpad.ethereum.org/en/validator-actions`. Connect the wallet that controls the withdrawal address, select the validator and choose **Request partial withdrawal**.
+
+</When>
+<When net="hoodi">
+
+Open the EthStaker console: `https://hoodi.console.ethstaker.org/withdraw`. Connect the wallet that controls the withdrawal address, then select the validator.
+
+</When>
+
+Type the address yourself. Websites that offer to "help" with this step are phishing.
+
+{/* Mainnet verified against ethereum/staking-launchpad (dev branch, src/pages/Actions), 2026-10; Hoodi against ethstaker/staker-console (src/routes, src/pages/PartialWithdraw), 2026-10; request rules against prysm beacon-chain/core/requests/withdrawals.go */}
+
+### Check that it works
+
+Your beacon node shows partial withdrawals waiting in the queue:
+
+<When os="unix">
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/beacon/states/head/pending_partial_withdrawals | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/pending_partial_withdrawals | jq
+```
+
+</When>

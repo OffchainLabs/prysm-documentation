@@ -1,0 +1,284 @@
+---
+title: Sync from a checkpoint
+description: Start a new Prysm beacon node from a recent finalized checkpoint so it follows the chain within minutes, then check the checkpoint against a second source.
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+Without checkpoint sync, a new beacon node replays every block since genesis, which takes days on mainnet. With it, the node downloads a recent finalized state from a beacon node you trust and follows the chain within minutes.
+
+<SetupPicker groups="os net" />
+
+## Before you begin
+
+- A beacon node with an **empty** data directory. Checkpoint sync only applies to a fresh database.
+- A connected execution client. See [Connect your execution client](/setup/connect-execution-client/).
+
+## Start the node
+
+<Steps>
+
+1. **Pick a provider.** Use your own synced beacon node, or a public endpoint from the community [checkpoint sync endpoints list](https://eth-clients.github.io/checkpoint-sync-endpoints/). Pick one run by an organization you trust.
+
+2. **Add <Flag name="checkpoint-sync-url" /> to your beacon node command.** From the `consensus` folder, with the layout from [Connect your execution client](/setup/connect-execution-client/):
+
+	<When os="unix" conn="jwt">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/beacon \
+	  --execution-endpoint=http://localhost:8551 \
+	  --jwt-secret=$HOME/ethereum/data/jwt.hex \
+	  --checkpoint-sync-url={checkpoint} \
+	  --beacon-db-pruning
+	```
+
+	</When>
+	<When os="win" conn="jwt">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\beacon `
+	  --execution-endpoint=http://localhost:8551 `
+	  --jwt-secret=$HOME\ethereum\data\jwt.hex `
+	  --checkpoint-sync-url={checkpoint} `
+	  --beacon-db-pruning
+	```
+
+	</When>
+	<When os="unix" conn="ipc">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/beacon \
+	  --execution-endpoint=$HOME/ethereum/data/{net}/execution/geth.ipc \
+	  --checkpoint-sync-url={checkpoint} \
+	  --beacon-db-pruning
+	```
+
+	</When>
+	<When os="win" conn="ipc">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\beacon `
+	  --execution-endpoint=\\.\pipe\geth.ipc `
+	  --checkpoint-sync-url={checkpoint} `
+	  --beacon-db-pruning
+	```
+
+	</When>
+
+	<Flag name="beacon-db-pruning" /> deletes blocks and states older than about 5 months, the oldest data other nodes can still ask for, so the database stops growing. Leave it out if you need the full history.
+
+	**Running validators?** Also add:
+
+	```bash
+	--postpone-shutdown-for-proposals
+	```
+
+	When you stop or restart the beacon node, it then waits until your validators' upcoming block proposals are done. See [Don't restart just before a proposal](/install/update/#dont-restart-just-before-a-proposal).
+
+	{/* Endpoints checked against https://eth-clients.github.io/checkpoint-sync-endpoints/ and their /checkpointz/v1/status, 2026-09-28. */}
+
+3. **Watch the logs.** A successful download looks like this:
+
+	```text
+	INFO node: Checkpoint sync - Downloading origin state and block
+	INFO checkpoint-sync: Downloaded checkpoint sync state and block. blockRoot=0x… blockSlot=… stateRoot=0x… stateSlot=…
+	```
+
+	You can leave the flag in place. On later restarts, the node finds its database and carries on from where it stopped. It logs:
+
+	```text
+	Origin checkpoint found in the database, ignoring checkpoint sync flags
+	```
+
+</Steps>
+
+## Verify the checkpoint
+
+A broken or malicious provider could hand you a state from the wrong chain. Once the node runs, compare its finalized checkpoint with a second provider that has nothing to do with the first.
+
+<Steps>
+
+1. Ask your node for its finalized checkpoint, and note `data.finalized.epoch` and `data.finalized.root`:
+
+	<When os="unix">
+
+	```bash
+	curl -s http://localhost:3500/eth/v1/beacon/states/head/finality_checkpoints
+	```
+
+	</When>
+	<When os="win">
+
+	```powershell
+	curl.exe -s http://localhost:3500/eth/v1/beacon/states/head/finality_checkpoints
+	```
+
+	</When>
+
+2. Ask a second provider. Endpoints from the list above report their finalized epoch and root at `/checkpointz/v1/status`:
+
+	<When os="unix">
+
+	```bash
+	curl -s {checkpoint2}/checkpointz/v1/status
+	```
+
+	</When>
+	<When os="win">
+
+	```powershell
+	curl.exe -s {checkpoint2}/checkpointz/v1/status
+	```
+
+	</When>
+	<When>
+
+	You can also open the epoch in a block explorer: `{explorer}/epoch/<EPOCH>`.
+
+	</When>
+
+</Steps>
+
+For the same epoch, the roots must be identical. If the epochs differ, finality has just moved on: query both again. If the roots differ, stop your validator, delete the beacon node's data directory, and sync again from another provider.
+
+## Check that it works
+
+<When os="unix">
+
+```bash
+curl -s http://localhost:3500/eth/v1/node/syncing
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://localhost:3500/eth/v1/node/syncing
+```
+
+</When>
+
+Right after the checkpoint sync, `head_slot` starts near the checkpoint slot and `sync_distance` drops quickly. When `is_syncing` is `false`, the node is following the chain, and the logs show a `Synced new block` line for every block. `is_optimistic: true` means the execution client is still syncing; your validators can't do their duties until it catches up.
+
+## Download older blocks (backfill)
+
+A checkpoint-synced node has no blocks from before the checkpoint. It validates fine without them, but it can't serve them to peers or return them from its API. To download them in the background once the node is synced, add:
+
+```bash
+--enable-backfill
+```
+
+By default, backfill goes back about 5 months (33,024 epochs): the history every node must be able to serve, and the same window <Flag name="beacon-db-pruning" /> keeps. To go further back, also add <Flag name="backfill-oldest-slot" value="<SLOT>" />, and leave out <Flag name="beacon-db-pruning" />, which would delete those blocks again. A slot more recent than the 5-month limit is ignored with a warning.
+
+The node logs its progress, then:
+
+```text
+INFO backfill: Backfill in progress batchesRemaining=… completion=…% lowestBackfilledSlot=… targetSlot=…
+INFO backfill: Backfill is complete lowestBackfilledSlot=… targetSlot=…
+```
+
+{/* Verified against prysm beacon-chain/sync/backfill/service.go and beacon-chain/das/needs.go, 2026-10. */}
+
+## Sync during a long period without finality
+
+<Flag name="checkpoint-sync-url" /> always downloads the last finalized checkpoint. When the network hasn't finalized for a long time, that checkpoint is old, and a new node has a lot of chain to replay before it's useful. You can start from a recent, unfinalized block instead.
+
+:::caution
+Prysm treats the block you pick as final. If it's later reorged out, the node can't recover: delete its data directory and sync again. Pick a block at least a few epochs old, and check its root against a second source.
+:::
+
+You need a synced beacon node you trust that serves the Beacon API, such as your own. Replace `<BEACON_NODE>` with its URL.
+
+<Steps>
+
+1. **Pick a slot.** It must be the first slot of an epoch at least 2 epochs before the current one, and it must hold a block. Replace `<SLOT>` with it and get the block's root:
+
+	<When os="unix">
+
+	```bash
+	curl -s <BEACON_NODE>/eth/v1/beacon/blocks/<SLOT>/root
+	```
+
+	</When>
+	<When os="win">
+
+	```powershell
+	curl.exe -s <BEACON_NODE>/eth/v1/beacon/blocks/<SLOT>/root
+	```
+
+	</When>
+
+	A `404` means the slot is empty: pick another epoch. Compare `data.root` with a second, independent source, such as a block explorer.
+
+2. **Download the state at that slot, and the block by its root.** Replace `<BLOCK_ROOT>` with the root from the previous step:
+
+	<When os="unix">
+
+	```bash
+	curl -H 'Accept: application/octet-stream' <BEACON_NODE>/eth/v2/debug/beacon/states/<SLOT> -o state.ssz
+	curl -H 'Accept: application/octet-stream' <BEACON_NODE>/eth/v2/beacon/blocks/<BLOCK_ROOT> -o block.ssz
+	```
+
+	</When>
+	<When os="win">
+
+	```powershell
+	curl.exe -H 'Accept: application/octet-stream' <BEACON_NODE>/eth/v2/debug/beacon/states/<SLOT> -o state.ssz
+	curl.exe -H 'Accept: application/octet-stream' <BEACON_NODE>/eth/v2/beacon/blocks/<BLOCK_ROOT> -o block.ssz
+	```
+
+	</When>
+
+3. **Start the node from the files.** With an empty data directory, add these instead of <Flag name="checkpoint-sync-url" />:
+
+	```bash
+	--checkpoint-state=state.ssz
+	--checkpoint-block=block.ssz
+	```
+
+	Prysm refuses to start if the block doesn't match the state. Otherwise, it warns:
+
+	```text
+	WARN checkpoint-sync: Checkpoint syncing from files. If this anchor is not finalized and is reorged out the node cannot recover and the database must be deleted
+	```
+
+</Steps>
+
+Until the network finalizes again, the node reports a justified epoch lower than its finalized epoch. That's expected.
+
+{/* Verified against prysm v7.3.1 docs/unfinalized-checkpoint-sync.md and beacon-chain/sync/checkpoint/file.go, 2026-11. */}
+
+## Good to know
+
+- **No internet access to a provider?** Download the checkpoint as files on another machine with `prysmctl checkpoint-sync download`, then start the node with <Flag name="checkpoint-state" /> and <Flag name="checkpoint-block" />.
+
+## Troubleshooting
+
+**The node ignores the checkpoint, but you wanted a fresh sync.** Prysm logs:
+
+```text
+Origin checkpoint found in the database, ignoring checkpoint sync flags
+```
+
+The data directory already holds a database. Stop the node and start it once with <Flag name="force-clear-db" />, or point <Flag name="datadir" /> at an empty directory.
+
+**The checkpoint download fails or times out.** Prysm logs:
+
+```text
+Error retrieving checkpoint origin state and block
+```
+
+The provider is down, rate-limited or unreachable. Try another one from the list.
+
+**The download worked but the node stays behind or has few peers.**
+Checkpoint sync only sets the starting point. Peers and sync speed depend on your network setup.

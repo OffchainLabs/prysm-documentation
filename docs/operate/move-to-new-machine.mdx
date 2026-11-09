@@ -1,0 +1,428 @@
+---
+title: "Move to a new machine"
+description: Move Prysm validators to a new machine without double signing - sync the new node first, stop and disable the old validator, wait two epochs, then move keys and slashing protection.
+---
+
+import { Aside, Steps } from '@site/src/components/ui';
+import Flag from '@site/src/components/Flag';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+Moving validators is safe if you follow one rule: **the same key must never run in multiple validator clients, not even for a second.** Prepare the new machine first, so your validators are offline only for the wait you choose (at least two epochs, about 13 minutes). A few missed attestations cost very little; a slashing costs far more.
+
+<Aside type="danger" title="Accept the downtime">
+Never start the new validator "just before" stopping the old one, and never run a failover copy. Most slashings happen exactly this way. See [Avoid slashing](/validators/avoid-slashing/).
+</Aside>
+
+<SetupPicker groups="os svc" />
+
+<When svc="systemd">
+
+The commands below use the users and paths from [Run with systemd](/setup/run-with-systemd/).
+
+</When>
+<When svc="compose">
+
+The commands below use the services and paths from [Run with Docker Compose](/setup/run-with-docker-compose/). Run them from the folder that holds `docker-compose.yml`.
+
+</When>
+<When os="win" svc="compose">
+
+On Windows, run them in your WSL terminal.
+
+</When>
+
+## Before you begin
+
+- The new machine meets the [system requirements](/get-started/system-requirements/) and has Prysm and an execution client installed.
+- Access to the keys on the old machine, or the original keystores and their password.
+- Your validator indices or public keys, so you can check them on a block explorer.
+
+## Move your validators
+
+<Steps>
+
+1. **Sync the new node while the old one keeps validating.** Start the execution client and beacon node on the new machine with [checkpoint sync](/setup/checkpoint-sync/), **without** a validator client and without keys. Wait until [Is my node healthy?](/operate/check-health/) shows it synced.
+
+2. **Stop and disable the old validator**, so nothing restarts it:
+
+	<When svc="systemd">
+
+	```bash
+	sudo systemctl disable --now validator
+	```
+
+	</When>
+	<When svc="compose">
+
+	```bash
+	docker compose stop validator
+	docker compose rm -f validator
+	```
+
+	`docker compose up` would create it again, so don't run it until you remove the validator service in step 5.
+
+	</When>
+	<When svc="none">
+
+	Stop the validator client with <kbd>Ctrl</kbd>+<kbd>C</kbd> in its terminal.
+
+	</When>
+	<When os="unix" svc="none">
+
+	Remove whatever starts it on its own, such as a cron job, a `tmux` session or a script.
+
+	</When>
+	<When os="win" svc="none">
+
+	Remove whatever starts it on its own, such as a scheduled task or a startup script.
+
+	</When>
+
+	The old beacon node can keep running; it holds no keys.
+
+3. **Check that the old validator is really off.** Don't continue until all of these pass:
+
+	<When os="unix" svc="systemd none">
+
+	- **No process runs:** this prints nothing:
+
+	  ```bash
+	  pgrep -af 'validator|prysm'
+	  ```
+
+	</When>
+	<When os="win" svc="none">
+
+	- **No process runs:** Task Manager shows no `validator` or `prysm` process.
+
+	</When>
+	<When svc="compose">
+
+	- **No container runs:** this shows no validator container, running or stopped:
+
+	  ```bash
+	  docker ps -a
+	  ```
+
+	</When>
+	<When svc="systemd">
+
+	- **Nothing will restart it:** this prints `disabled`:
+
+	  ```bash
+	  systemctl is-enabled validator
+	  ```
+
+	  No cron job or script starts it either.
+
+	</When>
+	<When svc="compose">
+
+	- **Nothing will restart it:** no cron job or script runs `docker compose up`.
+
+	</When>
+	<When os="unix" svc="none">
+
+	- **Nothing will restart it:** no cron job, `tmux` session or script starts it.
+
+	</When>
+	<When os="win" svc="none">
+
+	- **Nothing will restart it:** Task Scheduler and the Startup folder have nothing that starts it.
+
+	</When>
+
+	- **If in doubt, unplug it.** A machine you can't reach is a machine you can't prove is off.
+
+4. **Export slashing protection** from the old machine, now that it has stopped signing:
+
+	<When svc="systemd">
+
+	```bash
+	sudo install -d -m 0700 -o validator -g validator /var/lib/ethereum/validator/export
+	sudo -u validator /usr/local/bin/validator slashing-protection-history export \
+	  --datadir=/var/lib/ethereum/validator \
+	  --slashing-protection-export-dir=/var/lib/ethereum/validator/export
+	```
+
+	This writes `/var/lib/ethereum/validator/export/slashing_protection.json`.
+
+	</When>
+	<When svc="compose">
+
+	```bash
+	docker compose run --rm --no-deps validator slashing-protection-history export \
+	  --datadir=/data \
+	  --slashing-protection-export-dir=/data/export \
+	  --accept-terms-of-use
+	```
+
+	This writes `data/<NETWORK>/validator/export/slashing_protection.json`.
+
+	</When>
+	<When os="unix" svc="none">
+
+	```bash
+	./prysm.sh validator slashing-protection-history export \
+	  --datadir=<OLD_VALIDATOR_DATADIR> \
+	  --slashing-protection-export-dir=<EXPORT_DIR>
+	```
+
+	This writes `<EXPORT_DIR>/slashing_protection.json`.
+
+	</When>
+	<When os="win" svc="none">
+
+	```powershell
+	.\prysm.bat validator slashing-protection-history export `
+	  --datadir=<OLD_VALIDATOR_DATADIR> `
+	  --slashing-protection-export-dir=<EXPORT_DIR>
+	```
+
+	This writes `<EXPORT_DIR>\slashing_protection.json`.
+
+	</When>
+
+5. **Export the keys, then delete them from the old wallet.** Use the original keystores, or export them to `backup.zip` in the export directory:
+
+	<When svc="systemd">
+
+	```bash
+	sudo -u validator /usr/local/bin/validator accounts backup \
+	  --wallet-dir=/var/lib/ethereum/validator/wallet \
+	  --wallet-password-file=/var/lib/ethereum/validator/wallet-password.txt \
+	  --backup-dir=/var/lib/ethereum/validator/export
+
+	sudo -u validator /usr/local/bin/validator accounts delete \
+	  --wallet-dir=/var/lib/ethereum/validator/wallet \
+	  --wallet-password-file=/var/lib/ethereum/validator/wallet-password.txt
+	```
+
+	Select the keys you are moving. Afterwards, this must not show them:
+
+	```bash
+	sudo -u validator /usr/local/bin/validator accounts list \
+	  --wallet-dir=/var/lib/ethereum/validator/wallet \
+	  --wallet-password-file=/var/lib/ethereum/validator/wallet-password.txt
+	```
+
+	</When>
+	<When svc="compose">
+
+	```bash
+	docker compose run --rm --no-deps validator accounts backup \
+	  --wallet-dir=/data/wallet \
+	  --wallet-password-file=/data/wallet-password.txt \
+	  --backup-dir=/data/export \
+	  --accept-terms-of-use
+
+	docker compose run --rm --no-deps validator accounts delete \
+	  --wallet-dir=/data/wallet \
+	  --wallet-password-file=/data/wallet-password.txt \
+	  --accept-terms-of-use
+	```
+
+	Select the keys you are moving. Afterwards, this must not show them:
+
+	```bash
+	docker compose run --rm --no-deps validator accounts list \
+	  --wallet-dir=/data/wallet \
+	  --wallet-password-file=/data/wallet-password.txt \
+	  --accept-terms-of-use
+	```
+
+	Then remove the `validator` service from `docker-compose.yml`, so `docker compose up` can't start it again.
+
+	</When>
+	<When os="unix" svc="none">
+
+	```bash
+	./prysm.sh validator accounts backup \
+	  --wallet-dir=<OLD_WALLET_DIR> \
+	  --backup-dir=<EXPORT_DIR>
+
+	./prysm.sh validator accounts delete \
+	  --wallet-dir=<OLD_WALLET_DIR>
+	```
+
+	Select the keys you are moving. Afterwards, this must not show them:
+
+	```bash
+	./prysm.sh validator accounts list --wallet-dir=<OLD_WALLET_DIR>
+	```
+
+	</When>
+	<When os="win" svc="none">
+
+	```powershell
+	.\prysm.bat validator accounts backup `
+	  --wallet-dir=<OLD_WALLET_DIR> `
+	  --backup-dir=<EXPORT_DIR>
+
+	.\prysm.bat validator accounts delete `
+	  --wallet-dir=<OLD_WALLET_DIR>
+	```
+
+	Select the keys you are moving. Afterwards, this must not show them:
+
+	```powershell
+	.\prysm.bat validator accounts list --wallet-dir=<OLD_WALLET_DIR>
+	```
+
+	</When>
+
+	Also delete the original keystore files from the old machine, and any VM snapshots or images that contain the keys: restoring one later would bring the validator back.
+
+6. **Copy the files to the new machine** over an encrypted channel (`scp`, an encrypted USB drive): `slashing_protection.json`, and the keystores or `backup.zip`. Unzip `backup.zip` into a folder of its own on the new machine. Delete any intermediate copies.
+
+7. **Wait at least two epochs** (about 13 minutes) after the old validator stopped. Then look up your validators on a block explorer: the latest epochs must show **missed** attestations. If they show attestations after you stopped the old validator, something is still signing. Stop and find it.
+
+8. **Import slashing protection, then the keys**, on the new machine with its validator stopped. `<PATH_TO_KEYSTORES>` is the folder holding the `keystore-*.json` files:
+
+	<When svc="systemd">
+
+	```bash
+	sudo install -d -m 0700 -o validator -g validator /var/lib/ethereum/validator/import
+	sudo cp <PATH_TO>/slashing_protection.json /var/lib/ethereum/validator/import/
+	sudo cp -r <PATH_TO_KEYSTORES> /var/lib/ethereum/validator/import/keys
+	sudo chown -R validator:validator /var/lib/ethereum/validator/import
+
+	sudo -u validator /usr/local/bin/validator slashing-protection-history import \
+	  --datadir=/var/lib/ethereum/validator \
+	  --slashing-protection-json-file=/var/lib/ethereum/validator/import/slashing_protection.json
+
+	sudo -u validator /usr/local/bin/validator accounts import \
+	  --keys-dir=/var/lib/ethereum/validator/import/keys \
+	  --wallet-dir=/var/lib/ethereum/validator/wallet \
+	  --wallet-password-file=/var/lib/ethereum/validator/wallet-password.txt
+
+	sudo rm -r /var/lib/ethereum/validator/import
+	```
+
+	</When>
+	<When svc="compose">
+
+	```bash
+	docker compose run --rm --no-deps \
+	  -v <PATH_TO>/slashing_protection.json:/import/slashing_protection.json:ro \
+	  validator slashing-protection-history import \
+	  --datadir=/data \
+	  --slashing-protection-json-file=/import/slashing_protection.json \
+	  --accept-terms-of-use
+
+	docker compose run --rm --no-deps -v <PATH_TO_KEYSTORES>:/keys:ro \
+	  validator accounts import \
+	  --keys-dir=/keys \
+	  --wallet-dir=/data/wallet \
+	  --wallet-password-file=/data/wallet-password.txt \
+	  --accept-terms-of-use
+	```
+
+	</When>
+	<When os="unix" svc="none">
+
+	```bash
+	./prysm.sh validator slashing-protection-history import \
+	  --datadir=<NEW_VALIDATOR_DATADIR> \
+	  --slashing-protection-json-file=<PATH_TO>/slashing_protection.json
+
+	./prysm.sh validator accounts import \
+	  --keys-dir=<PATH_TO_KEYSTORES> \
+	  --wallet-dir=<NEW_WALLET_DIR>
+	```
+
+	Use the same `--datadir` the validator will run with, or it starts with empty slashing protection.
+
+	</When>
+	<When os="win" svc="none">
+
+	```powershell
+	.\prysm.bat validator slashing-protection-history import `
+	  --datadir=<NEW_VALIDATOR_DATADIR> `
+	  --slashing-protection-json-file=<PATH_TO>\slashing_protection.json
+
+	.\prysm.bat validator accounts import `
+	  --keys-dir=<PATH_TO_KEYSTORES> `
+	  --wallet-dir=<NEW_WALLET_DIR>
+	```
+
+	Use the same `--datadir` the validator will run with, or it starts with empty slashing protection.
+
+	</When>
+
+9. **Start the new validator:**
+
+	<When svc="systemd">
+
+	```bash
+	sudo systemctl enable --now validator
+	```
+
+	The unit from [Run with systemd](/setup/run-with-systemd/) already has your fee recipient, MEV-Boost settings and <Flag name="enable-doppelganger" bin="validator" />.
+
+	</When>
+	<When svc="compose">
+
+	```bash
+	docker compose up -d
+	```
+
+	</When>
+	<When svc="none">
+
+	Start it with your fee recipient and MEV-Boost settings, and add <Flag name="enable-doppelganger" bin="validator" /> if your command doesn't have it.
+
+	</When>
+
+	With doppelganger protection, before its first duty, the validator client asks the beacon node whether your keys attested in about the last two epochs. If they did, and its own slashing protection history shows no recent attestation for them, someone else signed: it exits instead of starting. It checks only once, so it's a last line of defense, not a replacement for step 7.
+
+</Steps>
+
+## Check that it works
+
+- The new validator logs this for each key:
+
+  ```text
+  Validator activated
+  ```
+
+  Then:
+
+  ```text
+  Submitted new attestations
+  ```
+- With doppelganger protection, it first logs:
+
+  ```text
+  Doppelganger check done
+  ```
+
+  If it exits with this instead, your keys are still active somewhere. Don't restart it: go back to step 3.
+
+  ```text
+  Duplicate instances exists in the network for validator keys
+  ```
+- A block explorer shows attestations again a few epochs after you started.
+
+<When svc="systemd">
+
+Follow the logs with:
+
+```bash
+sudo journalctl -fu validator
+```
+
+</When>
+<When svc="compose">
+
+Follow the logs with:
+
+```bash
+docker compose logs -f validator
+```
+
+</When>
+
+## If the old machine is gone
+
+If it died and you can't export slashing protection: make sure it can never come back online with the keys (wipe or destroy the disk), wait until a block explorer shows several epochs of missed attestations, then import the keys on the new machine without slashing protection.

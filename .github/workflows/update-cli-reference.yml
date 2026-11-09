@@ -1,13 +1,19 @@
 name: Update CLI reference
 
-# Regenerates docs/configure-prysm/command-line-options.md from the Prysm help
-# endpoint (cli.prylabs.network) and opens a PR if anything changed.
-# create-pull-request is idempotent: no diff -> no PR.
+# Regenerates the CLI reference (src/data/cli-*.json) and the Prysm version shown
+# across the site (src/data/cli-meta.json) from the latest Prysm release, and opens
+# a PR if anything changed. create-pull-request is idempotent: no diff -> no PR.
+# The Vercel preview build on that PR fails if a page mentions a flag that the new
+# release removed, so it's safe to merge once the preview is green.
 
 on:
   schedule:
     - cron: '0 8 * * 1' # Mondays 08:00 UTC
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Prysm release tag (defaults to the latest release)'
+        required: false
 
 jobs:
   update:
@@ -18,18 +24,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      # No install needed: the generator uses only Node builtins + global fetch.
-      - run: node scripts/generate-cli-reference.mjs
-
-      # Latest Prysm release tag, for the PR title/commit message only.
       - id: prysm
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          tag=$(curl -sf https://api.github.com/repos/OffchainLabs/prysm/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-          echo "tag=${tag:-latest}" >> "$GITHUB_OUTPUT"
+          tag="${INPUT_TAG:-$(gh api repos/OffchainLabs/prysm/releases/latest --jq .tag_name)}"
+          [[ "$tag" =~ ^v[0-9]+(\.[0-9]+){2}(-[0-9A-Za-z.-]+)?$ ]] || { echo "::error::Unexpected tag '$tag'"; exit 1; }
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      # Outside the workspace, so create-pull-request doesn't commit it.
+      - run: git clone --depth 1 --branch "${{ steps.prysm.outputs.tag }}" https://github.com/OffchainLabs/prysm.git "$RUNNER_TEMP/prysm"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ runner.temp }}/prysm/go.mod
+          cache: false
+
+      - run: tools/gen-cli-reference.sh "$RUNNER_TEMP/prysm"
+        env:
+          PRYSM_VERSION: ${{ steps.prysm.outputs.tag }}
 
       - uses: peter-evans/create-pull-request@v7
         with:
@@ -38,7 +52,12 @@ jobs:
           author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           body: |
-            Automated update of the command-line options reference from
-            `cli.prylabs.network`, created by the `update-cli-reference` workflow.
+            Automated update of the CLI reference and the Prysm version shown across
+            the site, generated from Prysm ${{ steps.prysm.outputs.tag }} by the
+            `update-cli-reference` workflow.
+
+            New flags appear without hand-written notes; add them in
+            `src/data/flag-notes/` if they need explaining.
+          base: master
           branch: automated/update-cli-reference
           delete-branch: true

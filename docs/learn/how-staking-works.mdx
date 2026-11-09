@@ -1,0 +1,82 @@
+---
+title: "How staking works"
+description: A plain-language guide to slots and epochs, what a validator does, the validator lifecycle from deposit to withdrawal, rewards and penalties, and slashing.
+---
+
+import ValidatorLifecycle from '@site/src/components/diagrams/ValidatorLifecycle';
+
+When you stake, you lock ETH in a **validator** that votes on the chain every few minutes and occasionally proposes a block. Do it on time and you earn rewards. Miss duties and you lose a little. Sign contradictory messages and you get **slashed**, which costs much more.
+
+{/* Values verified against Prysm config/params/mainnet_config.go during the v2 rewrite (archive/v2-removed/learn/*), 2026-09. */}
+
+## Slots and epochs
+
+Ethereum time is divided into **slots** of 12 seconds. 32 slots make an **epoch**, 6 min 24 sec.
+
+- In each slot, one validator, chosen at random, may **propose** a block.
+- In each epoch, every active validator **attests** once: it signs a vote for what it sees as the head of the chain. The votes are spread over the 32 slots, so about 1/32 of validators vote in any slot.
+- Once enough votes accumulate, blocks become **finalized** and can no longer be reverted. This normally takes between two and three epochs (about 13 to 19 minutes), depending on where in its epoch the block lands.
+
+## What a validator does
+
+The **validator client** holds your signing keys, asks your beacon node what to do and when, and signs. Its duties are:
+
+| Duty | How often | What it means for you |
+| --- | --- | --- |
+| Attest | Once per epoch | Most of your rewards. Late or wrong votes earn less. |
+| Propose a block | Rarely, at random | Consensus rewards plus the block's priority fees and MEV, paid to your [fee recipient](/validators/fee-recipient/). |
+| Sync committee | Very rarely: 512 validators at a time, for about 27 hours. On mainnet, a 32 ETH validator is picked about once every few years on average; the higher its balance, the more often. | Extra rewards for signing the head every slot while selected. |
+
+## The validator lifecycle
+
+A validator moves through these states, from deposit to getting its ETH back:
+
+<ValidatorLifecycle />
+
+1. **Deposit.** You send ETH and your deposit data to the deposit contract. See [Deposit for a new validator](/validators/deposit/). The deposit is processed once the block that contains it is finalized, and the chain only processes a limited amount of new stake per epoch. When many people deposit at once, this queue can take days or weeks.
+2. **Pending.** Once its balance reaches 32 ETH, the validator waits a few more epochs, about half an hour, before it activates.
+3. **Active.** The validator performs its duties and earns rewards.
+4. **Exiting.** You request an exit, either with a message signed by the validator key or with a request from the withdrawal address. See [Exit a validator](/validators/exit/). A validator must have been active for about 27 hours (256 epochs) before it can exit. The exit waits in a queue, and **the validator must keep performing its duties until its exit epoch**. Don't stop your validator client when you submit the exit.
+5. **Exited.** No more attestations or block proposals. A sync committee is chosen one period (about 27 hours) in advance, from active validators only. So a validator chosen before its exit, for the current or the next period, must still sign until that period ends, up to about 54 hours after the exit. It's rewarded for each signature and penalized for each one it misses. Keep its validator client running until then. See [Exit a validator](/validators/exit/#sync-committees). After another 256 epochs, about 27 hours, the validator becomes withdrawable.
+6. **Withdrawable.** The balance is paid automatically to the withdrawal address, with no transaction or gas from you. This requires `0x01` or `0x02` credentials; with `0x00` credentials, nothing is paid until you set a withdrawal address.
+
+While active, a validator with `0x01` credentials also gets everything above 32 ETH paid out automatically every few days (above 2,048 ETH for `0x02`). See [Withdraw ETH from a validator](/validators/withdrawals/).
+
+A validator is also exited automatically if its effective balance drops to 16 ETH, which in practice only happens after a long time offline during an inactivity leak, or after slashing.
+
+## Rewards and penalties
+
+There are two income streams, paid to two places:
+
+- **Consensus rewards** are new ETH added to the validator's balance on the beacon chain. They come mostly from attesting, and the rate goes down as the total amount staked goes up.
+- **Execution rewards** are the priority fees and MEV of blocks you propose. They go to your fee recipient address. [MEV-Boost](/validators/mev-boost/) can increase them.
+
+Missing duties costs you:
+
+- **Missed attestation:** a small penalty, about three quarters of the reward you would have earned. A validator that is offline for a day loses a bit less than a day's rewards, and earns it back after about a day online.
+- **Missed proposal:** no penalty, but you lose that block's rewards and fees.
+- **Missed sync committee duty:** a penalty for each slot missed, so downtime while selected costs more than usual.
+
+The one case where being offline gets expensive is the **inactivity leak**. If the chain can't finalize for more than four epochs, because more than a third of all stake is offline, offline validators lose balance faster and faster until the chain finalizes again.
+
+## Slashing
+
+A validator is slashed for signing messages that contradict each other:
+
+- Proposing two different blocks for the same slot.
+- Signing two different votes for the same epoch.
+- Signing two votes where one "surrounds" the other (it starts earlier and ends later), whichever was signed first.
+
+None of these happens by being offline or slow. In practice, **slashing happens when the same keys run in multiple places at once**: a backup machine, a copied Docker volume, or a migration where the old client still runs.
+
+When a validator is slashed:
+
+1. It loses 1/4,096 of its effective balance immediately, about 0.008 ETH for 32 ETH, and is forced to exit.
+2. It stays in the exit process for about 36 days (8,192 epochs), losing a little every epoch as if it were offline. If it's in a sync committee, it's still penalized for missed sync signatures until the committee's period ends, so keep one validator client running for it until then.
+3. Halfway through, it pays an extra penalty that depends on how much other stake was slashed around the same time. For an isolated mistake this is tiny, about 0.0001 ETH for 32 ETH. If a large share of all stake is slashed together, it can take the whole balance.
+
+Prysm's validator client keeps a **slashing protection** record of everything it has signed and refuses to sign anything that conflicts with it. That record only protects you if you move it together with your keys. See [Move your slashing protection history](/validators/slashing-protection-history/).
+
+:::danger[Offline is safe, duplicate is not]
+Being offline never gets you slashed. Running the same keys in two validator clients at once does. When in doubt, accept some downtime rather than risk a second copy running.
+:::

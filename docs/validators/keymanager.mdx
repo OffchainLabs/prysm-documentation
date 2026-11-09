@@ -1,0 +1,600 @@
+---
+title: "Use the Keymanager API"
+description: "Manage a running Prysm validator client with the standard Keymanager API: add and remove keys, set per-key fee recipient, gas limit, graffiti and builder config, and sign voluntary exits."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+The **Keymanager API** lets you change a running validator client without restarting it: add or remove keys, set a fee recipient, gas limit or graffiti per key, and sign voluntary exits. It's a standard API that every consensus client implements, so staking tools built for it work with Prysm. This page uses `curl`. The full specification is at [ethereum.github.io/keymanager-APIs](https://ethereum.github.io/keymanager-APIs/).
+
+<SetupPicker groups="os" />
+
+## Before you begin
+
+- A running validator client with a wallet. See [Import keys](/validators/import-keys/).
+
+<When os="win">
+
+Windows includes `curl.exe`. Install `jq` with:
+
+```powershell
+winget install jqlang.jq
+```
+
+The commands on this page are for PowerShell.
+
+</When>
+
+## Enable the API
+
+<Steps>
+
+1. **Add <Flag name="rpc" bin="validator" />** to your validator client command and restart it:
+
+   ```text
+   --rpc
+   ```
+
+   The API listens on `http://127.0.0.1:7500`. Change the port with <Flag name="http-port" bin="validator" />. It's advised not to change the address with <Flag name="http-host" bin="validator" />: the API is plain HTTP and controls your keys. Prysm creates the token file `auth-token` in your wallet directory (<Flag name="wallet-dir" bin="validator" />) if it doesn't exist. To put it elsewhere, set <Flag name="keymanager-token-file" bin="validator" />.
+
+2. **Check the log** for the token path and the API address:
+
+   ```text
+   INFO rpc: Validator Client auth token for gRPC and REST authentication set at <TOKEN_FILE>
+   INFO httprest: Starting HTTP server address=<ADDRESS>:<PORT>
+   ```
+
+3. **Load the token** into your shell. Replace `<TOKEN_FILE>`, `<ADDRESS>` and `<PORT>` with the values from the log:
+
+   <When os="unix">
+
+   ```bash
+   TOKEN=$(cat <TOKEN_FILE>)
+   API=http://<ADDRESS>:<PORT>
+   ```
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   $TOKEN = (Get-Content <TOKEN_FILE> -Raw).Trim()
+   $API = "http://<ADDRESS>:<PORT>"
+   ```
+
+   </When>
+
+</Steps>
+
+:::danger[The token controls your keys]
+Anyone with the token can remove your keys or sign exits for them. Keep the file readable only by the validator's user, and never expose the API port to other machines.
+:::
+
+## Endpoints
+
+Every request needs the `Authorization: Bearer $TOKEN` header. `<VALIDATOR_PUBKEY>` is the validator's BLS public key, with `0x`.
+
+| Path | `GET` | `POST` | `DELETE` |
+|---|---|---|---|
+| [`/eth/v1/keystores`](#add-keys) | List local keys | Import keys | Remove keys |
+| [`/eth/v1/remotekeys`](#add-remote-signer-keys) | List remote signer keys | Add keys | Remove keys |
+| [`/eth/v1/validator/<VALIDATOR_PUBKEY>/feerecipient`](#set-per-key-settings) | Read | Set | Reset to default |
+| [`/eth/v1/validator/<VALIDATOR_PUBKEY>/gas_limit`](#set-per-key-settings) | Read | Set | Reset to default |
+| [`/eth/v1/validator/<VALIDATOR_PUBKEY>/graffiti`](#set-per-key-settings) | Read | Set | Reset to default |
+| [`/eth/v1/validator/<VALIDATOR_PUBKEY>/builder_config`](#set-the-builder-config-of-a-key) | Read | Replace | Reset to default |
+| [`/eth/v1/validator/<VALIDATOR_PUBKEY>/voluntary_exit`](#sign-a-voluntary-exit) | | Sign an exit | |
+
+## Add keys
+
+Send the keystore file and its password.
+
+**For a new key**, one that has never signed:
+
+<When os="unix">
+
+```bash
+jq -n \
+  --rawfile ks <PATH_TO>/keystore-m_12381_3600_0_0_0-<TIMESTAMP>.json \
+  --arg pw "$(cat <KEYSTORE_PASSWORD_FILE>)" \
+  '{keystores: [$ks], passwords: [$pw]}' \
+| curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @- \
+  $API/eth/v1/keystores | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+jq -n `
+  --rawfile ks <PATH_TO>\keystore-m_12381_3600_0_0_0-<TIMESTAMP>.json `
+  --arg pw (Get-Content <KEYSTORE_PASSWORD_FILE> -Raw).Trim() `
+  '{keystores: [$ks], passwords: [$pw]}' |
+curl.exe -s -X POST `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json" `
+  -d '@-' `
+  "$API/eth/v1/keystores" | jq
+```
+
+</When>
+
+`jq` builds the request body, and `curl` sends it. The body looks like this:
+
+```json
+{
+  "keystores": [
+    "{\"crypto\": {...}, \"pubkey\": \"a1b2...\", \"path\": \"m/12381/3600/0/0/0\", \"uuid\": \"...\", \"version\": 4}"
+  ],
+  "passwords": [
+    "<KEYSTORE_PASSWORD>"
+  ]
+}
+```
+
+The API expects the keystore as a string holding the file contents, not as a JSON object: that's what `--rawfile` does. To check the body before sending it, run the `jq` part alone.
+
+**For a key that has already signed**, anywhere, also send its slashing protection history (see [Move your slashing protection history](/validators/slashing-protection-history/)):
+
+<When os="unix">
+
+```bash
+jq -n \
+  --rawfile ks <PATH_TO>/keystore-m_12381_3600_0_0_0-<TIMESTAMP>.json \
+  --arg pw "$(cat <KEYSTORE_PASSWORD_FILE>)" \
+  --rawfile sp <PATH_TO>/slashing_protection.json \
+  '{keystores: [$ks], passwords: [$pw], slashing_protection: $sp}' \
+| curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @- \
+  $API/eth/v1/keystores | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+jq -n `
+  --rawfile ks <PATH_TO>\keystore-m_12381_3600_0_0_0-<TIMESTAMP>.json `
+  --arg pw (Get-Content <KEYSTORE_PASSWORD_FILE> -Raw).Trim() `
+  --rawfile sp <PATH_TO>\slashing_protection.json `
+  '{keystores: [$ks], passwords: [$pw], slashing_protection: $sp}' |
+curl.exe -s -X POST `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json" `
+  -d '@-' `
+  "$API/eth/v1/keystores" | jq
+```
+
+</When>
+
+The body now also has the slashing protection history, as a string too:
+
+```json
+{
+  "keystores": [
+    "{\"crypto\": {...}, \"pubkey\": \"a1b2...\", \"path\": \"m/12381/3600/0/0/0\", \"uuid\": \"...\", \"version\": 4}"
+  ],
+  "passwords": [
+    "<KEYSTORE_PASSWORD>"
+  ],
+  "slashing_protection": "{\"metadata\": {...}, \"data\": [...]}"
+}
+```
+
+The response gives each key a status: `imported`, `duplicate` (already there) or `error` with a message. The validator starts duties for imported keys without a restart; with doppelganger protection on, it first waits at least two epochs.
+
+List the keys to check:
+
+<When os="unix">
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" $API/eth/v1/keystores | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s -H "Authorization: Bearer $TOKEN" "$API/eth/v1/keystores" | jq
+```
+
+</When>
+
+## Sign a voluntary exit
+
+:::danger[An exit can't be undone]
+Once the network processes it, the validator stops for good. You can't start it again with the same key.
+:::
+
+The validator client signs the exit and returns it. It does **not** send it to the network:
+
+<When os="unix">
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  $API/eth/v1/validator/<VALIDATOR_PUBKEY>/voluntary_exit \
+| jq '.data' > exit.json
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s -X POST `
+  -H "Authorization: Bearer $TOKEN" `
+  "$API/eth/v1/validator/<VALIDATOR_PUBKEY>/voluntary_exit" |
+jq '.data' | Set-Content -Encoding ascii exit.json
+```
+
+</When>
+
+The exit is valid from the epoch it names: by default, the current one. To hand someone an exit they can't use before a given epoch, add `?epoch=<EPOCH>`. That doesn't schedule the exit: the network rejects it until that epoch.
+
+Then submit it to your beacon node:
+
+<When os="unix">
+
+```bash
+curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -d @exit.json \
+  http://127.0.0.1:3500/eth/v1/beacon/pool/voluntary_exits
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s -X POST `
+  -H "Content-Type: application/json" `
+  -d '@exit.json' `
+  http://127.0.0.1:3500/eth/v1/beacon/pool/voluntary_exits
+```
+
+</When>
+
+An empty `200` response means the beacon node accepted it and shares it with the network. See [Exit a validator](/validators/exit/).
+
+## Remove keys
+
+Removing a key returns its slashing protection history. Save it in the same step:
+
+<When os="unix">
+
+```bash
+curl -s -X DELETE \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"pubkeys":["<VALIDATOR_PUBKEY>"]}' \
+  $API/eth/v1/keystores \
+| tee delete-response.json | jq '.data'
+```
+
+</When>
+<When os="win">
+
+```powershell
+'{"pubkeys":["<VALIDATOR_PUBKEY>"]}' |
+curl.exe -s -X DELETE `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json" `
+  -d '@-' `
+  -o delete-response.json `
+  "$API/eth/v1/keystores"
+jq '.data' delete-response.json
+```
+
+</When>
+
+<When os="unix">
+
+```bash
+jq -r '.slashing_protection' delete-response.json > slashing_protection.json
+```
+
+</When>
+<When os="win">
+
+```powershell
+jq -r '.slashing_protection' delete-response.json | Set-Content -Encoding ascii slashing_protection.json
+```
+
+</When>
+
+The status is `deleted`, `not_active`, `not_found` or `error`. Import `slashing_protection.json` wherever the key runs next.
+
+:::caution
+Removing a key doesn't exit the validator. It stays active and loses balance until something signs for it again. To stop for good, [exit the validator](#sign-a-voluntary-exit).
+:::
+
+## Add remote signer keys
+
+With a remote signer (<Flag name="validators-external-signer-url" bin="validator" />), the keys live in the signer, and the validator only needs their public keys. Use `/eth/v1/remotekeys` instead of `/eth/v1/keystores`. See [Use a remote signer](/validators/remote-signer/).
+
+Without a remote signer, `GET` returns an empty list and `POST` and `DELETE` fail. Adding keys also needs <Flag name="validators-external-signer-key-file" bin="validator" />, where Prysm saves them; without it, each key comes back with the status `error`.
+
+<When os="unix">
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"remote_keys":[{"pubkey":"<VALIDATOR_PUBKEY>"}]}' \
+  $API/eth/v1/remotekeys | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+'{"remote_keys":[{"pubkey":"<VALIDATOR_PUBKEY>"}]}' |
+curl.exe -s -X POST `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json" `
+  -d '@-' `
+  "$API/eth/v1/remotekeys" | jq
+```
+
+</When>
+
+Prysm always uses the signer URL from <Flag name="validators-external-signer-url" bin="validator" />. A `url` field in the request is ignored, with a warning in the log.
+
+List the keys to check:
+
+<When os="unix">
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" $API/eth/v1/remotekeys | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s -H "Authorization: Bearer $TOKEN" "$API/eth/v1/remotekeys" | jq
+```
+
+</When>
+
+## Remove remote signer keys
+
+You can remove keys from the key file only. Keys from <Flag name="validators-external-signer-public-keys" bin="validator" />, a list or a URL, show `readonly: true`, and removing one returns `error`: it would come back on the next reload. If such a key is also in the key file, Prysm removes it from the file, and the key keeps validating.
+
+<When os="unix">
+
+```bash
+curl -s -X DELETE \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"pubkeys":["<VALIDATOR_PUBKEY>"]}' \
+  $API/eth/v1/remotekeys | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+'{"pubkeys":["<VALIDATOR_PUBKEY>"]}' |
+curl.exe -s -X DELETE `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json" `
+  -d '@-' `
+  "$API/eth/v1/remotekeys" | jq
+```
+
+</When>
+
+:::caution
+Removing a key doesn't exit the validator. It stays active and loses balance until something signs for it again. To stop for good, [exit the validator](#sign-a-voluntary-exit).
+:::
+
+## Set per-key settings
+
+The fee recipient, gas limit and graffiti endpoints work the same way: `POST` sets the value for one key, `GET` reads it and `DELETE` resets it, so the key uses the default again.
+
+Set the fee recipient:
+
+<When os="unix">
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"ethaddress":"<FEE_RECIPIENT_ADDRESS>"}' \
+  $API/eth/v1/validator/<VALIDATOR_PUBKEY>/feerecipient
+```
+
+</When>
+<When os="win">
+
+```powershell
+'{"ethaddress":"<FEE_RECIPIENT_ADDRESS>"}' |
+curl.exe -s -X POST `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json" `
+  -d '@-' `
+  "$API/eth/v1/validator/<VALIDATOR_PUBKEY>/feerecipient"
+```
+
+</When>
+
+Set the gas limit:
+
+<When os="unix">
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"gas_limit":"<GAS_LIMIT>"}' \
+  $API/eth/v1/validator/<VALIDATOR_PUBKEY>/gas_limit
+```
+
+</When>
+<When os="win">
+
+```powershell
+'{"gas_limit":"<GAS_LIMIT>"}' |
+curl.exe -s -X POST `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json" `
+  -d '@-' `
+  "$API/eth/v1/validator/<VALIDATOR_PUBKEY>/gas_limit"
+```
+
+</When>
+
+Set the graffiti:
+
+<When os="unix">
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"graffiti":"<GRAFFITI>"}' \
+  $API/eth/v1/validator/<VALIDATOR_PUBKEY>/graffiti
+```
+
+</When>
+<When os="win">
+
+```powershell
+'{"graffiti":"<GRAFFITI>"}' |
+curl.exe -s -X POST `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json" `
+  -d '@-' `
+  "$API/eth/v1/validator/<VALIDATOR_PUBKEY>/graffiti"
+```
+
+</When>
+
+The graffiti can be at most 32 bytes: a longer one is rejected with `400`. Success returns an empty `202`, and `DELETE` an empty `204`.
+
+Read a value back, here the fee recipient:
+
+<When os="unix">
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  $API/eth/v1/validator/<VALIDATOR_PUBKEY>/feerecipient | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s -H "Authorization: Bearer $TOKEN" `
+  "$API/eth/v1/validator/<VALIDATOR_PUBKEY>/feerecipient" | jq
+```
+
+</When>
+
+To print the fee recipient of every key at once:
+
+<When os="unix">
+
+```bash
+prysmctl validator proposer-settings \
+  --token=$TOKEN \
+  --validator-host=$API
+```
+
+</When>
+<When os="win">
+
+```powershell
+prysmctl validator proposer-settings `
+  --token=$TOKEN `
+  --validator-host=$API
+```
+
+</When>
+
+It prints one line per key:
+
+```text
+Validator: <PUBKEY>. Fee-recipient: <ADDRESS>
+```
+
+:::caution[A settings file replaces API changes]
+Prysm keeps these values across restarts, **unless** you start the validator with a proposer settings file that has a `proposer_config` section: at the next restart, the file replaces them. Manage per-key settings in one place. See [Set your fee recipient](/validators/fee-recipient/).
+:::
+
+## Set the builder config of a key
+
+Read the config a key uses, with defaults filled in:
+
+<When os="unix">
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  $API/eth/v1/validator/<VALIDATOR_PUBKEY>/builder_config | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s -H "Authorization: Bearer $TOKEN" `
+  "$API/eth/v1/validator/<VALIDATOR_PUBKEY>/builder_config" | jq
+```
+
+</When>
+
+The response has `min_bid`, `builder_boost_factor`, `max_execution_payment` and a `builders` list, with the same fields as a version 2 proposer settings file; see [Use builders after Gloas (ePBS)](/validators/builders/). `auth_data` and `builder_pubkeys` are `0x` hex. You can edit it and send it back with `POST`, which replaces the key's whole builder config:
+
+<When os="unix">
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @builder-config.json \
+  $API/eth/v1/validator/<VALIDATOR_PUBKEY>/builder_config
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s -X POST `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json" `
+  -d '@builder-config.json' `
+  "$API/eth/v1/validator/<VALIDATOR_PUBKEY>/builder_config"
+```
+
+</When>
+
+`DELETE` removes the key's builder config, so it follows the validator's defaults again. That's not the same as sending `"builders": []`, which allows no builder at all.
+
+## Check that it works
+
+<When os="unix">
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -H "Authorization: Bearer $TOKEN" \
+  $API/eth/v1/keystores
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s -o NUL -w '%{http_code}\n' `
+  -H "Authorization: Bearer $TOKEN" `
+  "$API/eth/v1/keystores"
+```
+
+</When>
+
+`200` means the API is up and your token works. After adding or removing keys, list them again.

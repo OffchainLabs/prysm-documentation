@@ -1,0 +1,65 @@
+.stack {
+	margin: 1.5rem 0;
+	padding: 1rem;
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	background: var(--site-color-bg-nav);
+	overflow-x: auto;
+}
+.stack svg {
+	width: 100%;
+	min-width: 34rem;
+	height: auto;
+	display: block;
+}
+.stack text {
+	font-family: var(--site-font);
+	text-anchor: middle;
+	fill: var(--site-color-gray-2);
+	font-size: 14px;
+}
+.stack .s-net rect {
+	fill: none;
+	stroke: var(--site-color-gray-4);
+	stroke-dasharray: 4 5;
+}
+.stack .s-box rect {
+	fill: var(--site-color-bg);
+	stroke: var(--site-color-gray-4);
+	stroke-width: 1.5;
+}
+.stack .s-prysm rect {
+	stroke: var(--site-color-accent);
+	fill: color-mix(in srgb, var(--site-color-accent) 10%, var(--site-color-bg));
+}
+.stack .s-optional rect {
+	stroke-dasharray: 6 4;
+}
+.stack .s-title {
+	font-family: var(--prysm-display);
+	font-weight: 650;
+	font-size: 17px;
+	fill: var(--site-color-white);
+}
+.stack .s-sub {
+	font-size: 12.5px;
+	fill: var(--site-color-gray-3);
+}
+.stack .s-link line {
+	stroke: var(--site-color-gray-3);
+	stroke-width: 1.5;
+}
+.stack .s-arrowhead {
+	fill: var(--site-color-gray-3);
+}
+.stack .s-label {
+	font-size: 13px;
+	fill: var(--site-color-white);
+}
+.stack .s-muted {
+	fill: var(--site-color-gray-3);
+	font-size: 12px;
+}
+.stack .s-left {
+	text-anchor: start;
+}

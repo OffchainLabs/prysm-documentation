@@ -1,0 +1,130 @@
+---
+title: "Import keys"
+description: "Import the keystores from the deposit CLI into a Prysm wallet, start the validator with them, and list or remove accounts."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+The Prysm validator client signs with keys stored in a **wallet**, a folder that holds your keystores encrypted with a wallet password. This page imports the `keystore-m_*.json` files from the deposit CLI and starts the validator with them.
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+## Before you begin
+
+- Have the `validator_keys` folder from [Create validator keys](/validators/create-keys/) on the machine that runs the validator, and its keystore password. If you made the keys on another machine, copy only the `keystore-m_*.json` files, not the mnemonic.
+- [Install Prysm](/install/).
+- If these keys have **ever** run in another validator client, stop that client for good first and bring its slashing protection history. See [Avoid slashing](/validators/avoid-slashing/).
+
+:::danger[One key, one validator client]
+Never load the same key into two running validator clients, on the same machine or on different ones. Both sign, and the key gets slashed. This includes "backup" or "failover" setups.
+:::
+
+## Import your keystores
+
+<Steps>
+
+1. **Import your keystores.** This creates the wallet if it doesn't exist yet.
+
+   <When os="unix">
+
+   ```bash
+   ./prysm.sh validator accounts import \
+     --{net} \
+     --keys-dir=<PATH_TO_VALIDATOR_KEYS> \
+     --wallet-dir=<PATH_TO_WALLET_DIR>
+   ```
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   .\prysm.bat validator accounts import `
+     --{net} `
+     --keys-dir=<PATH_TO_VALIDATOR_KEYS> `
+     --wallet-dir=<PATH_TO_WALLET_DIR>
+   ```
+
+   </When>
+
+   Replace:
+
+   - `<PATH_TO_VALIDATOR_KEYS>` with the path to the folder containing the `keystore-m_*.json` files.
+   - `<PATH_TO_WALLET_DIR>` with the folder where Prysm keeps the wallet. Prysm creates it on the first import. Use the same path in every command on this page.
+
+   Prysm asks for two passwords:
+
+   - **New wallet password** (twice, at least 8 characters). It encrypts the wallet; the validator needs it every time it starts.
+   - **The password for your imported accounts**: the password you chose at step 3 of [Generate your keys](/validators/create-keys/#generate-your-keys).
+
+2. **Read the result:**
+
+   ```text
+   INFO local: Successfully imported validator key(s) pubkeys=<PUBKEY>
+   INFO accounts: Imported accounts [<PUBKEY>], view all of them by running `accounts list`
+   ```
+
+3. **List the accounts in the wallet:**
+
+   <When os="unix">
+
+   ```bash
+   ./prysm.sh validator accounts list --wallet-dir=<PATH_TO_WALLET_DIR>
+   ```
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   .\prysm.bat validator accounts list --wallet-dir=<PATH_TO_WALLET_DIR>
+   ```
+
+   </When>
+
+   ```text
+   Showing 2 validator accounts
+
+   Account 0 | <ACCOUNT_NAME>
+   [validating public key] 0x<PUBKEY>
+
+   Account 1 | <ACCOUNT_NAME>
+   [validating public key] 0x<PUBKEY>
+   ```
+
+   The public keys should match the `pubkey` fields in your `deposit_data-*.json`.
+
+4. **Start the validator with the wallet:**
+
+   <When os="unix">
+
+   ```bash
+   ./prysm.sh validator \
+     --{net} \
+     --wallet-dir=<PATH_TO_WALLET_DIR> \
+     --suggested-fee-recipient=<YOUR_WALLET_ADDRESS> \
+     --enable-doppelganger
+   ```
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   .\prysm.bat validator `
+     --{net} `
+     --wallet-dir=<PATH_TO_WALLET_DIR> `
+     --suggested-fee-recipient=<YOUR_WALLET_ADDRESS> `
+     --enable-doppelganger
+   ```
+
+   </When>
+
+   Replace `<YOUR_WALLET_ADDRESS>` with the address that should receive block fees. The validator asks for the wallet password when it starts.
+
+</Steps>
+
+:::tip[Skip the password prompt]
+If you don't want to type the wallet password at every restart, save it into a file, then add <Flag name="wallet-password-file" bin="validator" /> to the validator command.
+:::
+
+If the validator is already running with this wallet, you don't need to restart it: it picks up newly imported keys on its own.

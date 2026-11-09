@@ -1,0 +1,124 @@
+---
+title: "Run a slasher"
+description: "What a slasher does, what it costs, and how to turn on Prysm's built-in slasher and check that it works."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+<SetupPicker groups="os net" />
+
+A slasher watches the blocks and attestations of every validator on the network and catches the ones that break the rules: two different blocks for the same slot, two conflicting votes for the same epoch, or two votes where one surrounds the other. When it finds one, it turns the two signed messages into a proof. Once a block includes that proof, the offending validator is slashed.
+
+A slasher protects the **network**, not your own validators. Your validators are protected by the slashing protection built into the validator client.
+
+## Should you run one?
+
+- **The network needs only a few.** One honest slasher that sees an offense is enough.
+- **It earns you nothing.** Running a slasher is unpaid. The protocol rewards the validator that proposes the block including the proof of the offense, not the node that found it.
+- **It's expensive.** The slasher keeps a history for every validator on the network, so the beacon node uses a lot more disk, disk I/O, memory and CPU. On a home staking machine it can slow the beacon node enough to hurt your own validators.
+
+Run one if you operate infrastructure with spare capacity (a staking pool, a data center, an explorer). Home stakers are usually better off without it.
+
+{/* VERIFY: no current, sourced disk/RAM figures for the slasher database on mainnet. The 2023 docs said slasher.db "will quickly grow to 1TB or more" with 8-16 GB RAM; not re-measured. */}
+
+## Before you begin
+
+- A synced beacon node on hardware well above the [system requirements](/get-started/system-requirements/), with a fast NVMe SSD and plenty of free space.
+- Good peer connectivity. The slasher only sees what your node receives; see [Ports, peers and router setup](/setup/networking/).
+
+## Turn it on
+
+<Steps>
+
+1. **Add <Flag name="slasher" /> to the beacon node** and restart it. The slasher runs inside the beacon node; there's no separate process or port.
+
+   <When os="unix" conn="jwt">
+
+   ```bash
+   ./prysm.sh beacon-chain \
+     --{net} \
+     --datadir=$HOME/ethereum/data/{net}/beacon \
+     --execution-endpoint=http://localhost:8551 \
+     --jwt-secret=$HOME/ethereum/data/jwt.hex \
+     --slasher
+   ```
+
+   </When>
+   <When os="win" conn="jwt">
+
+   ```powershell
+   .\prysm.bat beacon-chain `
+     --{net} `
+     --datadir=$HOME\ethereum\data\{net}\beacon `
+     --execution-endpoint=http://localhost:8551 `
+     --jwt-secret=$HOME\ethereum\data\jwt.hex `
+     --slasher
+   ```
+
+   </When>
+   <When os="unix" conn="ipc">
+
+   ```bash
+   ./prysm.sh beacon-chain \
+     --{net} \
+     --datadir=$HOME/ethereum/data/{net}/beacon \
+     --execution-endpoint=$HOME/ethereum/data/{net}/execution/geth.ipc \
+     --slasher
+   ```
+
+   </When>
+   <When os="win" conn="ipc">
+
+   ```powershell
+   .\prysm.bat beacon-chain `
+     --{net} `
+     --datadir=$HOME\ethereum\data\{net}\beacon `
+     --execution-endpoint=\\.\pipe\geth.ipc `
+     --slasher
+   ```
+
+   </When>
+
+   Keep the rest of your usual flags; the slasher only needs <Flag name="slasher" /> added.
+
+2. **Optionally put the slasher database on another disk** with <Flag name="slasher-datadir" />. By default the database is `beaconchaindata/slasher.db` inside the beacon node's <Flag name="datadir" />. With `--slasher-datadir=<DIR>`, it's `<DIR>/beaconchaindata/slasher.db`. Replace `<DIR>` with a folder on the fast disk.
+
+3. **Wait for the beacon node to sync.** The slasher stays idle while the beacon node syncs, then starts. It doesn't backfill old history: it builds its record from the blocks and attestations the node receives from then on, and keeps the last 4096 epochs (about 18 days). It can only catch an offense when it has seen both conflicting messages.
+
+</Steps>
+
+## Check that it works
+
+Once the beacon node is synced, the log shows:
+
+```text
+INFO slasher: Completed chain sync, starting slashing detection
+INFO slasher: Reading last epoch written for each validator...
+INFO slasher: Finished retrieving last epoch written per validator elapsed=...
+```
+
+After that, every slot it logs `Start processing queued attestations`, `Done processing queued attestations` and `Processing queued blocks for slashing detection`. Once it holds more than 4096 epochs of history, it also logs `Pruning old attestations and proposals for slasher` as it deletes the oldest data.
+
+When it catches an offense, you see one of:
+
+```text
+INFO slasher: Proposer slashing detected slot=... validatorIndex=...
+WARN slasher: Slashable attestation offenses found numSlashings=1
+INFO slasher: Attester slashing detected prevSourceEpoch=... prevTargetEpoch=... sourceEpoch=... targetEpoch=... validatorIndex=[...]
+```
+
+On the beacon node's metrics port, `slasher_attestations_processed_total` and `slasher_blocks_processed_total` should rise steadily.
+
+## Troubleshooting
+
+**Nothing from the slasher after startup.** The beacon node is still syncing. The slasher starts only once the node reports synced.
+
+**`slasher_attestations_dropped_total` keeps growing, or the node falls behind.** The machine can't keep up. Move the slasher database to a faster disk with <Flag name="slasher-datadir" />, add memory, or turn the slasher off.
+
+**Shutdown takes a long time.** On stop, the slasher logs `Flushing last epoch written for each validator to disk, please wait` and saves its state. Let it finish; if you run it as a service, give the unit enough stop time so it isn't killed.
+
+## Turn it off
+
+Remove <Flag name="slasher" /> and restart the beacon node. The slasher database stays on disk; delete `slasher.db` if you won't use it again.

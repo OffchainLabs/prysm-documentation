@@ -1,0 +1,109 @@
+---
+title: "Unit tests"
+description: "Run Prysm's unit tests with Bazel for the whole repository, one package or a single test, stream output, and chase flaky tests."
+---
+
+Run the unit tests for the code you change before you open a pull request. Each Go package has a `BUILD.bazel` file whose test target is usually called `go_default_test`, so the tests of `beacon-chain/sync` are `//beacon-chain/sync:go_default_test`.
+
+## Before you begin
+
+- [Build with Bazel](/developers/build/) works on your machine.
+- Run every command from the root of the clone.
+
+## Run tests
+
+| What | Command |
+| --- | --- |
+| One package | `bazel test //beacon-chain/sync:go_default_test` |
+| A directory and everything below it | `bazel test //beacon-chain/sync/...` |
+| Everything except spec tests | `bazel test //... --test_tag_filters=-spectest` |
+| Everything | `bazel test //...` |
+
+`//...` skips targets tagged `manual`, which includes the end-to-end tests. It does include the consensus spec tests (tagged `spectest`), which are slow.
+
+The output ends with one line per test target:
+
+```text
+//beacon-chain/sync:go_default_test                                     PASSED in …
+
+Executed 1 out of 1 test: 1 test passes.
+```
+
+`(cached) PASSED` means nothing the test depends on changed since its last successful run, so Bazel didn't run it again.
+
+## Find a package's test target
+
+List the test targets in a package or directory:
+
+```bash
+bazel query 'tests(//beacon-chain/blockchain/...)'
+```
+
+```text
+//beacon-chain/blockchain:go_default_test
+//beacon-chain/blockchain/kzg:go_default_test
+```
+
+Bazel runs a test target, not a file: a package's `_test.go` files are usually all in one `go_default_test`. To find the target that contains a given test file:
+
+```bash
+bazel query 'attr(srcs, "rpc_status_test.go", //beacon-chain/sync:all)'
+```
+
+```text
+//beacon-chain/sync:go_default_test
+```
+
+To run only the tests from that file, filter by their names, as shown next.
+
+## Run part of a package
+
+Pass a regular expression to `--test_filter`. Bazel hands it to Go's `-test.run`, so it matches test names:
+
+```bash
+bazel test //beacon-chain/sync:go_default_test --test_filter='TestStatusRPCHandler_ReturnsHelloMessage$'
+```
+
+A prefix runs a group of tests, for example every test in `rpc_status_test.go` whose name starts with `TestStatusRPCHandler`:
+
+```bash
+bazel test //beacon-chain/sync:go_default_test --test_filter='^TestStatusRPCHandler'
+```
+
+Useful options while you work on a test:
+
+| Option | Effect |
+| --- | --- |
+| `--test_output=errors` | Print the log of failing tests. The repository sets this by default. |
+| `--test_output=streamed` | Print output live as the test runs. Runs tests one at a time. |
+| `--test_arg=-test.v` | Pass an argument to the Go test binary; `-test.v` also shows `t.Log` output of passing tests. |
+| `--nocache_test_results` | Run the test even if a cached result exists. |
+| `--test_timeout=<SECONDS>` | Override the timeout set by the target's `size`. |
+| `--config=debug` | Streamed output, one test at a time, a 9999-second timeout and no cached results, all at once. |
+
+## Chase a flaky test
+
+Run the test many times to reproduce a flake:
+
+```bash
+bazel test //beacon-chain/sync:go_default_test --test_filter='TestStatusRPCHandler_ReturnsHelloMessage$' --runs_per_test=50
+```
+
+Add Go's race detector with rules_go's race setting. It rebuilds the test and its dependencies in race mode, so the first run is slow:
+
+```bash
+bazel test //beacon-chain/sync:go_default_test --@io_bazel_rules_go//go/config:race
+```
+
+`--flaky_test_attempts=3` retries failing tests, and reports a test that passes on a retry as `FLAKY`. Use it to get past a known flake, not to hide one.
+
+## Read test logs
+
+Logs of every test run, passing or failing, stay under `bazel-testlogs/`:
+
+```text
+bazel-testlogs/beacon-chain/sync/go_default_test/test.log
+bazel-testlogs/beacon-chain/sync/go_default_test/test.xml
+```
+
+Targets split with `shard_count` (such as `//beacon-chain/sync:go_default_test`, which has four shards) have one directory per shard, for example `shard_1_of_4/test.log`.

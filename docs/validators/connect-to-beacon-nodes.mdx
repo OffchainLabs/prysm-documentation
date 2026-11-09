@@ -1,0 +1,204 @@
+---
+title: "Connect to beacon nodes"
+description: "Connect the Prysm validator client to one beacon node, on the same machine or another one, or to several beacon nodes: active-active with the Beacon API, active-passive with gRPC."
+---
+
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+import TopologyDiagram from '@site/src/components/diagrams/TopologyDiagram';
+
+The validator client gets its duties from a beacon node and sends it what it signs.
+
+<SetupPicker groups="os net api" nets="mainnet hoodi" />
+
+<When api="grpc">
+
+The validator client talks to the beacon node over gRPC, Prysm's default. It connects to the address in <Flag name="beacon-rpc-provider" bin="validator" />, `127.0.0.1:4000` by default.
+
+</When>
+<When api="rest">
+
+The validator client talks to the beacon node over the Beacon API (REST). This mode is experimental. It turns on when you set <Flag name="beacon-rest-api-provider" bin="validator" /> to the beacon node's address, or when you add <Flag name="enable-beacon-rest-api" bin="validator" /> to use the default address, `http://127.0.0.1:3500`.
+
+</When>
+
+## One beacon node
+
+<When api="grpc">
+
+**On the same machine:** nothing to set if the beacon node listens on its default port, 4000. If you changed it with <Flag name="rpc-port" />, add `--beacon-rpc-provider=127.0.0.1:<PORT>`.
+
+**On another machine:** point the validator client at the beacon node's private IP, and make the beacon node listen on it with <Flag name="rpc-host" />. Open port 4000 in the firewall to the validator's host only.
+
+<When os="unix">
+
+```bash
+./prysm.sh validator \
+  --{net} \
+  --beacon-rpc-provider=<BEACON_IP>:4000
+```
+
+</When>
+<When os="win">
+
+```powershell
+.\prysm.bat validator `
+  --{net} `
+  --beacon-rpc-provider=<BEACON_IP>:4000
+```
+
+</When>
+
+</When>
+<When api="rest">
+
+**On the same machine:** add <Flag name="enable-beacon-rest-api" bin="validator" /> if the beacon node listens on its default port, 3500. If you changed it with <Flag name="http-port" />, add `--beacon-rest-api-provider=http://127.0.0.1:<PORT>` instead.
+
+**On another machine:** point the validator client at the beacon node's private IP, and make the beacon node listen on it with <Flag name="http-host" />. Open port 3500 in the firewall to the validator's host only.
+
+<When os="unix">
+
+```bash
+./prysm.sh validator \
+  --{net} \
+  --beacon-rest-api-provider=http://<BEACON_IP>:3500
+```
+
+</When>
+<When os="win">
+
+```powershell
+.\prysm.bat validator `
+  --{net} `
+  --beacon-rest-api-provider=http://<BEACON_IP>:3500
+```
+
+</When>
+
+</When>
+
+Keep the two machines on the same local network: every duty waits on the beacon node.
+
+### Several validator clients on one beacon node
+
+Several validator clients can share one beacon node. Give each its own wallet, data directory, HTTP API port and metrics port.
+
+<TopologyDiagram variant="multi-vc" />
+
+:::danger[Never load the same key in two validator clients]
+Their slashing protection databases are separate, so the key would get slashed.
+:::
+
+## Several beacon nodes
+
+Give the validator client a comma-separated list of beacon nodes so it keeps working while one of them is down, restarting or updating. Your keys still run in **one** validator client with one slashing protection database, so this adds no slashing risk. It is not the same as running your keys twice, which you must never do (see [Avoid slashing](/validators/avoid-slashing/)).
+
+<When api="grpc">
+
+The validator client uses one node at a time, and the others wait as backups (**active-passive**):
+
+<TopologyDiagram variant="several-bn-grpc" />
+
+<When os="unix">
+
+```bash
+./prysm.sh validator \
+  --{net} \
+  --beacon-rpc-provider=<BEACON_1_IP>:4000,<BEACON_2_IP>:4000
+```
+
+</When>
+<When os="win">
+
+```powershell
+.\prysm.bat validator `
+  --{net} `
+  --beacon-rpc-provider=<BEACON_1_IP>:4000,<BEACON_2_IP>:4000
+```
+
+</When>
+
+It uses the first node. Every slot it checks that the current node is up and synced. If not, it moves to the next node in the list and stays there; it doesn't switch back when the first node recovers. A switch logs:
+
+```text
+WARN fallback: Switched to responsive beacon node current=<BEACON_2_IP>:4000 previous=<BEACON_1_IP>:4000 tried=[<BEACON_1_IP>:4000]
+```
+
+</When>
+<When api="rest">
+
+The validator client uses all nodes at the same time (**active-active**):
+
+<TopologyDiagram variant="several-bn-rest" />
+
+<When os="unix">
+
+```bash
+./prysm.sh validator \
+  --{net} \
+  --beacon-rest-api-provider=http://<BEACON_1_IP>:3500,http://<BEACON_2_IP>:3500
+```
+
+</When>
+<When os="win">
+
+```powershell
+.\prysm.bat validator `
+  --{net} `
+  --beacon-rest-api-provider=http://<BEACON_1_IP>:3500,http://<BEACON_2_IP>:3500
+```
+
+</When>
+
+- It listens to the event stream of every node, so it learns about a new block from whichever node sees it first.
+- It sends attestations, blocks and other signed messages to every node. A submission succeeds as soon as one node accepts it.
+- For time-critical data (what to attest to, the block to propose) it asks every node at once and takes the answer from a node that already has the newest block. If none catches up in time, it uses the first valid answer so the duty still happens.
+- Other requests go to the nodes in the order listed, until one answers.
+- It counts as healthy while at least one node is synced.
+
+</When>
+
+### Block production from Gloas on
+
+When the network has the Gloas fork scheduled, a list of two or more nodes also turns on <Flag name="stateless" bin="validator" />, because only the node that built a block can reveal its payload. The validator client logs:
+
+```text
+INFO node: Multiple beacon nodes configured: enabling --stateless so block production works on every node
+```
+
+### Several validator clients on several beacon nodes
+
+Several validator clients can share the same beacon nodes. Give each one the same list of beacon nodes, and its own wallet, data directory, HTTP API port and metrics port, as with [one beacon node](#several-validator-clients-on-one-beacon-node).
+
+<TopologyDiagram variant="multi-vc-several-bn" />
+
+:::danger[Never load the same key in two validator clients]
+Their slashing protection databases are separate, so the key would get slashed.
+:::
+
+## Check that it works
+
+At startup, the validator client logs how many beacon nodes it uses:
+
+<When api="grpc">
+
+```text
+INFO grpc: Initialized gRPC connection provider count=2 endpoints=[<BEACON_1_IP>:4000 <BEACON_2_IP>:4000]
+```
+
+</When>
+<When api="rest">
+
+```text
+INFO rest: Initialized REST connection provider count=2 endpoints=[http://<BEACON_1_IP>:3500 http://<BEACON_2_IP>:3500]
+```
+
+</When>
+
+With one beacon node, `count=1`. Then, in the next epochs, watch for:
+
+```text
+INFO client: Submitted new attestations blockRoot=<ROOT> committeeIndices=[<INDEX>] pubkeys=[<PUBKEY>] sinceSlotStartTime=<DELAY> slot=<SLOT> sourceEpoch=<EPOCH> sourceRoot=<ROOT> targetEpoch=<EPOCH> targetRoot=<ROOT>
+```
+
+With several nodes, stop one of them: the validator client keeps attesting.

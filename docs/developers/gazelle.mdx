@@ -1,0 +1,87 @@
+---
+title: "Update BUILD files with Gazelle"
+description: "Regenerate Prysm's BUILD.bazel files and deps.bzl with Gazelle after you add files, change imports or update go.mod, and pass the CI Gazelle check."
+---
+
+import { Steps } from '@site/src/components/ui';
+
+Bazel only compiles what a package's `BUILD.bazel` lists, so every Go file, import and dependency must appear there. You rarely edit these files by hand: [Gazelle](https://github.com/bazelbuild/bazel-gazelle) generates them from your Go code, and CI fails a pull request whose `BUILD.bazel` files or `deps.bzl` are out of date.
+
+## When you need it
+
+| You changed | Run |
+| --- | --- |
+| Added, renamed or deleted a `.go` file, or added a package | `bazel run //:gazelle -- fix` |
+| Changed a package's imports | `bazel run //:gazelle -- fix` |
+| Added, removed or upgraded a module in `go.mod` | `update-repos` (below), then `bazel run //:gazelle -- fix` |
+
+## Before you begin
+
+- [Build with Bazel](/developers/build/) works on your machine.
+- Run every command from the root of the clone.
+
+## Update BUILD files
+
+<Steps>
+
+1. Regenerate the `BUILD.bazel` files:
+
+   ```bash
+   bazel run //:gazelle -- fix
+   ```
+
+   Gazelle walks the repository, adds new files to `srcs`, updates `deps` from your imports, and creates `go_library` and `go_test` targets for new packages.
+
+2. Review the changes and commit them with your code:
+
+   ```bash
+   git diff -- '*BUILD.bazel'
+   ```
+
+</Steps>
+
+The root `BUILD.bazel` configures Gazelle with directives: it maps `go_library` and `go_test` to Prysm's wrappers in `tools/go/def.bzl`, compiles with the `bazel` build tag, and excludes some paths. So new targets load from `@prysm//tools/go:def.bzl`; keep that as Gazelle writes it.
+
+## Update Go dependencies
+
+Bazel doesn't read `go.mod`. It gets each Go module from a `go_repository` rule in `deps.bzl`, inside the `prysm_deps` macro. After you change `go.mod`, regenerate `deps.bzl` from it:
+
+<Steps>
+
+1. Change the dependency with the Go toolchain:
+
+   ```bash
+   go get github.com/<OWNER>/<MODULE>@<VERSION>
+   go mod tidy
+   ```
+
+2. Regenerate `deps.bzl`:
+
+   ```bash
+   bazel run //:gazelle -- update-repos \
+     -from_file=go.mod \
+     -to_macro=deps.bzl%prysm_deps \
+     -prune=true
+   ```
+
+   `-prune=true` removes `go_repository` rules for modules that are no longer in `go.mod`.
+
+3. Update the `BUILD.bazel` files that import the new module:
+
+   ```bash
+   bazel run //:gazelle -- fix
+   ```
+
+</Steps>
+
+:::note
+The pull request template says that pull requests updating dependencies or the Go version are not accepted; file an issue instead.
+:::
+
+## Stop Gazelle from changing something
+
+A few comments steer Gazelle. They're all used in the repository:
+
+- `# keep` after an entry in a list keeps it even if Gazelle wouldn't generate it, for example a file that is only compiled with a build tag Gazelle doesn't use (see `config/params/BUILD.bazel`).
+- `# gazelle:ignore` in a `BUILD.bazel` file stops Gazelle from changing that file. `testing/endtoend/BUILD.bazel` uses it for its hand-written test targets.
+- `# gazelle:exclude <PATH>` hides a file or directory from Gazelle.

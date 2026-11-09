@@ -1,0 +1,94 @@
+---
+title: "Set graffiti"
+description: "Put your own text in the graffiti field of the blocks your validators propose, for all validators, per validator, or from a list."
+---
+
+import Flag from '@site/src/components/Flag';
+
+Every block has a 32-byte **graffiti** field that the proposer fills with any text. It has no effect on rewards. Graffiti is public and permanent, so don't put anything in it you wouldn't want tied to your validator forever.
+
+## Before you begin
+
+- A running validator client. See [Import keys](/validators/import-keys/).
+- Graffiti only appears in blocks you propose: for one validator on mainnet, a few times a year at most.
+
+## Set one graffiti for all validators
+
+Add <Flag name="graffiti" bin="validator" /> to your validator client command and restart it:
+
+```text
+--graffiti="<YOUR_GRAFFITI>"
+```
+
+The field holds 32 bytes. Plain letters and digits take one byte each; emoji take three or four.
+
+## Set graffiti per validator
+
+Add a `graffiti` field to a key in your proposer settings file (see [Set your fee recipient](/validators/fee-recipient/)):
+
+```yaml title="proposer-settings.yaml"
+proposer_config:
+  '<VALIDATOR_PUBKEY>':
+    fee_recipient: '<FEE_RECIPIENT>'
+    graffiti: 'validator one'
+default_config:
+  fee_recipient: '<DEFAULT_FEE_RECIPIENT>'
+```
+
+You can also change it while the validator runs through the [Keymanager API](/validators/keymanager/).
+
+## Use a graffiti file
+
+For lists or rotating text, write a YAML file:
+
+```yaml title="graffiti.yaml"
+specific:
+  <VALIDATOR_INDEX>: 'validator one was here'
+ordered:
+  - 'first block'
+  - 'second block'
+random:
+  - 'gm'
+  - 'staking from home'
+default: 'proposed with Prysm'
+```
+
+Then add <Flag name="graffiti-file" bin="validator" /> to your validator client command and restart it:
+
+```text
+--graffiti-file=<PATH_TO_GRAFFITI_FILE>
+```
+
+| Section | Behavior |
+| --- | --- |
+| `specific` | Graffiti for one validator, keyed by **validator index** (the number on block explorers), not public key. |
+| `ordered` | One entry per proposal, in order. When the list runs out, Prysm moves on to `random`, then `default`. |
+| `random` | A random entry for each proposal. |
+| `default` | Used when nothing above applies. |
+
+Prysm reads the file at startup: restart the validator after editing it.
+
+## Which graffiti wins
+
+1. The key's `graffiti` in proposer settings (or set through the Keymanager API).
+2. `graffiti` in the proposer settings `default_config`.
+3. <Flag name="graffiti" bin="validator" />.
+4. The graffiti file.
+
+A `graffiti` in `default_config` hides the flag and the whole graffiti file. Leave it out if you want the file to apply.
+
+## The client tag at the end
+
+The beacon node adds a short tag after your text that names your execution and consensus clients, for example `Sushi GEabcdPMe4f6` (`GE` for Geth, `PM` for Prysm, each followed by the start of its commit). It uses only the space your text leaves free and never cuts your text. The tag helps client teams track client diversity; keep your text to 20 bytes or less to leave room for it.
+
+To keep your graffiti exactly as written, start the **beacon node** with <Flag name="disable-graffiti-client-append" />.
+
+## Check that it works
+
+When your validator proposes, its log shows the graffiti it sent:
+
+```text
+INFO client: Submitted new block slot=<SLOT> blockRoot=<ROOT> graffiti="<GRAFFITI>" ...
+```
+
+The final graffiti, including the client tag, is visible on the block in a block explorer, as in [this Sepolia block](https://light-sepolia.beaconcha.in/slot/11403208).

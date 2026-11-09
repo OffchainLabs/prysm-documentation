@@ -1,0 +1,165 @@
+---
+title: Build Docker images
+description: "Build Prysm's beacon-chain, validator and prysmctl container images with Bazel, load them into your local Docker, and build multi-arch images."
+---
+
+import { Steps, Tabs, TabItem } from '@site/src/components/ui';
+
+Prysm has no Dockerfile. Bazel builds the container images straight from the compiled binaries with [rules_oci](https://github.com/bazel-contrib/rules_oci), through the `prysm_image_upload` macro in `tools/prysm_image.bzl`. Build an image when you want to run your change in Docker or in a devnet.
+
+## Before you begin
+
+- [Build with Bazel](/developers/build/) works on your machine.
+- Docker (or Podman) installed and running. `bazel run` on an image tarball loads it with `docker load`, or `podman load` if Docker isn't installed.
+
+## Build and load an image
+
+<Steps>
+
+1. Build the images and load them into Docker. `--platforms` sets the Linux platform the binary is built for, so the image runs the same way whether you build on Linux or macOS. Pick the one that matches the machine that will run the container:
+
+   <Tabs>
+   <TabItem label="arm64">
+
+   For Apple silicon Macs and other arm64 machines:
+
+   ```bash
+   bazel run //cmd/beacon-chain:oci_image_tarball --platforms=@io_bazel_rules_go//go/toolchain:linux_arm64_cgo
+   bazel run //cmd/validator:oci_image_tarball --platforms=@io_bazel_rules_go//go/toolchain:linux_arm64_cgo
+   ```
+
+   </TabItem>
+   <TabItem label="amd64">
+
+   For x86-64 machines:
+
+   ```bash
+   bazel run //cmd/beacon-chain:oci_image_tarball --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo
+   bazel run //cmd/validator:oci_image_tarball --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo
+   ```
+
+   </TabItem>
+   </Tabs>
+
+2. Check that the image is in Docker:
+
+   ```bash
+   docker image ls gcr.io/offchainlabs/prysm/beacon-chain
+   ```
+
+3. Give it a local tag, so it can't be confused with the upstream `latest` image:
+
+   ```bash
+   docker tag gcr.io/offchainlabs/prysm/beacon-chain:latest prysm-beacon-chain:local
+   docker tag gcr.io/offchainlabs/prysm/validator:latest prysm-validator:local
+   ```
+
+</Steps>
+
+Add other build options the same way. For example, an optimized release image:
+
+<Tabs>
+<TabItem label="arm64">
+
+```bash
+bazel run //cmd/beacon-chain:oci_image_tarball --config=release --platforms=@io_bazel_rules_go//go/toolchain:linux_arm64_cgo
+```
+
+</TabItem>
+<TabItem label="amd64">
+
+```bash
+bazel run //cmd/beacon-chain:oci_image_tarball --config=release --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo
+```
+
+</TabItem>
+</Tabs>
+
+To build the tarball without loading it, use `bazel build` instead of `bazel run` with the same target and `--platforms`. The file is at `bazel-bin/cmd/beacon-chain/oci_image_tarball/tarball.tar`, and you can load it later with:
+
+```bash
+docker load --input <FILE>
+```
+
+## Image targets
+
+`cmd/beacon-chain`, `cmd/validator` and `cmd/prysmctl` each define the same targets:
+
+| Target | What it builds |
+| --- | --- |
+| `:oci_image` | The image, as an OCI layout, for the platform set with `--platforms`. |
+| `:oci_image_tarball` | A tarball of `:oci_image`; `bazel run` loads it. |
+| `:oci_image_tarball_e2e` | A tarball of the image built for Linux on the host's CPU (`linux/amd64` or `linux/arm64`); `bazel run` loads it. The Kurtosis [end-to-end test](/developers/e2e-tests/) uses it. |
+| `:oci_image_index` | A multi-arch image index for `linux/amd64` and `linux/arm64`. |
+| `:push_images` | Pushes `:oci_image_index` to a registry. |
+
+The tarballs are tagged `latest` in these repositories:
+
+| Package | Tag |
+| --- | --- |
+| `//cmd/beacon-chain` | `gcr.io/offchainlabs/prysm/beacon-chain:latest` |
+| `//cmd/validator` | `gcr.io/offchainlabs/prysm/validator:latest` |
+| `//cmd/prysmctl` | `gcr.io/offchainlabs/prysm/cmd/prysmctl:latest` |
+
+## What's in the image
+
+- A distroless Debian 11 base with the C runtime (`gcr.io/prysmaticlabs/distroless/cc-debian11`, pinned by digest in `WORKSPACE`), plus `bash` and `coreutils`.
+- An `/etc/passwd` with `root` (UID 0) and `nonroot` (UID 1001). The image doesn't set a user, so containers run as root unless you pass `--user`.
+- The binary at `/beacon-chain`, `/validator` or `/prysmctl`, which is also the entrypoint. A symlink keeps the old path `/app/cmd/<NAME>/<NAME>` working.
+
+Because the entrypoint is the binary, arguments to `docker run` go straight to it.
+
+## Build multi-arch images
+
+`:oci_image_index` builds the binary once for each Linux platform and combines the two images into one index. The Linux C toolchain is hermetic, so you don't need a cross-compiler:
+
+```bash
+bazel build --config=release //cmd/beacon-chain:oci_image_index
+```
+
+To publish it, push to a registry you control. `:push_images` defaults to the `gcr.io/offchainlabs/prysm/…` repository, so override it and set a tag:
+
+```bash
+bazel run --config=release //cmd/beacon-chain:push_images -- \
+  --repository=<REGISTRY>/prysm-beacon-chain \
+  --tag=<TAG>
+```
+
+Replace `<REGISTRY>` with your registry and namespace, for example `ghcr.io/<YOUR_USER>`. Log in first:
+
+```bash
+docker login
+```
+
+## Check that it works
+
+```bash
+docker run --rm prysm-beacon-chain:local --version
+docker run --rm prysm-validator:local --version
+```
+
+Each prints the version string of your build.
+
+## Troubleshooting
+
+**The container stops right after it starts with:**
+
+```text
+exec format error
+```
+
+The image was built for the other CPU architecture, or without `--platforms` on macOS (which puts a macOS binary into a Linux image). Rebuild with the `--platforms` value that matches the machine running the container.
+
+**`bazel run` on a tarball target fails with:**
+
+```text
+Neither docker or podman could be found.
+```
+
+It needs one of them on your `PATH`.
+
+**The container runs an old build.** A runtime that pulls images may prefer the registry's `…:latest` over yours. Use the local tag from step 3, and compare image IDs with:
+
+```bash
+docker image ls
+```

@@ -1,0 +1,46 @@
+---
+title: "Top up a validator"
+description: "Add ETH to an existing validator through the official Staking Launchpad, and know how much a regular or compounding validator can hold."
+---
+
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import { NETWORKS } from '@site/src/data/networks';
+
+export const mainnet = NETWORKS.find((n) => n.id === 'mainnet');
+
+A top-up adds ETH to a validator that already exists. A validator's rewards are proportional to its **effective balance**: a whole number of ETH, capped at the validator's maximum, that follows its actual balance. Top up when:
+
+- **The balance dropped** after downtime penalties. Once the effective balance falls a step, every reward is smaller until you add ETH back. A validator whose effective balance reaches 16 ETH is exited automatically.
+- **You want a compounding (`0x02`) validator to earn more.** It can hold up to 2048 ETH, so a top-up grows its rewards without running another validator.
+
+<SetupPicker groups="net" nets="mainnet hoodi" />
+
+<When net="mainnet">
+
+Like a first deposit, it goes to the deposit contract: only use the <a href={mainnet.launchpad}>official Staking Launchpad</a>.
+
+</When>
+<When net="hoodi">
+
+Like a first deposit, it goes to the deposit contract: only use the [official EthStaker console](https://hoodi.console.ethstaker.org/).
+
+</When>
+
+## How much to add
+
+- A **regular (`0x01`)** validator counts at most 32 ETH. The automatic withdrawal sweep sends anything above 32 ETH to its withdrawal address, usually within a few days. Top up only if the balance fell below 32 ETH.
+- A **compounding (`0x02`)** validator counts at most 2048 ETH. The automatic withdrawal sweep sends anything above 2048 ETH to its withdrawal address, usually within a few days. Top up only if the balance is below 2048 ETH.
+
+## Add ETH
+
+<When net="mainnet">
+
+To add ETH to an existing validator (at least 1 ETH), open **Validator actions** on the launchpad (<a href={`${mainnet.launchpad}en/validator-actions`}>{`${mainnet.launchpad}en/validator-actions`}</a>), connect your wallet, pick the validator and choose **Add funds**.
+
+</When>
+<When net="hoodi">
+
+To add ETH to an existing validator (at least 1 ETH), open the **Top-Up** page of the console ([https://hoodi.console.ethstaker.org/topup](https://hoodi.console.ethstaker.org/topup)), connect your wallet, pick the validator and enter the amount.
+
+</When>
+{/* Verified against ethereum/staking-launchpad (dev branch, src/pages/Actions), 2026-09 */}

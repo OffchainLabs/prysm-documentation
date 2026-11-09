@@ -1,61 +1,53 @@
-# Prysm Documentation Portal
+# Prysm documentation
 
-This repository houses all the documentation pertaining to the Prysm client and Ethereum. It is generated with [Docusaurus](https://github.com/facebook/docusaurus) and deployed with [Vercel](https://vercel.com/).
+Source for [prysm.offchainlabs.com/docs](https://prysm.offchainlabs.com/docs/), built with [Docusaurus](https://docusaurus.io).
 
-Below are steps for initializing and reproducing this portal for development.
-
-## Dependencies
-
-1. The latest version of [Node](https://nodejs.org/en/download/) installed.
-2. npm (comes with Node.js)
-
-   > You have to be on Node >= 20.
-
-## Installation
-
-1. Clone this repository.
-2. Enter the newly cloned repo.
-3. Issue the command `npm install`.
-4. Wait for the installation process to complete.
-
-## Running the development server
-
-1. From the root directory, run the local web server using `npm start`.
-2. Load the example site at http://localhost:3000/docs/ if it did not already open automatically. If port 3000 has already been taken, another port will be used. Look at the console messages to see which.
-
-   You should see the example site loaded in your web browser. There's also a LiveReload server running, and any changes made to the docs and files in the project directory will cause the page to refresh.
-
-## Building Static HTML Pages
-
-To create a static build of the documentation portal, run the following script from the root directory:
+## Develop
 
 ```bash
-npm run build
+npm install
+npm start          # http://localhost:3000/docs/
+npm run build      # static site in build/, fails on broken links and anchors
+npm run serve      # serve build/ locally (search works only on a build)
 ```
 
-This will generate a `build` directory containing the `.html` files from all of the docs and other files included in `pages`.
+## Layout
 
-## Deployment with Vercel
+| Path | What lives there |
+| --- | --- |
+| `docs/` | Pages, one `.mdx` file per page. The URL mirrors the path. |
+| `tools/ia.mjs` | Every page and its sidebar group. `sidebars.ts` is built from it. |
+| `tools/WRITING.md` | Writing guide: voice, page structure, conventions, accuracy rules. Read it before writing. |
+| `src/components/` | React components: Quickstart builder, CLI reference, network table, diagrams, landing page. |
+| `src/components/ui.tsx` | `Aside`, `Steps`, `Tabs`/`TabItem`, `LinkCard`, `CardGrid`, `FileTree`, `Badge` used by the pages. |
+| `src/data/` | Generated CLI flag dumps, flag notes, network parameters, legacy URL redirects. |
+| `src/data/flag-notes/` | Hand-written explanations merged into the generated CLI reference, one JSON file per binary. |
+| `src/css/custom.css` | Colours, type and theme overrides for both color modes. |
+| `static/` | Images and downloadable assets, served as-is. |
+| `docusaurus.config.ts` | Site settings, navbar, footer, plugins. |
 
-This project is configured to be deployed with Vercel. The `vercel.json` file in the root directory contains the necessary configuration for deployment.
+When adding a page, add it to `tools/ia.mjs`; `node tools/ia-stubs.mjs` creates placeholders for new entries.
 
-To deploy:
+## Writing
 
-1. Push your changes to GitHub.
-2. Connect your GitHub repository to Vercel.
-3. Vercel will automatically build and deploy the site.
+- Link to pages by root-relative path with a trailing slash: `[Checkpoint sync](/setup/checkpoint-sync/)`. The `/docs/` base is added automatically.
+- Import components from `@site/src/components/...`, for example `import { Aside, Steps } from '@site/src/components/ui';`.
+- Use `<PrysmVersion />` instead of hard-coding the current release, and `<Flag name="..." />` to mention a flag: it links to the reference and fails the build if the flag doesn't exist.
+- Tabs that share a `syncKey` stay in sync across the site and must use identical labels; see `tools/WRITING.md`.
 
-Alternatively, you can use the Vercel CLI to deploy from your local machine:
+## Updating the CLI reference
+
+The flag reference is generated from Prysm's source, so it never drifts from the release. The `update-cli-reference` GitHub workflow does this every Monday from the latest Prysm release and opens a PR when anything changed. To do it by hand, generate from the exact release tag, not from `develop`:
 
 ```bash
-npm install -g vercel
-vercel
+mkdir -p /tmp/prysm-release && git -C ../prysm archive v7.2.0 | tar -x -C /tmp/prysm-release
+PRYSM_VERSION=v7.2.0 npm run gen:cli -- /tmp/prysm-release
 ```
 
-## Maintenance
+This builds `beacon-chain`, `validator` and `prysmctl` with a Go build overlay that dumps their flags as JSON into `src/data/`. The Prysm checkout isn't modified. The current release shown across the site (`PRYSM_VERSION`) comes from the same step.
 
-When a new version of Prysm is released, update the following files:
+## Deploying
 
-- `docusaurus.config.js` — bump `prysmVersion` (line 1) to the new tag (e.g., `"v7.1.5"`). This drives the version badge and release link in the navbar.
-- `docs/faq.md` — update any hardcoded version strings in example terminal-output blocks to match the new release.
-- `.node-version` — update if the required Node version changes; keep `README.md` in sync.
+`vercel.json` builds the site and moves the output under `build/docs/` to match the `/docs/` base. Old URLs from the previous docs redirect to their new locations, both through `@docusaurus/plugin-client-redirects` (`src/data/legacy-redirects.json`) and through the older redirects carried over in `vercel.json`.
+
+`@signalwire/docusaurus-plugin-llms-txt` writes `llms.txt`, `llms-full.txt` and a `.md` copy of every page. `middleware.js` (Vercel Routing Middleware) serves that `.md` copy to clients that send `Accept: text/markdown`.

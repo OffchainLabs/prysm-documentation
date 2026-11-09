@@ -1,0 +1,23 @@
+---
+title: "Overview"
+description: "Build, run and test Prysm from source with Bazel: prerequisites, the pages in this guide, and a cheat sheet of the most common commands."
+---
+
+This guide is for developers who want to build, run and test Prysm from a clone of the repository. Prysm builds with [Bazel](https://bazel.build/), which downloads its own Go toolchain and every dependency, so a fresh machine needs little more than Bazelisk and `git`.
+
+If you only want to run Prysm, you don't need any of this. Use the [Quickstart](/get-started/quickstart/) and [Install Prysm](/install/) instead.
+
+## Before you begin
+
+- A **Linux** (x86-64 or ARM64) or **macOS** (Apple silicon or Intel) machine.
+- `git` and a network connection. The first build downloads the toolchains and all dependencies.
+- Plenty of free disk space for Bazel's caches, which grow with every configuration you build.
+
+Clone the repository. The default branch, `develop`, is the one pull requests target:
+
+```bash
+git clone https://github.com/OffchainLabs/prysm.git
+cd prysm
+```
+
+Run every command in this guide from the root of the clone.

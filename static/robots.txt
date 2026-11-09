@@ -1,4 +1,4 @@
 User-agent: *
-Disallow: /docs/docs
+Allow: /
 
-Sitemap: https://docs.prylabs.network/docs/sitemap.xml
+Sitemap: https://prysm.offchainlabs.com/docs/sitemap.xml

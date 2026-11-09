@@ -1,0 +1,138 @@
+---
+title: Update and roll back
+description: Update Prysm with prysm.sh, the release binaries or Docker, judge how urgent a release is, restart without missing proposals, and roll back safely.
+---
+
+import { Steps, Tabs, TabItem } from '@site/src/components/ui';
+import Flag from '@site/src/components/Flag';
+import PrysmVersion from '@site/src/components/PrysmVersion';
+import PrysmVersionCommand from '@site/src/components/PrysmVersionCommand';
+
+Updating Prysm means replacing the `beacon-chain` and `validator` programs with a newer release and restarting them. Your database and wallet stay where they are. A restart takes seconds to a minute, so a careful update costs at most one attestation. The current release is <PrysmVersion includeLink />.
+
+## Before you begin
+
+- Read the release notes for every release between yours and the new one, on the [GitHub releases page](https://github.com/OffchainLabs/prysm/releases). They tell you how urgent the update is, which flags were removed, and any required update order.
+- Before a major version change (for example v6 to v7), back up the validator's data directory.
+
+## How urgent is this release?
+
+Prysm doesn't use a formal priority label. Each release's notes open with a sentence saying how soon to update. Recent examples:
+
+| What the notes say | What to do |
+| --- | --- |
+| "All operators MUST update to v7.0.0 or later release prior to the fulu fork epoch" | **Mandatory.** The release schedules a hard fork. Update before the fork epoch, or your node stops following the chain and your validators miss every duty. |
+| "Sepolia operators are required to update to v7.2.0 before the fork" | Mandatory **for the network named**. Update that network's nodes before its fork. |
+| "This is a highly recommended patch release" / "Operators are encouraged to update to this release as soon as practical" | Update within days. |
+| "Operators can update at their convenience" / "There are no known security issues in this release" | Update during your next maintenance window. |
+
+For a hard fork, your execution client needs a fork-ready release at the same time. To hear about releases, watch the [Prysm repository](https://github.com/OffchainLabs/prysm) on GitHub (**Watch → Custom → Releases**) or follow the announcements channel in the [Prysm Discord](https://discord.gg/qEZK94mFXP).
+
+## Update
+
+Unless the release notes say otherwise, update the beacon node first, then the validator. Download the new release before you stop anything, so the downtime is only the restart.
+
+On a network that has forked into Gloas, run the same release on both: since v7.3.0, a beacon node can't serve block proposals to an older validator client over gRPC.
+
+<Tabs syncKey="runner">
+<TabItem label="prysm.sh">
+
+Download and verify the new release while the old one keeps running:
+
+```bash
+./prysm.sh beacon-chain --download-only
+./prysm.sh validator --download-only
+```
+
+Then stop each program (Ctrl-C, and wait for it to exit) and start it again with the same command. Without a pinned version, the script runs the latest release. If you pin one, change it to the new release first:
+
+<PrysmVersionCommand template={`export USE_PRYSM_VERSION={version}\n./prysm.sh beacon-chain <YOUR_FLAGS>`} />
+
+On Windows, `prysm.bat` also fetches the latest release when it starts. Pin with `set USE_PRYSM_VERSION=<VERSION>`.
+
+</TabItem>
+<TabItem label="Binaries">
+
+<Steps>
+
+1. Download and verify the new release as in [Install Prysm](/install/), without stopping anything.
+
+2. Install the new files over the old ones. This is safe while Prysm is running; the running process keeps its copy until it restarts.
+
+   <PrysmVersionCommand template={`sudo install -m 0755 beacon-chain-{version}-linux-amd64 /usr/local/bin/beacon-chain\nsudo install -m 0755 validator-{version}-linux-amd64 /usr/local/bin/validator\nsudo install -m 0755 prysmctl-{version}-linux-amd64 /usr/local/bin/prysmctl`} />
+
+3. Restart the beacon node, wait until it's running and synced, then restart the validator:
+
+   ```bash
+   sudo systemctl restart beacon
+   journalctl -fu beacon
+   sudo systemctl restart validator
+   ```
+
+</Steps>
+
+Keep the previous release's files until you're sure you won't roll back.
+
+</TabItem>
+<TabItem label="Docker">
+
+Pull the new images first:
+
+<PrysmVersionCommand template={`docker pull gcr.io/offchainlabs/prysm/beacon-chain:{version}\ndocker pull gcr.io/offchainlabs/prysm/validator:{version}`} />
+
+With Docker Compose, change the tags in `docker-compose.yml`, then recreate the containers:
+
+```bash
+docker compose up -d beacon
+docker compose up -d validator
+```
+
+With plain `docker run`, stop and remove the old container, then run the same command with the new tag. Your data lives in the mounted volume, so nothing is lost.
+
+</TabItem>
+</Tabs>
+
+**Watch for removed flags.** Prysm refuses to start if you pass a flag that no longer exists. Compare your flags or config file with the [CLI reference](/reference/cli/) before restarting.
+
+## Don't restart just before a proposal
+
+Missing one attestation costs about what one attestation earns. Missing a block proposal costs much more.
+
+Start the beacon node with <Flag name="postpone-shutdown-for-proposals" />. When you stop it, it checks whether a connected validator has a proposal in the current or next epoch. If so, it logs:
+
+```text
+WARN node: Postponing shutdown: a connected validator client has an upcoming block proposal. Send the shutdown signal again (SIGINT/SIGTERM, e.g. Ctrl-C on Linux) to force the node to stop immediately eta=4m12s slot=12345678 validatorIndex=123456
+```
+
+It then waits until the proposal is done, which can take up to about 13 minutes. Send the stop signal a second time to stop at once. Give your service manager a long enough stop timeout, such as `stop_grace_period: 15m` in Docker Compose or `TimeoutStopSec=900` in systemd.
+
+The validator client does something similar on its own, without a flag. When you stop it, it first finishes the current slot's attestations, sync committee messages and block proposals. If too little of the slot is left to restart before the next slot's duties, it also waits for those. It waits at most 8 seconds and logs:
+
+```text
+INFO client: Waiting for the rewarded duties of the slot to be done before shutting down. Interrupt again to shut down immediately slot=12345678
+```
+
+Send the stop signal a second time to stop at once. To turn this off, add:
+
+```bash
+--disable-duty-aware-shutdown
+```
+
+## Check that it works
+
+A program's `--version` shows what's on disk, not what's running. Ask the running beacon node:
+
+```bash
+curl -s http://localhost:3500/eth/v1/node/version
+```
+
+It returns something like `{"data":{"version":"Prysm/v7.2.0-03f3712 (linux amd64)"}}`. Both programs also log their version when they start, and expose it as the `prysm_version` metric. Then check that the node is synced and the validator attests.
+
+## Roll back
+
+Roll back when a new release misbehaves on your setup and a fix isn't out yet. Use the same steps as an update, with the older release: validator first, then the beacon node.
+
+- **Read the release notes of the release you're leaving.** They say when a downgrade needs special steps. Patch releases (same major and minor number) can usually be swapped either way.
+- **Never roll back past a hard fork your network has already activated.** An older release doesn't know the new rules and can't follow the chain.
+- **If the older beacon node won't start** because of a database change, move its data directory aside and checkpoint sync a fresh one. It only takes minutes.
+- **Never delete the validator's database** to get an older release to start. It holds your slashing protection history.

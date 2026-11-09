@@ -1,0 +1,57 @@
+---
+title: System requirements
+description: The CPU, memory, disk, network and operating system you need to run a Prysm beacon node with an execution client, with or without validators.
+---
+
+import Flag from '@site/src/components/Flag';
+
+A node is an execution client and a Prysm beacon node on the same machine. Size the machine for both. Adding a validator client costs little on its own, but the recommended figures for validators are higher because a validator needs its node to keep up at all times.
+
+## Hardware
+
+{/* Minimum: ethereum.org "Run a node" (2026-09). Recommended: EIP-7870 "Full node" and "Attester" profiles (2026-09). */}
+
+| | Minimum | Recommended: node | Recommended: validator |
+| --- | --- | --- | --- |
+| **CPU** | 4 cores | 4 cores / 8 threads | 8 cores / 16 threads |
+| **Memory** | 16 GB | 32 GB | 64 GB |
+| **Disk** | 2 TB NVMe SSD | 4 TB NVMe SSD | 4 TB NVMe SSD |
+| **Internet** | 25 Mbit/s | 50 Mbit/s down, 15 Mbit/s up | 50 Mbit/s down, 25 Mbit/s up |
+
+The recommended columns follow [EIP-7870](https://eips.ethereum.org/EIPS/eip-7870), the hardware guidance agreed across Ethereum client teams.
+
+- **Use an SSD, ideally NVMe.** Spinning disks and most network storage are too slow to keep up with the chain. Avoid DRAM-less and QLC drives.
+- **Avoid tight data caps.** A node uploads and downloads continuously. Open your peer-to-peer ports so other nodes can reach you.
+
+## Disk space and growth
+
+| Component | Space |
+| --- | --- |
+| Prysm beacon node, checkpoint synced | About 200 GB |
+| Prysm beacon node, synced from genesis with pruning disabled | About 1 TB |
+| Execution client | Varies by client and mode. Check your client's documentation. |
+
+The execution client's database grows every day, and ethereum.org expects a 2 TB disk to fill up around 2027. Buy 4 TB if you can, and keep both clients on the same fast disk. The beacon node's blob storage stays roughly constant, because it deletes old blobs automatically. Running with <Flag name="supernode" /> or <Flag name="semi-supernode" /> stores more.
+
+## Operating systems
+
+Prysm publishes release binaries for:
+
+| OS | Versions | CPU |
+| --- | --- | --- |
+| Linux | Kernel 3.2 or later (any current distribution) | x86-64 (amd64), ARM64 |
+| macOS | 12 Monterey or later | Intel, Apple silicon |
+| Windows | Windows 10 or later, Windows Server 2016 or later | x86-64 (amd64) |
+
+{/* OS minimums: Prysm v7.2.0 builds with Go 1.26 (go.mod); Go 1.26 minimums from https://go.dev/wiki/MinimumRequirements, 2026-09. Architectures: release asset names. */}
+
+Linux is the most widely run and tested. 32-bit systems are not supported; on a Raspberry Pi, install a 64-bit OS.
+
+## For validators
+
+Validators don't need a faster machine than the recommended node, but they need it to stay up.
+
+- **Power and network.** A UPS covers short power cuts. Being offline for a few hours costs about what you would have earned in that time.
+- **Restarts.** Run the clients as services that start on boot, with Docker Compose or systemd.
+- **Key generation.** Ideally, generate your mnemonic on a separate machine that has never been online.
+- **Stake.** 32 ETH per validator on mainnet, or 32 Hoodi ETH on the Hoodi testnet.

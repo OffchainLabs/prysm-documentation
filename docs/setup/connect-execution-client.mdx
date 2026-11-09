@@ -1,0 +1,506 @@
+---
+title: Connect your execution client
+description: Create the JWT secret, start Geth, Nethermind, Besu, Erigon, Reth or Ethrex with it, point the Prysm beacon node at it, and check that the two are talking.
+---
+
+import { Aside, Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+Prysm needs an execution layer client (EL) such as Geth or Nethermind running next to it: the EL checks the transactions in every block. The two connect on port 8551 by default and prove who they are with a shared secret file, the JWT secret.
+
+<SetupPicker />
+
+## Before you begin
+
+- The Prysm launcher script, and a folder for each program and for the data. The programs live in `consensus` and `execution`, and everything the clients store goes into `data`, one folder per network. The commands on this page use this layout:
+
+	<When os="unix">
+
+	```text
+	~/ethereum/
+	├── consensus/
+	├── execution/
+	└── data/
+	    └── {net}/
+	        ├── execution/
+	        └── beacon/
+	```
+
+	If you don't have it yet, create the folders, then download the Prysm launcher script into `consensus`:
+
+	```bash
+	mkdir -p $HOME/ethereum
+	cd $HOME/ethereum
+
+	mkdir -p \
+	  consensus \
+	  execution \
+	  data/{net}/execution \
+	  data/{net}/beacon
+
+	cd consensus
+	curl https://raw.githubusercontent.com/OffchainLabs/prysm/master/prysm.sh --output prysm.sh && chmod +x prysm.sh
+	```
+
+	</When>
+	<When os="win">
+
+	```text
+	$HOME\ethereum\
+	├── consensus\
+	├── execution\
+	└── data\
+	    └── {net}\
+	        ├── execution\
+	        └── beacon\
+	```
+
+	If you don't have it yet, create the folders, then download the Prysm launcher script into `consensus`:
+
+	```powershell
+	mkdir $HOME\ethereum
+	cd $HOME\ethereum
+
+	mkdir `
+	  consensus, `
+	  execution, `
+	  data\{net}\execution, `
+	  data\{net}\beacon
+
+	cd consensus
+	curl.exe https://raw.githubusercontent.com/OffchainLabs/prysm/master/prysm.bat --output prysm.bat
+	```
+
+	</When>
+
+	See [Install Prysm](/install/) for the other install methods and for verifying the download.
+
+- Enough disk for the EL. See [System requirements](/get-started/system-requirements/).
+
+## Connect the two clients
+
+<Steps>
+
+1. <When conn="jwt">
+
+	**Create the JWT secret.** Do this once. Both clients read the same file.
+
+	<When os="unix">
+
+	```bash
+	cd ~/ethereum/consensus
+	./prysm.sh beacon-chain generate-auth-secret --output-file=$HOME/ethereum/data/jwt.hex
+	```
+
+	Prysm prints:
+
+	```text
+	INFO jwt: Successfully wrote JSON-RPC authentication secret to file /home/<USER>/ethereum/data/jwt.hex
+	```
+
+	The file is readable only by you (`0600`).
+
+	</When>
+	<When os="win">
+
+	```powershell
+	cd $HOME\ethereum\consensus
+	.\prysm.bat beacon-chain generate-auth-secret --output-file=$HOME\ethereum\data\jwt.hex
+	```
+
+	Prysm prints:
+
+	```text
+	INFO jwt: Successfully wrote JSON-RPC authentication secret to file C:\Users\<USER>\ethereum\data\jwt.hex
+	```
+
+	</When>
+
+	The file holds 64 hex characters, and the same secret serves every network. Running the command again replaces the secret, so don't: you'd have to restart both clients with the new file.
+
+	</When>
+
+2. **Install and start your execution client.** The commands keep the EL's data in `ethereum/data`, in the folder for your network.
+
+	<When el="besu">
+
+	{/* Verified against Besu 26.9.0 (options from docs in besu-eth/besu-docs, main branch; Engine API options in app/src/main/java/org/hyperledger/besu/cli/options/EngineRPCOptions.java at 26.9.0), 2026-09 */}
+
+	Install: see the [Besu installation guide](https://docs.besu-eth.org/public-networks/get-started/install/binary-distribution). Besu needs Java 25 or later.
+
+	To start it:
+
+	<When os="unix">
+
+	```bash
+	besu \
+	  --network={net} \
+	  --data-path=$HOME/ethereum/data/{net}/execution \
+	  --engine-jwt-secret=$HOME/ethereum/data/jwt.hex
+	```
+
+	</When>
+	<When os="win">
+
+	{/* VERIFY: Besu on Windows (bin\besu.bat from the release archive) has not been run. */}
+
+	```powershell
+	besu `
+	  --network={net} `
+	  --data-path=$HOME\ethereum\data\{net}\execution `
+	  --engine-jwt-secret=$HOME\ethereum\data\jwt.hex
+	```
+
+	</When>
+
+	Besu gives the JVM 25% of RAM by default; its [memory guide](https://docs.besu-eth.org/public-networks/how-to/configure-java/manage-memory) suggests this on machines with 24 GB or more:
+
+	<When os="unix">
+
+	```bash
+	export BESU_OPTS=-Xmx8g
+	```
+
+	</When>
+	<When os="win">
+
+	```powershell
+	$env:BESU_OPTS="-Xmx8g"
+	```
+
+	</When>
+
+	</When>
+	<When el="erigon">
+
+	{/* Verified against Erigon v3.7.0 (flags in cmd/utils/flags.go at the v3.7.0 tag; docs.erigon.tech, which documents v3.6 as latest at time of writing), 2026-09 */}
+
+	Install: see the [Erigon installation guide](https://docs.erigon.tech/get-started/installation).
+
+	To start it:
+
+	<When os="unix">
+
+	```bash
+	erigon \
+	  --chain={net} \
+	  --datadir=$HOME/ethereum/data/{net}/execution \
+	  --externalcl \
+	  --authrpc.jwtsecret=$HOME/ethereum/data/jwt.hex
+	```
+
+	</When>
+	<When os="win">
+
+	{/* VERIFY: check that Erigon v3.7.0 publishes a Windows build; this command has not been run. */}
+
+	```powershell
+	erigon `
+	  --chain={net} `
+	  --datadir=$HOME\ethereum\data\{net}\execution `
+	  --externalcl `
+	  --authrpc.jwtsecret=$HOME\ethereum\data\jwt.hex
+	```
+
+	</When>
+
+	**Always pass `--externalcl`.** Without it, Erigon runs its own built-in consensus client (Caplin) and you'd have two consensus clients driving one EL.
+
+	</When>
+	<When el="ethrex">
+
+	{/* Verified against Ethrex v27.0.0 (docs/CLI.md, docs/l1/running/*.md and cmd/ethrex/cli.rs at the v27.0.0 tag), 2026-09 */}
+
+	Install: see the [Ethrex installation guide](https://docs.ethrex.xyz/getting-started/index.html). On x86-64, Ethrex needs a CPU with AVX2.
+
+	<When os="win">
+
+	<Aside type="caution">
+	Ethrex doesn't publish Windows builds. Pick another execution client, or run the node on Linux or macOS.
+	</Aside>
+
+	</When>
+	<When os="unix">
+
+	To start it:
+
+	```bash
+	ethrex \
+	  --network {net} \
+	  --datadir $HOME/ethereum/data/{net}/execution \
+	  --authrpc.jwtsecret $HOME/ethereum/data/jwt.hex
+	```
+
+	</When>
+
+	Ethrex adds a subfolder named after the network inside its data directory.
+
+	</When>
+	<When el="geth">
+
+	{/* Verified against Geth v1.17.6 (flags from cmd/utils/flags.go at the v1.17.6 tag, docs at geth.ethereum.org), 2026-09 */}
+
+	Install: see the [Geth installation guide](https://geth.ethereum.org/docs/getting-started/installing-geth).
+
+	To start it:
+
+	<When os="unix" conn="jwt">
+
+	```bash
+	geth \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/execution \
+	  --authrpc.jwtsecret=$HOME/ethereum/data/jwt.hex
+	```
+
+	</When>
+	<When os="win" conn="jwt">
+
+	```powershell
+	geth `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\execution `
+	  --authrpc.jwtsecret=$HOME\ethereum\data\jwt.hex
+	```
+
+	</When>
+	<When os="unix" conn="ipc">
+
+	```bash
+	geth \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/execution
+	```
+
+	Geth creates its IPC socket, `geth.ipc`, in its data directory.
+
+	</When>
+	<When os="win" conn="ipc">
+
+	```powershell
+	geth `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\execution
+	```
+
+	On Windows, Geth's IPC endpoint is the named pipe `\\.\pipe\geth.ipc`.
+
+	</When>
+
+	The defaults (snap sync, path-based state) are right for a staking node.
+
+	</When>
+	<When el="nethermind">
+
+	{/* Verified against Nethermind 2.0.0 (docs.nethermind.io, network configs in src/Nethermind/Nethermind.Runner/configs at the 2.0.0 tag), 2026-09 */}
+
+	Install: see the [Nethermind installation guide](https://docs.nethermind.io/get-started/installing-nethermind/).
+
+	To start it:
+
+	<When os="unix">
+
+	```bash
+	nethermind \
+	  -c {net} \
+	  --data-dir $HOME/ethereum/data/{net}/execution \
+	  --jsonrpc-jwtsecretfile $HOME/ethereum/data/jwt.hex \
+	  --History.Pruning=Rolling
+	```
+
+	</When>
+	<When os="win">
+
+	```powershell
+	nethermind `
+	  -c {net} `
+	  --data-dir $HOME\ethereum\data\{net}\execution `
+	  --jsonrpc-jwtsecretfile $HOME\ethereum\data\jwt.hex `
+	  --History.Pruning=Rolling
+	```
+
+	</When>
+
+	</When>
+	<When el="reth">
+
+	{/* Verified against Reth v2.7.0 (CLI reference at reth.rs/cli/reth/node, log lines in crates/node/events/src/node.rs at the v2.7.0 tag), 2026-09 */}
+
+	Install: see the [Reth installation guide](https://reth.rs/installation/overview).
+
+	<When os="win">
+
+	<Aside type="caution">
+	Reth doesn't publish Windows builds. Pick another execution client, or run the node on Linux or macOS.
+	</Aside>
+
+	</When>
+	<When os="unix">
+
+	To start it:
+
+	```bash
+	reth node \
+	  --chain {net} \
+	  --datadir $HOME/ethereum/data/{net}/execution \
+	  --full \
+	  --authrpc.jwtsecret $HOME/ethereum/data/jwt.hex
+	```
+
+	</When>
+
+	**Pass `--full`.** Reth runs an archive node by default, which needs far more disk than a staking node does.
+
+	</When>
+	<When conn="jwt">
+
+	Always give the EL an **absolute path** to the secret. Most clients create a new secret when the path doesn't exist, which Prysm then doesn't know.
+
+	</When>
+
+3. **Start the beacon node** from the `consensus` folder:
+
+	<When os="unix" conn="jwt">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/beacon \
+	  --execution-endpoint=http://localhost:8551 \
+	  --jwt-secret=$HOME/ethereum/data/jwt.hex \
+	  --checkpoint-sync-url={checkpoint} \
+	  --beacon-db-pruning
+	```
+
+	At startup Prysm logs:
+
+	```text
+	INFO execution: Finished reading JWT secret from /home/<USER>/ethereum/data/jwt.hex
+	```
+
+	</When>
+	<When os="win" conn="jwt">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\beacon `
+	  --execution-endpoint=http://localhost:8551 `
+	  --jwt-secret=$HOME\ethereum\data\jwt.hex `
+	  --checkpoint-sync-url={checkpoint} `
+	  --beacon-db-pruning
+	```
+
+	At startup Prysm logs:
+
+	```text
+	INFO execution: Finished reading JWT secret from C:\Users\<USER>\ethereum\data\jwt.hex
+	```
+
+	</When>
+	<When os="unix" conn="ipc">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/beacon \
+	  --execution-endpoint=$HOME/ethereum/data/{net}/execution/geth.ipc \
+	  --checkpoint-sync-url={checkpoint} \
+	  --beacon-db-pruning
+	```
+
+	</When>
+	<When os="win" conn="ipc">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\beacon `
+	  --execution-endpoint=\\.\pipe\geth.ipc `
+	  --checkpoint-sync-url={checkpoint} `
+	  --beacon-db-pruning
+	```
+
+	</When>
+
+	The checkpoint sync URL is one of several community endpoints; any one you trust works.
+
+	<Flag name="beacon-db-pruning" /> deletes blocks and states older than about 5 months, the oldest data other nodes can still ask for, so the database stops growing. Leave it out if you need the full history.
+
+	**Running validators?** Also add:
+
+	```bash
+	--postpone-shutdown-for-proposals
+	```
+
+	When you stop or restart the beacon node, it then waits until your validators' upcoming block proposals are done. See [Don't restart just before a proposal](/install/update/#dont-restart-just-before-a-proposal).
+
+</Steps>
+
+The two flags that matter:
+
+| Flag | Default | What to set |
+| --- | --- | --- |
+| <Flag name="execution-endpoint" /> | `http://localhost:8551` | The EL's Engine API address. Leave the default when the EL runs on the same machine with default ports. |
+| <Flag name="jwt-secret" /> | none | Path to the same JWT secret file the EL uses. |
+
+<Aside type="caution" title="Never expose port 8551 to the internet">
+The JWT secret is the only protection on the Engine API. Allow port 8551 only from the beacon node's address.
+</Aside>
+
+## Check that it works
+
+1. **Ask the beacon node** whether it reaches the EL:
+
+	<When os="unix">
+
+	```bash
+	curl -s http://127.0.0.1:3500/eth/v1/node/syncing
+	```
+
+	</When>
+	<When os="win">
+
+	```powershell
+	curl.exe -s http://127.0.0.1:3500/eth/v1/node/syncing
+	```
+
+	</When>
+
+	`"el_offline":false` means the connection works. `"is_optimistic":true` means the EL is still syncing; that's normal for the first hours. Once it shows `false`, the EL has caught up.
+
+2. **Watch the beacon node logs.** Once both are synced, Prysm logs a `Synced new block` line for every block. While the EL is still catching up, you see `Called fork choice updated with optimistic block` instead.
+
+## Troubleshooting
+
+**Authentication fails.** Prysm logs one of:
+
+```text
+HTTP authentication to your execution client is not working
+401 Unauthorized
+```
+
+Prysm and the EL read different secrets. Check the EL's startup log for the path it loaded; a line such as Geth's `Generated JWT secret` or Nethermind's `...was not found or was empty, so it has been automatically created` means the path was wrong and the EL made its own. Point both at the same file and restart both. Also check that the clocks are in sync.
+
+**The chain IDs don't match.** Prysm logs, with your networks' chain IDs:
+
+```text
+wanted chain ID 560048, got 1
+```
+
+The two clients are on different networks, here Prysm on Hoodi and the EL on mainnet. Start both with the same network.
+
+**Prysm can't read the JWT secret.** Prysm logs:
+
+```text
+could not read JWT secret file for authenticating execution API
+```
+
+Prysm can't read the file, or it doesn't hold exactly 32 bytes of hex. Check the path and permissions.
+
+**The EL logs that no beacon client or consensus client is connected.**
+Prysm isn't running, points at the wrong port, or fails authentication. Check the beacon node logs.
+
+**The beacon node stays optimistic.**
+The EL is still syncing. That can take hours or days. If it never progresses, check the EL's peers and disk speed.

@@ -1,0 +1,39 @@
+---
+title: Ports
+description: Every port Prysm and its companion software listen on by default, which ones to open to the internet, and the flags that change them.
+---
+
+Only peer-to-peer ports should be reachable from the internet. Everything else listens on `127.0.0.1` by default, and should stay private unless you have a reason to expose it and have secured it.
+
+## Open to the internet
+
+Forward these on your router and allow them through your firewall. Open ports bring more peers, which helps your node receive blocks and attestations on time. See [Ports, peers and router setup](/setup/networking/).
+
+| Port | Protocol | Used by | Purpose | Change with |
+| --- | --- | --- | --- | --- |
+| 13000 | TCP | Beacon node | libp2p peer connections | [`--p2p-tcp-port`](/reference/cli/beacon-chain/#p2p-tcp-port) |
+| 13000 | UDP | Beacon node | libp2p over QUIC | [`--p2p-quic-port`](/reference/cli/beacon-chain/#p2p-quic-port) |
+| 12000 | UDP | Beacon node | discv5 peer discovery | [`--p2p-udp-port`](/reference/cli/beacon-chain/#p2p-udp-port) |
+| 30303 | TCP and UDP | Execution client | Execution-layer peers (typical default; check your client) | Execution client flags |
+
+## Keep private
+
+| Port | Used by | Purpose | Change with |
+| --- | --- | --- | --- |
+| 3500 | Beacon node | [Beacon API](/reference/apis/) (HTTP), used by validator clients and tools | [`--http-port`](/reference/cli/beacon-chain/#http-port) |
+| 4000 | Beacon node | gRPC API for Prysm validator clients | [`--rpc-port`](/reference/cli/beacon-chain/#rpc-port) |
+| 8080 | Beacon node | Prometheus metrics | [`--monitoring-port`](/reference/cli/beacon-chain/#monitoring-port) |
+| 6060 | Beacon node, validator | pprof profiling, when `--pprof` is set | [`--pprofport`](/reference/cli/beacon-chain/#pprofport) |
+| 7500 | Validator | [Keymanager API](/reference/apis/), only when `--rpc` or `--web` is set | [`--http-port`](/reference/cli/validator/#http-port) |
+| 8081 | Validator | Prometheus metrics | [`--monitoring-port`](/reference/cli/validator/#monitoring-port) |
+| 8551 | Execution client | Engine API, authenticated with the JWT secret | Execution client flags; Prysm connects with [`--execution-endpoint`](/reference/cli/beacon-chain/#execution-endpoint) |
+| 8545 | Execution client | JSON-RPC API | Execution client flags |
+| 18550 | MEV-Boost | Builder API relay proxy | MEV-Boost `-addr`; Prysm connects with [`--http-mev-relay`](/reference/cli/beacon-chain/#http-mev-relay) |
+
+:::danger[Never expose the validator's APIs]
+Anyone who reaches port 7500 with a valid token can manage your keys, and a few of its routes need no token at all. Keep it on `127.0.0.1`, or behind a VPN or SSH tunnel. See the [Security checklist](/security/).
+:::
+
+## Running multiple nodes on one machine
+
+Give each beacon node its own `--datadir` and shift every port it listens on, for example `--p2p-tcp-port=13001 --p2p-quic-port=13001 --p2p-udp-port=12001 --http-port=3501 --rpc-port=4001 --monitoring-port=8082`. Point each validator client at its own beacon node with `--beacon-rpc-provider` or `--beacon-rest-api-provider`.

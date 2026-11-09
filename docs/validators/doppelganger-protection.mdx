@@ -1,0 +1,33 @@
+---
+title: "Turn on doppelganger protection"
+description: "How Prysm's doppelganger protection checks that your keys aren't running elsewhere before they sign, and what it can't catch."
+---
+
+import Flag from '@site/src/components/Flag';
+
+Doppelganger protection stops your validator client from signing when your keys already run somewhere else.
+
+Add <Flag name="enable-doppelganger" bin="validator" /> to your validator client. It's off by default; turn it on unless you have a reason not to.
+
+At startup, the validator client checks whether your keys were active on the network in the last few epochs. It logs:
+
+```text
+INFO client: Running doppelganger check keyCount=…
+INFO client: Doppelganger check done duration=… keyCount=…
+```
+
+If your keys were active, it refuses to start instead:
+
+```text
+Duplicate instances exists in the network for validator keys: <PUBKEYS>
+```
+
+Keys you add while it runs sit out of duties for about three epochs while they're checked. If one turns out to be active elsewhere, that key stays excluded and the validator logs:
+
+```text
+Doppelganger detected for reloaded key; key remains excluded from duties
+```
+
+Your other keys keep working.
+
+Doppelganger protection is a last line of defense, not a permission to run two copies. It can't catch a copy that was offline during the check and comes online later.

@@ -1,0 +1,127 @@
+---
+title: "Run with Bazel"
+description: "Run a beacon node and validator client built from your working tree with bazel run, passing Prysm flags after --."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+Run the beacon node and validator client straight from your checkout, so every code change is one command away from a running process. `bazel run` builds the target if needed, then starts it with the arguments you put after `--`.
+
+<SetupPicker groups="net" />
+
+The flags are the same as for a normal install, so this page shows only what differs; see the [Quickstart](/get-started/quickstart/) for the full walkthrough and [Common flags and config file](/reference/cli/) for the flags.
+
+## Before you begin
+
+- [Build with Bazel](/developers/build/) works on your machine.
+- An execution client running with its Engine API on `http://localhost:8551` and a JWT secret file. See [Connect your execution client](/setup/connect-execution-client/).
+
+:::caution[Use a separate data directory]
+Without <Flag name="datadir" />, a development build uses the default data directory (`~/.eth2` on Linux, `~/Library/Eth2` on macOS), the same one an installed Prysm uses. Always pass your own data directory so a test build can't change the database of a node you rely on.
+:::
+
+## Run a beacon node
+
+<Steps>
+
+1. Start the beacon node. Everything after `--` goes to the binary:
+
+   <When>
+
+   ```bash
+   bazel run //cmd/beacon-chain -- \
+     --{net} \
+     --accept-terms-of-use \
+     --datadir=$HOME/prysm-dev/beacon \
+     --execution-endpoint=http://localhost:8551 \
+     --jwt-secret=$HOME/ethereum/jwt.hex \
+     --checkpoint-sync-url={checkpoint} \
+     --genesis-beacon-api-url={checkpoint}
+   ```
+
+   </When>
+
+2. Watch the logs. Bazel first builds anything that changed, then the node starts:
+
+   ```text
+   INFO db: Opening Bolt DB path=/home/<USER>/prysm-dev/beacon/beaconchaindata/beaconchain.db
+   INFO httprest: Starting HTTP server address=127.0.0.1:3500
+   ```
+
+3. Stop the node with `Ctrl+C`, change the code, and run the same command again. Bazel rebuilds only the packages you changed.
+
+</Steps>
+
+:::note[Use absolute paths]
+`bazel run` starts the binary inside Bazel's runfiles directory, not your shell's current directory. A relative path such as `--datadir=./data` ends up under `bazel-bin`. Use absolute paths, `$HOME`, or a leading `~/`, which Prysm expands itself.
+:::
+
+Long flag lists are easier to keep in a YAML file passed with <Flag name="config-file" /> (see [Use a config file](/reference/cli/#use-a-config-file) for the format). Flags on the command line override the same keys in the file:
+
+```bash
+bazel run //cmd/beacon-chain -- --config-file=$HOME/prysm-dev/beacon.yaml
+```
+
+## Run a validator client
+
+<When net="mainnet">
+
+Pick a testnet above. Never run a development build with mainnet keys.
+
+</When>
+<When net="hoodi sepolia">
+
+Import testnet keys into a development wallet. `bazel run` works for every subcommand:
+
+```bash
+bazel run //cmd/validator -- accounts import \
+  --{net} \
+  --accept-terms-of-use \
+  --keys-dir=<PATH_TO_KEYSTORES> \
+  --wallet-dir=$HOME/prysm-dev/wallet
+```
+
+Replace `<PATH_TO_KEYSTORES>` with the directory that holds your `keystore-*.json` files. Then start the validator client against your beacon node:
+
+```bash
+bazel run //cmd/validator -- \
+  --{net} \
+  --accept-terms-of-use \
+  --datadir=$HOME/prysm-dev/validator \
+  --wallet-dir=$HOME/prysm-dev/wallet \
+  --wallet-password-file=<PASSWORD_FILE> \
+  --suggested-fee-recipient=<FEE_RECIPIENT_ADDRESS> \
+  --enable-doppelganger
+```
+
+Replace `<PASSWORD_FILE>` with a file containing the wallet password, and `<FEE_RECIPIENT_ADDRESS>` with your address. See [Import keys](/validators/import-keys/) and [Set your fee recipient](/validators/fee-recipient/) for details.
+
+</When>
+
+:::danger[Never run development builds with mainnet keys]
+A development build can contain bugs that make a validator sign conflicting messages. Use testnet keys that aren't active anywhere else, and never run the same keys in two validator clients at once. See [Avoid slashing](/validators/avoid-slashing/).
+:::
+
+## Run the built binary directly
+
+`bazel run` checks the build graph and holds the Bazel server while it builds. When you restart often without changing code, or want to run tests in another terminal, build once and run the output directly:
+
+```bash
+bazel build //cmd/beacon-chain
+bazel-bin/cmd/beacon-chain/beacon-chain_/beacon-chain --config-file=$HOME/prysm-dev/beacon.yaml
+```
+
+Build options go before the target, as usual: `bazel run --config=release //cmd/beacon-chain -- …` runs an optimized build. See [Build with Bazel](/developers/build/) for the configs.
+
+## Check that it works
+
+Ask the beacon node for its version and sync status:
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/node/version
+curl -s http://127.0.0.1:3500/eth/v1/node/syncing
+```
+
+The version starts with `Prysm/`, and `is_syncing` turns `false` once the node has caught up.

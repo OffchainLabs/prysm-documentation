@@ -1,0 +1,123 @@
+---
+title: "Build with Bazel"
+description: "Build the beacon-chain, validator and prysmctl binaries with Bazel, choose a development, release or minimal-preset build, and find the outputs in bazel-bin."
+---
+
+import { Steps } from '@site/src/components/ui';
+
+Build Prysm's binaries from your working tree. Bazel rebuilds only what changed, so after the first build a small edit recompiles in seconds.
+
+## Before you begin
+
+- [Install Bazel with Bazelisk](/developers/environment/) and clone the repository.
+- Run every command from the root of the clone.
+
+## Build the binaries
+
+<Steps>
+
+1. Build the beacon node and validator client:
+
+   ```bash
+   bazel build //cmd/beacon-chain //cmd/validator
+   ```
+
+   The first build takes a while because it compiles every dependency, including the C libraries. It ends with where each output landed:
+
+   ```text
+   Target //cmd/beacon-chain:beacon-chain up-to-date:
+     bazel-bin/cmd/beacon-chain/beacon-chain_/beacon-chain
+   Target //cmd/validator:validator up-to-date:
+     bazel-bin/cmd/validator/validator_/validator
+   INFO: Build completed successfully, …
+   ```
+
+2. Build `prysmctl` if you need it:
+
+   ```bash
+   bazel build //cmd/prysmctl
+   ```
+
+3. Check that a binary runs:
+
+   ```bash
+   bazel-bin/cmd/beacon-chain/beacon-chain_/beacon-chain --version
+   ```
+
+</Steps>
+
+Each binary is a `go_binary` target named after its directory under `cmd/`, so `//cmd/beacon-chain` is short for `//cmd/beacon-chain:beacon-chain`:
+
+| Target | What it is |
+| --- | --- |
+| `//cmd/beacon-chain` | The beacon node. |
+| `//cmd/validator` | The validator client. |
+| `//cmd/prysmctl` | The command-line tool for checkpoint sync, database, exits, withdrawals and testnet tasks. |
+| `//cmd/client-stats` | Sends beacon node and validator metrics to a stats service. |
+
+To build everything in the repository, including every test and tool, run:
+
+```bash
+bazel build //...
+```
+
+It takes much longer, and you rarely need it.
+
+## Where the outputs land
+
+Bazel writes outputs into its output base and creates symlinks in the repository root:
+
+| Symlink | Contents |
+| --- | --- |
+| `bazel-bin/` | Outputs of the last configuration you built. Go binaries are at `bazel-bin/<package>/<name>_/<name>`. |
+| `bazel-out/` | Outputs of every configuration, one directory each, for example `darwin_arm64-fastbuild` or `k8-opt`. |
+| `bazel-testlogs/` | Test logs. |
+
+`bazel-bin` follows the last build. If you build with `--config=release` and then without it, it points to the development build again. To find the output of a specific configuration, ask Bazel:
+
+```bash
+bazel cquery --config=release --output=files //cmd/beacon-chain
+```
+
+Copy a binary out of `bazel-bin` before you install it somewhere. The files are read-only, and the next build may replace them.
+
+## Pick a build configuration
+
+Without a `--config`, Bazel builds a development binary (`fastbuild`): quick to compile, not optimized, and not stamped with a version. The repository's `.bazelrc` defines these named configs:
+
+| Command | Result |
+| --- | --- |
+| `bazel build //cmd/beacon-chain` | Development build with the default mainnet preset. |
+| `bazel build --config=release //cmd/beacon-chain` | Release build: `--compilation_mode=opt`, `--stamp` (git commit and tag in the version), profile-guided optimization for `beacon-chain`, and stripped symbols. This is how official binaries are built. |
+| `bazel build --config=minimal //cmd/beacon-chain` | Minimal-preset build, for local devnets that use the minimal preset. |
+| `bazel build -c dbg //cmd/beacon-chain` | Debug build without optimizations, for debuggers such as Delve. |
+| `bazel build --config=cgo_symbolizer //cmd/beacon-chain` | Debug build that also symbolizes C frames in stack traces and profiles. |
+| `bazel build --config=blst_disabled //cmd/beacon-chain` | Build without the blst BLS library. |
+
+Configs combine. For example, an optimized minimal-preset beacon node:
+
+```bash
+bazel build \
+  --config=release \
+  --config=minimal \
+  //cmd/beacon-chain
+```
+
+:::caution[Presets are compiled in]
+The preset changes the size of consensus types at compile time. A `--config=minimal` binary can only follow minimal-preset chains, and a default build can only follow mainnet-preset chains, which includes mainnet and every public testnet.
+:::
+
+For a build that fails in a way you don't understand, add `--config=debug`. For builds it turns on `--verbose_failures`, `--sandbox_debug`, toolchain resolution debugging and printed commands.
+
+## Cross-compile
+
+`build/bazelrc/cross.bazelrc` defines one config per target platform: `linux_amd64`, `linux_arm64`, `osx_amd64`, `osx_arm64` and `windows_amd64`. For example, a release `beacon-chain` for Linux ARM64:
+
+```bash
+bazel build \
+  --config=release \
+  --config=linux_arm64 \
+  //cmd/beacon-chain
+```
+
+All of them except `linux_amd64` use Prysm's cross toolchain (`--config=cross`), which needs clang and the cross compilers installed on the host; `tools/cross-toolchain/` shows what's required. Adding `_docker` to the config name (for example `--config=linux_arm64_docker`) runs every action in a Docker sandbox instead. That works only from a Linux x86-64 host and is very slow.

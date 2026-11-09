@@ -1,0 +1,128 @@
+---
+title: "Install Bazel with Bazelisk"
+description: "Install Bazelisk on Linux or macOS so every Bazel command in the Prysm repository runs the Bazel version pinned in .bazelversion."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+<SetupPicker groups="devos" />
+
+Prysm pins its Bazel version in the `.bazelversion` file at the root of the repository (currently `7.4.1`). [Bazelisk](https://github.com/bazelbuild/bazelisk) is a small launcher that reads this file, downloads that exact Bazel release and runs it. Install Bazelisk as `bazel` and you never manage Bazel versions by hand.
+
+## Before you begin
+
+<When devos="linux">
+
+- A clone of the repository. See [Overview](/developers/).
+
+The repository registers a hermetic C toolchain on Linux, so the system compiler isn't used.
+
+</When>
+<When devos="macos">
+
+- A clone of the repository. See [Overview](/developers/).
+- The Xcode Command Line Tools. Bazel uses them for the C code in Prysm's dependencies:
+
+  ```bash
+  xcode-select --install
+  ```
+
+</When>
+
+You don't need to install Go for Bazel builds. Bazel downloads the Go SDK set in `WORKSPACE` (`go_register_toolchains(go_version = "1.26.5")`), which matches `go.mod`. Install Go separately only if your editor needs it.
+
+## Install Bazelisk
+
+<Steps>
+
+1. Install Bazelisk and make it available as `bazel`.
+
+   <When devos="linux">
+
+   Download the binary for your CPU from the Bazelisk releases and install it as `/usr/local/bin/bazel`. Use `bazelisk-linux-arm64` on ARM64:
+
+   ```bash
+   curl -fL -o /tmp/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 && sudo install -m 0755 /tmp/bazel /usr/local/bin/bazel
+   ```
+
+   </When>
+   <When devos="macos">
+
+   With [Homebrew](https://brew.sh/):
+
+   ```bash
+   brew install bazelisk
+   ```
+
+   The formula installs both `bazelisk` and `bazel`, and both run Bazelisk.
+
+   </When>
+
+   {/* Verified against bazelisk v1.29.0 release assets and the Homebrew bazelisk formula, 2026-09 */}
+
+2. From the root of your clone, check the version. The first run downloads Bazel.
+
+   ```bash
+   bazel version
+   ```
+
+   You should see the Bazelisk version and the pinned Bazel release:
+
+   ```text
+   Bazelisk version: <BAZELISK_VERSION>
+   Build label: 7.4.1
+   ```
+
+</Steps>
+
+Bazelisk picks the version from the `.bazelversion` of the directory you run it in, so a branch that bumps Bazel switches automatically on your next command. Outside a Bazel workspace it falls back to the latest Bazel release, which is why `bazel version` must run inside the clone.
+
+## Check that it works
+
+List the binary targets. This loads the repository and fetches the first dependencies:
+
+```bash
+bazel query 'kind(go_binary, //cmd/...)'
+```
+
+You should see:
+
+```text
+//cmd/beacon-chain:beacon-chain
+//cmd/client-stats:client-stats
+//cmd/prysmctl:prysmctl
+//cmd/validator:validator
+```
+
+## Bazel settings in the repository
+
+The root `.bazelrc` imports fragments from `build/bazelrc/`. A few defaults affect what you see day to day:
+
+| Setting | Effect |
+| --- | --- |
+| `--keep_going` | Builds and tests everything it can instead of stopping at the first failure. |
+| `test --test_output=errors` | Prints the log of failing tests to the terminal. |
+| `--sandbox_default_allow_network=false` | Build actions and tests have no network access unless the target is tagged `requires-network`. |
+| `--incompatible_strict_action_env` | Actions get a fixed `PATH`, so changes to your shell environment don't invalidate the cache. |
+
+The named configs (`release`, `minimal`, `debug` and others) are covered in Build with Bazel and Unit tests.
+
+### Personal settings and a disk cache
+
+Put your own flags in `~/.bazelrc`, which Bazel reads in addition to the repository's `.bazelrc` and which isn't part of the repository. The most useful one is a disk cache, which keeps build results across `bazel clean` and across several clones:
+
+```bash title="~/.bazelrc"
+build --disk_cache=~/.cache/bazel-disk
+```
+
+<When devos="linux">
+
+Bazel's own output base lives under `~/.cache/bazel`. The disk cache isn't pruned automatically; delete it when it gets too big.
+
+</When>
+<When devos="macos">
+
+Bazel's own output base lives under `/private/var/tmp/_bazel_$USER`. The disk cache isn't pruned automatically; delete it when it gets too big.
+
+</When>

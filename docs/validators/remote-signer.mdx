@@ -1,0 +1,133 @@
+---
+title: "Use a remote signer"
+description: "Keep validator keys out of the Prysm validator client by signing through Web3Signer, with the validator flags and the checks that it works."
+---
+
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+import TopologyDiagram from '@site/src/components/diagrams/TopologyDiagram';
+
+With a remote signer, the Prysm validator client never holds private keys. It sends each signing request to [Web3Signer](https://docs.web3signer.consensys.io/), which holds the keys, checks its own slashing protection database and returns the signature. Use it when keys must live on a separate, hardened host or in a cloud key vault or HSM.
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+## Before you begin
+
+- A synced beacon node. See the [Quickstart](/get-started/quickstart/).
+- Your validator keystores, and their slashing protection history if they signed anywhere before.
+- A [fee recipient](/validators/fee-recipient/).
+
+<TopologyDiagram variant="remote-signer" />
+
+## Set up Web3Signer
+
+Set up Web3Signer by following its [documentation](https://docs.web3signer.consensys.io/). It needs Java 25 or later (or Docker), a PostgreSQL database for slashing protection, and one key configuration file per keystore. A typical start command:
+
+{/* Verified against Web3Signer 26.7.0 (docs in Consensys-Incorporated/doc.web3signer, main branch), 2026-09 */}
+
+<When os="unix">
+
+```bash
+bin/web3signer \
+  --key-store-path=/var/lib/web3signer/keys \
+  --http-listen-host=127.0.0.1 \
+  --http-listen-port=9000 \
+  eth2 \
+  --network={net} \
+  --slashing-protection-db-url="jdbc:postgresql://localhost/web3signer" \
+  --slashing-protection-db-username=<DB_USER> \
+  --slashing-protection-db-password=<DB_PASSWORD>
+```
+
+</When>
+<When os="win">
+
+```powershell
+bin\web3signer.bat `
+  --key-store-path=$HOME\web3signer\keys `
+  --http-listen-host=127.0.0.1 `
+  --http-listen-port=9000 `
+  eth2 `
+  --network={net} `
+  --slashing-protection-db-url="jdbc:postgresql://localhost/web3signer" `
+  --slashing-protection-db-username=<DB_USER> `
+  --slashing-protection-db-password=<DB_PASSWORD>
+```
+
+</When>
+
+The network must match Prysm's. This returns `200` when it's up:
+
+<When os="unix">
+
+```bash
+curl http://127.0.0.1:9000/upcheck
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe http://127.0.0.1:9000/upcheck
+```
+
+</When>
+
+This lists the keys it holds:
+
+<When os="unix">
+
+```bash
+curl http://127.0.0.1:9000/api/v1/eth2/publicKeys
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe http://127.0.0.1:9000/api/v1/eth2/publicKeys
+```
+
+</When>
+
+## Point the validator client at Web3Signer
+
+| Flag | What to set |
+| --- | --- |
+| <Flag name="validators-external-signer-url" bin="validator" /> | Web3Signer's URL, for example `http://127.0.0.1:9000`. With it set, Prysm doesn't load a local wallet. |
+| <Flag name="validators-external-signer-public-keys" bin="validator" /> | The public keys this client validates with, comma-separated. Or a URL that returns them, such as `http://127.0.0.1:9000/api/v1/eth2/publicKeys`. |
+| <Flag name="validators-external-signer-key-file" bin="validator" /> | And/or: a file with one public key per line. It must exist; Prysm watches it for changes. Keys added through the [Keymanager API](/validators/keymanager/) are saved here. |
+| <Flag name="validators-external-signer-poll-interval" bin="validator" /> | With a public keys URL: how often to fetch it again, for example `5m`, so keys added to or removed from the signer are picked up without a restart. Off by default. |
+
+You can combine these sources: the validator client validates with the keys from all of them. A failed or empty answer from the URL keeps the current keys, so emptying the signer doesn't stop validating.
+
+Add them to your validator client command and restart it:
+
+```text
+--validators-external-signer-url=http://127.0.0.1:9000
+--validators-external-signer-public-keys=<PUBKEY_1>,<PUBKEY_2>
+```
+
+Replace the placeholders with your `0x`-prefixed public keys. Keep Web3Signer on the same host or LAN: every duty waits for a signature. The validator client still keeps its own slashing protection database, so you get two layers of protection.
+
+:::danger[Move slashing protection history with the keys]
+If the keys ever signed anywhere else, import that client's slashing protection history into Web3Signer and into Prysm before anything signs, and make sure the old client can never run the keys again. See [Move your slashing protection history](/validators/slashing-protection-history/).
+:::
+
+## Check that it works
+
+At startup, the validator client logs:
+
+```text
+No Prysm wallet required for web3signer validation
+```
+
+After a few epochs, it logs this for your keys:
+
+```text
+Submitted new attestations
+```
+
+Web3Signer's logs show the signing requests.
+
+All remote signer flags are in the [validator reference](/reference/cli/validator/).

@@ -1,0 +1,212 @@
+---
+title: Ports, peers and router setup
+description: Open and forward the beacon node's peer-to-peer ports, tell Prysm your public IP when you're behind a router, set the peer limit, and check that other nodes can reach you.
+---
+
+import { Steps, Tabs, TabItem } from '@site/src/components/ui';
+import Flag from '@site/src/components/Flag';
+
+Your beacon node gets blocks, blob data, attestations and other consensus messages from other nodes (its peers), downloads past blocks from them while it syncs, and sends your validators' blocks, attestations and sync committee messages through them. It works without any setup here, because it can always connect out. When other nodes can also connect *in*, it finds peers faster and receives messages sooner, which helps your attestations arrive on time.
+
+## Before you begin
+
+- A running beacon node. See the [Quickstart](/get-started/quickstart/).
+- Access to your router's admin page (at home) or your cloud provider's firewall settings (on a server).
+
+## Which ports to open
+
+Open only these to the internet:
+
+| Port | Protocol | Used by | Change with |
+| --- | --- | --- | --- |
+| 13000 | TCP and UDP | Prysm peer connections (UDP carries QUIC) | <Flag name="p2p-tcp-port" />, <Flag name="p2p-quic-port" /> |
+| 12000 | UDP | Prysm peer discovery | <Flag name="p2p-udp-port" /> |
+| 30303 | TCP and UDP | Execution client peers (the usual default; check your client) | Execution client flags |
+
+Keep every other port private, including the Beacon API (3500), gRPC (4000), metrics (8080, 8081) and the execution client's Engine API (8551) and JSON-RPC (8545). The full list is in [Ports](/reference/ports/).
+
+## Open the firewall
+
+<Tabs syncKey="os">
+<TabItem label="Linux">
+
+These steps use `ufw`. Ubuntu usually ships with it; Debian and some minimal or cloud images don't. Check whether it's installed:
+
+```bash
+sudo ufw status
+```
+
+If the command isn't found, install it:
+
+```bash
+sudo apt update && sudo apt install ufw
+```
+
+Then allow the node's ports:
+
+```bash
+# Keep SSH (port 22) open so you don't lock yourself out
+# If SSH listens on another port, use sudo ufw allow <port>/tcp instead
+sudo ufw allow OpenSSH
+
+# Block incoming connections unless a rule allows them
+sudo ufw default deny incoming
+
+# Let the node connect out to peers and other services
+sudo ufw default allow outgoing
+
+# Let other beacon nodes connect to yours
+sudo ufw allow 13000/tcp comment 'Prysm peers TCP'
+
+# Same, over QUIC
+sudo ufw allow 13000/udp comment 'Prysm peers QUIC'
+
+# Let other beacon nodes find yours
+sudo ufw allow 12000/udp comment 'Prysm discovery'
+
+# Let other execution clients connect to and find yours (TCP and UDP)
+sudo ufw allow 30303 comment 'Execution client peers'
+```
+
+Before you turn the firewall on, check the rules you added:
+
+```bash
+sudo ufw show added
+```
+
+It should list:
+
+```text
+Added user rules (see 'ufw status' for running firewall):
+ufw allow OpenSSH
+ufw allow 13000/tcp comment 'Prysm peers TCP'
+ufw allow 13000/udp comment 'Prysm peers QUIC'
+ufw allow 12000/udp comment 'Prysm discovery'
+ufw allow 30303 comment 'Execution client peers'
+```
+
+If SSH listens on another port, you see `ufw allow <port>/tcp` instead of `ufw allow OpenSSH`. Then turn the firewall on:
+
+```bash
+sudo ufw enable
+```
+
+If you're connected over SSH, keep your current session open and log in again from a second terminal. If the new login fails, fix the SSH rule from the session that's still open: `ufw` usually keeps connections that were already established, but it refuses new ones that no rule allows.
+
+</TabItem>
+<TabItem label="macOS">
+
+Use the application firewall in **System Settings → Network → Firewall**. It's off by default, and if it stays off you have nothing to do here.
+
+The macOS firewall allows or blocks incoming connections per application, not per port, and it never blocks outgoing connections. If you turned it on:
+
+1. Make sure **Block all incoming connections** is off. Otherwise peers can't reach your node.
+2. When macOS asks whether `beacon-chain` should accept incoming connections, choose **Allow**. Do the same for your execution client. If you missed the prompt, open **Options…**, click **+**, and add both programs with **Allow incoming connections**.
+
+Allowing `beacon-chain` opens every port it listens on, not just 13000 and 12000. Its Beacon API (3500), gRPC (4000) and metrics (8080) listen on `127.0.0.1` by default, so they stay private. Keep it that way: don't set <Flag name="http-host" />, <Flag name="rpc-host" /> or <Flag name="monitoring-host" /> to `0.0.0.0`. On a Mac at home, the router decides what the internet can reach, so forward only the ports in [Which ports to open](#which-ports-to-open).
+
+</TabItem>
+<TabItem label="Windows">
+
+Windows Defender Firewall asks to allow `beacon-chain` the first time it runs; allow it on private and public networks. To open the ports directly, run PowerShell as administrator:
+
+```powershell
+New-NetFirewallRule -DisplayName "Prysm TCP 13000" -Direction Inbound -Protocol TCP -LocalPort 13000 -Action Allow
+New-NetFirewallRule -DisplayName "Prysm UDP 12000-13000" -Direction Inbound -Protocol UDP -LocalPort 12000,13000 -Action Allow
+```
+
+</TabItem>
+</Tabs>
+
+On a cloud server, allow the same ports in the provider's firewall or security group too.
+
+## Forward the ports on your router
+
+At home, the router shares one public IP between all your devices. Peers can only reach your node if the router forwards the ports to it.
+
+<Steps>
+
+1. **Find your node's local IP address** with `ip -4 addr` (Linux), `ipconfig getifaddr en0` (macOS) or `ipconfig` (Windows). It usually starts with `192.168.` or `10.`. Give the node a fixed address, for example with a DHCP reservation on the router, so the rules keep pointing at it.
+
+2. **Add port forwarding rules.** In the router's admin page, find **Port forwarding** (sometimes **Virtual server** or **NAT**) and forward each external port to the same port on the node's local IP:
+
+	- 13000, TCP and UDP
+	- 12000, UDP
+	- 30303, TCP and UDP
+
+	The rules apply right away; you don't need to restart anything.
+
+</Steps>
+
+If your router supports UPnP, <Flag name="enable-upnp" /> makes Prysm ask the router to forward its peer connection ports (13000) automatically. It doesn't cover the discovery port, so add a manual rule for 12000/UDP anyway. Many routers have UPnP turned off, and manual rules are more predictable.
+
+## Tell Prysm your public IP
+
+Behind a router, Prysm only sees its local address. It usually learns the public one from its peers, but that can be slow or wrong. If your public IP is fixed, set it:
+
+```bash
+./prysm.sh beacon-chain \
+  --hoodi \
+  --jwt-secret=../jwt.hex \
+  --p2p-host-ip=<YOUR_PUBLIC_IP>
+```
+
+Replace `<YOUR_PUBLIC_IP>` with the address this command prints:
+
+```bash
+curl -4 https://ifconfig.co
+```
+
+If your ISP changes your IP from time to time, use a dynamic DNS name with <Flag name="p2p-host-dns" /> instead, and restart the node when the IP changes: Prysm resolves the name only at startup.
+
+On a cloud server whose network interface has only a private address (common on AWS and GCP), set <Flag name="p2p-host-ip" /> to the server's public or elastic IP.
+
+## Peer count
+
+<Flag name="p2p-max-peers" /> (default 70) is the number of peers the node aims for. Up to 80% of them can be peers that connected to you; the rest are peers your node chose.
+
+- **Home connection with limited upload:** 30 to 50 saves bandwidth and CPU.
+- **Server with good bandwidth:** 70 to 100.
+
+Don't go far below the default on a validating node: with too few peers, messages reach you and leave your node later. To stay connected to one specific node, such as your own second beacon node, add it with <Flag name="peer" />. Other options are in the [beacon-chain reference](/reference/cli/beacon-chain/).
+
+## Check that it works
+
+1. **Read the peer summary.** Every minute, the beacon node logs its connections:
+
+	```text
+	INFO p2p: Connected peers inboundQUIC=6 inboundTCP=9 outboundQUIC=17 outboundTCP=38 target=70 total=70
+	```
+
+	Non-zero `inboundTCP` or `inboundQUIC` means other nodes can reach you, so your forwarding works. If both stay at `0` for more than half an hour while `total` is at `target`, incoming connections aren't getting through.
+
+2. **Check the address you advertise.** `p2p_addresses` should contain your public IP, not a `192.168.` or `10.` address:
+
+	```bash
+	curl -s http://localhost:3500/eth/v1/node/identity
+	```
+
+With <Flag name="p2p-host-ip" /> set, the node also tries to reach itself on that IP at startup and logs `IP address is not accessible` if it can't. Many home routers can't loop a connection back to their own public IP, so treat that warning as a hint and rely on the inbound counts above.
+
+## Troubleshooting
+
+**`total` stays well below `target`.**
+Check that outgoing traffic is allowed and that the clock is right. On Linux, check the clock with:
+
+```bash
+timedatectl
+```
+
+Then open and forward the ports; nodes that accept incoming connections fill up faster.
+
+**Incoming peers stay at 0.**
+Check, in order: the host firewall, the router's forwarding rules and the node's local IP, then the address in `/eth/v1/node/identity`. To check the host firewall:
+
+```bash
+sudo ufw status
+```
+
+If your router's WAN address starts with `100.64.` to `100.127.`, your ISP shares one public IP between customers (carrier-grade NAT) and incoming connections can't work without their help. An outgoing-only node still works.
+
+**High bandwidth use.**
+Lower <Flag name="p2p-max-peers" />.

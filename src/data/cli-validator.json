@@ -1,0 +1,1544 @@
+{
+  "groups": [
+    {
+      "name": "cmd",
+      "flags": [
+        {
+          "name": "minimal-config",
+          "usage": "Uses minimal config with parameters as defined in the spec.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "e2e-config",
+          "usage": "Enables the E2E testing config, only for use within end-to-end testing.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "verbosity",
+          "usage": "Logging verbosity. (trace, debug, info, warn, error, fatal, panic)",
+          "default": "\"info\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "datadir",
+          "usage": "Data directory for the databases.",
+          "default": "\"~/Library/Eth2\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "wallet-dir",
+          "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+          "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "wallet-password-file",
+          "usage": "Path to a plain-text, .txt file containing your wallet password.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "clear-db",
+          "usage": "Prompt for clearing any previously stored data at the data directory.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "force-clear-db",
+          "usage": "Clears any previously stored data at the data directory.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "enable-tracing",
+          "usage": "Enables OpenTelemetry tracing.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "tracing-process-name",
+          "usage": "Name to apply to tracing tag `process_name`.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "tracing-endpoint",
+          "usage": "OTLP/HTTP endpoint that traces are exported to (e.g. an OpenTelemetry Collector or a Tempo receiver).",
+          "default": "\"http://127.0.0.1:14268/api/traces\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "trace-sample-fraction",
+          "usage": "Head-sampling ratio applied to every trace started by the process. 1.0 keeps all traces.",
+          "default": "0.2",
+          "type": "Float64",
+          "takesValue": true
+        },
+        {
+          "name": "monitoring-host",
+          "usage": "Host used for listening and responding metrics for prometheus.",
+          "default": "\"127.0.0.1\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "monitoring-port",
+          "usage": "Port used to listening and respond metrics for Prometheus.",
+          "default": "8081",
+          "type": "Int",
+          "takesValue": true
+        },
+        {
+          "name": "disable-monitoring",
+          "usage": "Disables monitoring service.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "disable-log-colors",
+          "usage": "Disable color formatting for terminal logs.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "log-format",
+          "usage": "Specifies log formatting. Supports: text, json, fluentd, journald.",
+          "default": "\"text\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "log-file",
+          "usage": "Specifies log file name, relative or absolute.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "config-file",
+          "usage": "Filepath to a yaml file with flag values.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "chain-config-file",
+          "usage": "Path to a YAML file with chain config values.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "grpc-max-msg-size",
+          "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tInteger to define max receive message call size (in bytes).\n\t\tIf serving a public gRPC server, set this to a more reasonable size to avoid\n\t\tresource exhaustion from large messages. \n\t\tValidators with as many as 10000 keys can be run with a max message size of less than \n\t\t50Mb. The default here is set to a very high value for local users.",
+          "default": "2147483647",
+          "type": "Int",
+          "takesValue": true
+        },
+        {
+          "name": "accept-terms-of-use",
+          "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "api-timeout",
+          "usage": "Specifies the timeout value for API requests in seconds.",
+          "default": "10s",
+          "type": "Duration",
+          "takesValue": true
+        },
+        {
+          "name": "disable-ephemeral-log-file",
+          "usage": "Disables the creation of a debug log file that keeps 24 hours of logs.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "log.vmodule",
+          "usage": "Per-package log verbosity. packagePath=level entries separated by commas.",
+          "type": "StringSlice",
+          "takesValue": true
+        }
+      ]
+    },
+    {
+      "name": "debug",
+      "flags": [
+        {
+          "name": "pprof",
+          "usage": "Enables the pprof HTTP server.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "pprofaddr",
+          "usage": "pprof HTTP server listening interface.",
+          "default": "\"127.0.0.1\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "pprofport",
+          "usage": "pprof HTTP server listening port.",
+          "default": "6060",
+          "type": "Int",
+          "takesValue": true
+        },
+        {
+          "name": "memprofilerate",
+          "usage": "Turns on memory profiling with the given rate.",
+          "default": "524288",
+          "type": "Int",
+          "takesValue": true
+        },
+        {
+          "name": "blockprofilerate",
+          "usage": "Turns on block profiling with the given rate.",
+          "default": "0",
+          "type": "Int",
+          "takesValue": true
+        },
+        {
+          "name": "mutexprofilefraction",
+          "usage": "Turns on mutex profiling with the given rate.",
+          "default": "0",
+          "type": "Int",
+          "takesValue": true
+        }
+      ]
+    },
+    {
+      "name": "rpc",
+      "flags": [
+        {
+          "name": "tls-cert",
+          "usage": "Certificate for secure gRPC. Pass this and the tls-key flag in order to use gRPC securely.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "beacon-rpc-provider",
+          "aliases": [
+            "beacon-grpc"
+          ],
+          "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tBeacon node RPC provider endpoint.",
+          "default": "\"127.0.0.1:4000\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "beacon-rest-api-headers",
+          "usage": "Comma-separated list of key value pairs to pass as headers for all HTTP calls to the beacon node. \n\t\tTo provide multiple values for the same key, specify the same key for each value. \n\t\tExample: --grpc-headers=key1=value1,key1=value2,key2=value3",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "rpc",
+          "usage": "Enables the RPC server for the validator client (without Web UI).",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "rpc-host",
+          "usage": "Host on which the RPC server should listen.",
+          "default": "\"127.0.0.1\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "rpc-port",
+          "usage": "RPC port exposed by a validator client.",
+          "default": "7000",
+          "type": "Int",
+          "takesValue": true
+        },
+        {
+          "name": "http-port",
+          "aliases": [
+            "grpc-gateway-port"
+          ],
+          "usage": "Port on which the HTTP server runs on.",
+          "default": "7500",
+          "type": "Int",
+          "takesValue": true
+        },
+        {
+          "name": "http-host",
+          "aliases": [
+            "grpc-gateway-host"
+          ],
+          "usage": "Host on which the HTTP server runs on.",
+          "default": "\"127.0.0.1\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "grpc-retries",
+          "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tNumber of attempts to retry gRPC requests.",
+          "default": "5",
+          "type": "Uint",
+          "takesValue": true
+        },
+        {
+          "name": "grpc-retry-delay",
+          "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tAmount of time between gRPC retry requests.",
+          "default": "1s",
+          "type": "Duration",
+          "takesValue": true
+        },
+        {
+          "name": "http-cors-domain",
+          "aliases": [
+            "grpc-gateway-corsdomain"
+          ],
+          "usage": "Comma separated list of domains from which to accept cross origin requests (browser enforced).",
+          "default": "\"http://localhost:7500,http://127.0.0.1:7500,http://0.0.0.0:7500,http://localhost:4242,http://127.0.0.1:4242,http://localhost:4200,http://0.0.0.0:4242,http://127.0.0.1:4200,http://0.0.0.0:4200,http://localhost:3000,http://0.0.0.0:3000,http://127.0.0.1:3000\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "grpc-headers",
+          "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tComma separated list of key value pairs to pass as gRPC headers for all gRPC calls.\n\t\tExample: --grpc-headers=key=value",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "beacon-rest-api-provider",
+          "aliases": [
+            "beacon-rest"
+          ],
+          "usage": "Beacon node REST API provider endpoint. Setting this implicitly enables the beacon REST API (no need for --enable-beacon-rest-api). Use a comma-separated list to connect to several beacon nodes: the validator client listens to the event stream of every node and queries all of them, keeping the best suited response.",
+          "default": "\"http://127.0.0.1:3500\"",
+          "type": "String",
+          "takesValue": true
+        }
+      ]
+    },
+    {
+      "name": "proposer",
+      "flags": [
+        {
+          "name": "proposer-settings-file",
+          "usage": "Sets path to a YAML or JSON file containing validator settings used when proposing blocks such as\n\t\tfee recipient and gas limit. File format found in docs.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "proposer-settings-url",
+          "usage": "Sets URL to a REST endpoint containing validator settings used when proposing blocks such as\n\t\tfee recipient and gas limit. File format found in docs",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "suggested-fee-recipient",
+          "usage": "Sets the default address that receives the fees of blocks proposed by all validators. A builder\n\t\tintegrated through the Builder API may pay a different address as payment for the blocks it builds.\n\t\tPer-key settings from a proposer settings file, URL, or the keymanager API take precedence.",
+          "default": "\"0x0000000000000000000000000000000000000000\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "enable-builder",
+          "aliases": [
+            "enable-validator-registration"
+          ],
+          "usage": "Enables builder validator registration APIs for the validator client to update settings\n\t\tsuch as fee recipient and gas limit. This flag is not required if using proposer\n\t\tsettings config file.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "suggested-gas-limit",
+          "usage": "Sets the default gas limit for all validators: registered with builders before Gloas and signed into\n\t\tproposer preferences from Gloas onward, where it overrides the network gas limit schedule. Remove it to follow\n\t\tthe schedule. Per-key settings from a proposer settings file, URL, or the keymanager API take precedence.",
+          "default": "\"60000000\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "builder-urls",
+          "usage": "Comma-separated URLs of Gloas builders to request execution payload bids from, for all validators.\n\t\tAuth data agreed with a builder may be appended as a hex fragment (https://builder.example#0x0123); otherwise\n\t\tthe URL's UTF-8 bytes are used. Before Gloas a non-empty list also enables builder validator registration,\n\t\tlike --enable-builder; set the gas limit with --suggested-gas-limit. Per-key settings from a proposer settings file, URL, or the keymanager API take precedence.",
+          "type": "StringSlice",
+          "takesValue": true
+        },
+        {
+          "name": "builder-min-bid",
+          "usage": "Minimum total payment in Gwei a Gloas builder bid must offer to be considered, for all validators:\n\t\tthe bid value plus its execution payment up to --builder-max-execution-payment. Only used from Gloas onward.\n\t\tPer-key settings from a proposer settings file, URL, or the keymanager API take precedence.",
+          "default": "0",
+          "type": "Uint64",
+          "takesValue": true
+        },
+        {
+          "name": "builder-boost-factor",
+          "usage": "Percentage applied to Gloas builder bid values when comparing them with a locally built payload, for\n\t\tall validators. 100 is neutral, below 100 favors the local payload, 0 always uses it. Only used from Gloas onward.\n\t\tPer-key settings from a proposer settings file, URL, or the keymanager API take precedence.",
+          "default": "100",
+          "type": "Uint64",
+          "takesValue": true
+        },
+        {
+          "name": "builder-max-execution-payment",
+          "usage": "Maximum execution layer payment in Gwei counted toward a Gloas builder bid, for all validators. 0 counts\n\t\tonly the collateral-backed bid value; payments above that rest on the builder's promise to pay. Only used from Gloas onward.\n\t\tPer-key settings from a proposer settings file, URL, or the keymanager API take precedence.",
+          "default": "0",
+          "type": "Uint64",
+          "takesValue": true
+        },
+        {
+          "name": "validators-registration-batch-size",
+          "usage": "Sets the maximum size for one batch of validator registrations. Use a non-positive value to disable batching.",
+          "default": "200",
+          "type": "Int",
+          "takesValue": true
+        },
+        {
+          "name": "stateless",
+          "usage": "Enables stateless block production from Gloas onward: the validator requests the block and execution payload envelope together and republishes the envelope itself. Works over both the gRPC and REST validator clients. Forced on when several beacon nodes are configured, since only the node that built a block can reveal its payload.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "graffiti",
+          "usage": "String to include in proposed blocks.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "graffiti-file",
+          "usage": "Path to a YAML file with graffiti values.",
+          "type": "String",
+          "takesValue": true
+        }
+      ]
+    },
+    {
+      "name": "remote signer",
+      "flags": [
+        {
+          "name": "validators-external-signer-url",
+          "aliases": [
+            "remote-signer-url"
+          ],
+          "usage": "URL for consensys' web3signer software to use with the Prysm validator client.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "validators-external-signer-public-keys",
+          "aliases": [
+            "remote-signer-keys"
+          ],
+          "usage": "Comma separated list of public keys OR an external url endpoint for the validator to retrieve public keys from for usage with web3signer.",
+          "type": "StringSlice",
+          "takesValue": true
+        },
+        {
+          "name": "validators-external-signer-key-file",
+          "aliases": [
+            "remote-signer-keys-file"
+          ],
+          "usage": "A file path used to load remote public validator keys and persist them through restarts.",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "validators-external-signer-poll-interval",
+          "aliases": [
+            "remote-signer-poll-interval"
+          ],
+          "usage": "Interval to poll the external signer public-keys URL for added or removed validators (e.g. 30s, 5m). \n\t\tZero or negative disables polling. A failed or empty response keeps the current keys, \n\t\tso removing every key from the URL will not stop validating.",
+          "default": "0s",
+          "type": "Duration",
+          "takesValue": true
+        }
+      ]
+    },
+    {
+      "name": "misc",
+      "flags": [
+        {
+          "name": "disable-rewards-penalties-logging",
+          "usage": "Disables reward/penalty logging during cluster deployment.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "disable-account-metrics",
+          "usage": "Disables prometheus metrics for validator accounts. Operators with high volumes \n\t\tof validating keys may wish to disable granular prometheus metrics as it increases\n\t\tthe data cardinality.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "distributed",
+          "usage": "To enable the use of prysm validator client in Distributed Validator Cluster",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "keymanager-token-file",
+          "aliases": [
+            "validator-api-bearer-file"
+          ],
+          "usage": "Path to auth token file used for validator apis.",
+          "default": "\"~/Library/Eth2Validators/prysm-wallet-v2/auth-token\"",
+          "type": "String",
+          "takesValue": true
+        },
+        {
+          "name": "disable-duties-polling",
+          "usage": "Disables polling of duties on dependent root changes.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "max-health-checks",
+          "usage": "Maximum number of consecutive failed health checks before exiting. A health check fails when no connected beacon node is ready. Set to 0 or a negative number for indefinite checks.",
+          "default": "0",
+          "type": "Int",
+          "takesValue": true
+        }
+      ]
+    },
+    {
+      "name": "features",
+      "flags": [
+        {
+          "name": "write-wallet-password-on-web-onboarding",
+          "usage": "(Danger): Writes the wallet password to the wallet directory on completing Prysm web onboarding.\n\tWe recommend against this flag unless you are an advanced user.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "sepolia",
+          "usage": "Runs Prysm configured for the Sepolia test network.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "hoodi",
+          "usage": "Runs Prysm configured for the Hoodi test network.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "mainnet",
+          "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+          "default": "true",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "dynamic-key-reload-debounce-interval",
+          "usage": "(Advanced): Specifies the time duration the validator waits to reload new keys if they have changed on disk.\n\tCan be any type of duration such as 1.5s, 1000ms, 1m.",
+          "default": "1s",
+          "type": "Duration",
+          "takesValue": true
+        },
+        {
+          "name": "disable-attest-timely",
+          "usage": "Disable validator attesting timely after current block processes. See #8185 for more details.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "disable-duty-aware-shutdown",
+          "usage": "Stop the validator client immediately on SIGINT/SIGTERM, instead of waiting for the moment in the slot where a restart would not miss any rewarded duty.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "enable-slashing-protection-history-pruning",
+          "usage": "Enables the pruning of the validator client's slashing protection database.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "enable-minimal-slashing-protection",
+          "usage": "(Experimental): Enables the minimal slashing protection. See EIP-3076 for more details.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "enable-doppelganger",
+          "usage": "Enables the validator to perform a doppelganger check.\n\t\tThis is not a foolproof method to find duplicate instances in the network.\n\t\tYour validator will still be vulnerable if it is being run in unsafe configurations.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "enable-beacon-rest-api",
+          "aliases": [
+            "enable-rest"
+          ],
+          "usage": "(Experimental): Enables the beacon REST API when querying a beacon node. Optional: also enabled implicitly when --beacon-rest-api-provider is set.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "disable-duties-v2",
+          "usage": "Forces use of get duties endpoint instead of v2.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        },
+        {
+          "name": "web",
+          "usage": "(Work in progress): Enables the web portal for the validator client.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        }
+      ]
+    },
+    {
+      "name": "deprecated",
+      "flags": [
+        {
+          "name": "holesky",
+          "usage": "Runs Prysm configured for the Holesky test network.",
+          "default": "false",
+          "type": "Bool",
+          "takesValue": false
+        }
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "name": "wallet",
+      "usage": "Defines commands for interacting with Ethereum validator wallets.",
+      "subcommands": [
+        {
+          "name": "create",
+          "usage": "creates a new wallet with a desired type of keymanager: either on-disk (imported), derived, or using remote credentials",
+          "flags": [
+            {
+              "name": "wallet-dir",
+              "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "keymanager-kind",
+              "usage": "Kind of keymanager, either imported, derived, or remote, specified during wallet creation.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "remote-signer-crt-path",
+              "usage": "/path/to/client.crt for establishing a secure, TLS gRPC connection to a remote signer server.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "remote-signer-key-path",
+              "usage": "/path/to/client.key for establishing a secure, TLS gRPC connection to a remote signer server.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "remote-signer-ca-crt-path",
+              "usage": "/path/to/ca.crt for establishing a secure, TLS gRPC connection to a remote signer server.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "wallet-password-file",
+              "usage": "Path to a plain-text, .txt file containing your wallet password.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mnemonic-25th-word-file",
+              "usage": "(Advanced) Path to a plain-text, `.txt` file containing a 25th word passphrase for your mnemonic for HD wallets.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "skip-mnemonic-25th-word-check",
+              "usage": "Allows for skipping the check for a mnemonic 25th word passphrase for HD wallets.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        },
+        {
+          "name": "recover",
+          "usage": "uses a derived wallet seed recovery phase to recreate an existing HD wallet",
+          "flags": [
+            {
+              "name": "wallet-dir",
+              "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mnemonic-file",
+              "usage": "File to retrieve mnemonic for non-interactively passing a mnemonic phrase into wallet recover.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "wallet-password-file",
+              "usage": "Path to a plain-text, .txt file containing your wallet password.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "num-accounts",
+              "usage": "Number of accounts to generate for derived wallets.",
+              "default": "1",
+              "type": "altsrc.Int",
+              "takesValue": true
+            },
+            {
+              "name": "mnemonic-25th-word-file",
+              "usage": "(Advanced) Path to a plain-text, `.txt` file containing a 25th word passphrase for your mnemonic for HD wallets.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "skip-mnemonic-25th-word-check",
+              "usage": "Allows for skipping the check for a mnemonic 25th word passphrase for HD wallets.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "accounts",
+      "usage": "Defines commands for interacting with Ethereum validator accounts.",
+      "subcommands": [
+        {
+          "name": "delete",
+          "usage": "",
+          "description": "deletes the selected accounts from a users wallet.",
+          "flags": [
+            {
+              "name": "wallet-dir",
+              "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "wallet-password-file",
+              "usage": "Path to a plain-text, .txt file containing your wallet password.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "delete-public-keys",
+              "usage": "Comma separated list of public key hex strings to specify which validator accounts to delete.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "usage": "",
+          "description": "Lists all validator accounts in a user's wallet directory",
+          "flags": [
+            {
+              "name": "wallet-dir",
+              "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "wallet-password-file",
+              "usage": "Path to a plain-text, .txt file containing your wallet password.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "show-private-keys",
+              "usage": "Displays the private keys for validator accounts.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "list-validator-indices",
+              "usage": "Lists validator indices.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "beacon-rpc-provider",
+              "aliases": [
+                "beacon-grpc"
+              ],
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tBeacon node RPC provider endpoint.",
+              "default": "\"127.0.0.1:4000\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-max-msg-size",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tInteger to define max receive message call size (in bytes).\n\t\tIf serving a public gRPC server, set this to a more reasonable size to avoid\n\t\tresource exhaustion from large messages. \n\t\tValidators with as many as 10000 keys can be run with a max message size of less than \n\t\t50Mb. The default here is set to a very high value for local users.",
+              "default": "2147483647",
+              "type": "altsrc.Int",
+              "takesValue": true
+            },
+            {
+              "name": "tls-cert",
+              "usage": "Certificate for secure gRPC. Pass this and the tls-key flag in order to use gRPC securely.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-headers",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tComma separated list of key value pairs to pass as gRPC headers for all gRPC calls.\n\t\tExample: --grpc-headers=key=value",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-retries",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tNumber of attempts to retry gRPC requests.",
+              "default": "5",
+              "type": "altsrc.Uint",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-retry-delay",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tAmount of time between gRPC retry requests.",
+              "default": "1s",
+              "type": "altsrc.Duration",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        },
+        {
+          "name": "backup",
+          "usage": "",
+          "description": "backup accounts into EIP-2335 compliant keystore.json files zipped into a backup.zip file at a desired output directory. Accounts to backup can also be specified programmatically via a --backup-for-public-keys flag which specifies a comma-separated list of hex string public keys",
+          "flags": [
+            {
+              "name": "wallet-dir",
+              "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "wallet-password-file",
+              "usage": "Path to a plain-text, .txt file containing your wallet password.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "backup-dir",
+              "usage": "Path to a directory where accounts will be backed up into a zip file.",
+              "default": "\"~/Library/Eth2Validators\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "backup-public-keys",
+              "usage": "Comma separated list of public key hex strings to specify which validator accounts to backup.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "backup-password-file",
+              "usage": "Path to a plain-text, .txt file containing the desired password for your backed up accounts.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        },
+        {
+          "name": "import",
+          "usage": "",
+          "description": "imports Ethereum validator accounts stored in EIP-2335 keystore.json files from an external directory",
+          "flags": [
+            {
+              "name": "wallet-dir",
+              "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "keys-dir",
+              "usage": "Path to a directory where keystores to be imported are stored.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "wallet-password-file",
+              "usage": "Path to a plain-text, .txt file containing your wallet password.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "account-password-file",
+              "usage": "Path to a plain-text, .txt file containing a password for a validator account.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "import-private-key-file",
+              "usage": "Path to a plain-text, .txt file containing a hex string representation of a private key to import.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        },
+        {
+          "name": "voluntary-exit",
+          "usage": "",
+          "description": "Performs a voluntary exit on selected accounts",
+          "flags": [
+            {
+              "name": "wallet-dir",
+              "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "wallet-password-file",
+              "usage": "Path to a plain-text, .txt file containing your wallet password.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "account-password-file",
+              "usage": "Path to a plain-text, .txt file containing a password for a validator account.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "public-keys",
+              "usage": "Comma separated list of public key hex strings to specify on which validator accounts to perform a voluntary exit.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "beacon-rpc-provider",
+              "aliases": [
+                "beacon-grpc"
+              ],
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tBeacon node RPC provider endpoint.",
+              "default": "\"127.0.0.1:4000\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "validators-external-signer-url",
+              "aliases": [
+                "remote-signer-url"
+              ],
+              "usage": "URL for consensys' web3signer software to use with the Prysm validator client.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "validators-external-signer-public-keys",
+              "aliases": [
+                "remote-signer-keys"
+              ],
+              "usage": "Comma separated list of public keys OR an external url endpoint for the validator to retrieve public keys from for usage with web3signer.",
+              "type": "altsrc.StringSlice",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-max-msg-size",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tInteger to define max receive message call size (in bytes).\n\t\tIf serving a public gRPC server, set this to a more reasonable size to avoid\n\t\tresource exhaustion from large messages. \n\t\tValidators with as many as 10000 keys can be run with a max message size of less than \n\t\t50Mb. The default here is set to a very high value for local users.",
+              "default": "2147483647",
+              "type": "altsrc.Int",
+              "takesValue": true
+            },
+            {
+              "name": "tls-cert",
+              "usage": "Certificate for secure gRPC. Pass this and the tls-key flag in order to use gRPC securely.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-headers",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tComma separated list of key value pairs to pass as gRPC headers for all gRPC calls.\n\t\tExample: --grpc-headers=key=value",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-retries",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tNumber of attempts to retry gRPC requests.",
+              "default": "5",
+              "type": "altsrc.Uint",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-retry-delay",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tAmount of time between gRPC retry requests.",
+              "default": "1s",
+              "type": "altsrc.Duration",
+              "takesValue": true
+            },
+            {
+              "name": "exit-all",
+              "usage": "Exits all validators. This will still require the staker to confirm a userprompt for the action.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "force-exit",
+              "usage": "Exits without displaying the confirmation prompt.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "exit-json-output-dir",
+              "usage": "Output directory to write voluntary exits as individual unencrypted JSON files. If this flag is provided, voluntary exits will be written to the provided directory and will not be broadcasted.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "slashing-protection-history",
+      "usage": "Defines commands for interacting your validator's slashing protection history.",
+      "subcommands": [
+        {
+          "name": "export",
+          "usage": "",
+          "description": "exports your validator slashing protection history into an EIP-3076 compliant JSON",
+          "flags": [
+            {
+              "name": "datadir",
+              "usage": "Data directory for the databases.",
+              "default": "\"~/Library/Eth2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "slashing-protection-export-dir",
+              "usage": "Allows users to specify the output directory to export their slashing protection EIP-3076 standard JSON File.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "enable-minimal-slashing-protection",
+              "usage": "(Experimental): Enables the minimal slashing protection. See EIP-3076 for more details.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        },
+        {
+          "name": "import",
+          "usage": "",
+          "description": "imports a selected EIP-3076 compliant slashing protection JSON to the validator database",
+          "flags": [
+            {
+              "name": "datadir",
+              "usage": "Data directory for the databases.",
+              "default": "\"~/Library/Eth2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "slashing-protection-json-file",
+              "usage": "Path to an EIP-3076 compliant JSON file containing a user's slashing protection history.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "enable-minimal-slashing-protection",
+              "usage": "(Experimental): Enables the minimal slashing protection. See EIP-3076 for more details.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "db",
+      "usage": "Defines commands for interacting with the Prysm validator database.",
+      "subcommands": [
+        {
+          "name": "restore",
+          "usage": "",
+          "description": "restores a database from a backup file",
+          "flags": [
+            {
+              "name": "restore-source-file",
+              "usage": "Filepath to the backed-up database file which will be used to restore the database",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "restore-target-dir",
+              "usage": "Target directory of the restored database",
+              "default": "\"~/Library/Eth2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            }
+          ]
+        },
+        {
+          "name": "migrate",
+          "usage": "Defines commands for running validator database migrations",
+          "subcommands": [
+            {
+              "name": "up",
+              "usage": "Runs up migrations for the validator database",
+              "flags": [
+                {
+                  "name": "datadir",
+                  "usage": "Data directory for the databases.",
+                  "default": "\"~/Library/Eth2\"",
+                  "type": "altsrc.String",
+                  "takesValue": true
+                }
+              ]
+            },
+            {
+              "name": "down",
+              "usage": "Runs down migrations for the validator database",
+              "flags": [
+                {
+                  "name": "datadir",
+                  "usage": "Data directory for the databases.",
+                  "default": "\"~/Library/Eth2\"",
+                  "type": "altsrc.String",
+                  "takesValue": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "convert-complete-to-minimal",
+          "usage": "Convert a complete EIP-3076 slashing protection to a minimal one",
+          "flags": [
+            {
+              "name": "source-data-dir",
+              "usage": "Source data directory",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "target-data-dir",
+              "usage": "Target data directory",
+              "type": "String",
+              "takesValue": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "web",
+      "usage": "Defines commands for interacting with the Prysm web interface.",
+      "subcommands": [
+        {
+          "name": "generate-auth-token",
+          "usage": "",
+          "description": "Generate an authentication token for the Prysm web interface",
+          "flags": [
+            {
+              "name": "wallet-dir",
+              "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "http-host",
+              "aliases": [
+                "grpc-gateway-host"
+              ],
+              "usage": "Host on which the HTTP server runs on.",
+              "default": "\"127.0.0.1\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "http-port",
+              "aliases": [
+                "grpc-gateway-port"
+              ],
+              "usage": "Port on which the HTTP server runs on.",
+              "default": "7500",
+              "type": "altsrc.Int",
+              "takesValue": true
+            },
+            {
+              "name": "keymanager-token-file",
+              "aliases": [
+                "validator-api-bearer-file"
+              ],
+              "usage": "Path to auth token file used for validator apis.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2/auth-token\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

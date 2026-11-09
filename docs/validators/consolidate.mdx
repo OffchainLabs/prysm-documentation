@@ -1,0 +1,143 @@
+---
+title: "Merge several validators into one"
+description: "Merge a 0x01 or 0x02 validator into a 0x02 validator with a consolidation request sent from the source's withdrawal address, using the Staking Launchpad or the EthStaker console."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+# Merge several validators into one
+
+A consolidation moves the whole balance of one validator (the **source**) into another (the **target**), then exits the source. The target is a compounding (`0x02`) validator: it keeps up to 2048 ETH staked, so several validators can become one. To consolidate, send a request **from the source's withdrawal address**. Prysm and your keys are not involved. A consolidation is permanent: the source can't be reactivated.
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+## Before you begin
+
+- The target has `0x02` credentials. If it starts with `0x01`, first [convert it to `0x02`](/validators/upgrade-to-compounding/).
+- The source has `0x01` or `0x02` credentials. If it starts with `0x00`, first [convert it to `0x01`](/validators/add-withdrawal-address/).
+- Both validators are active and not exiting, and the source has been active for at least 256 epochs (about 27 hours).
+- The source has no partial withdrawal waiting in the queue.
+- You control the source's withdrawal address in a wallet that can connect to a website (for example a hardware wallet through a browser extension), with a little ETH for gas and the request fee.
+
+If one of these isn't met, the network ignores the request and the fee isn't refunded.
+
+## Check your credentials
+
+Run this for the source and for the target:
+
+<When os="unix">
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX_OR_PUBKEY> | jq '.data.validator.withdrawal_credentials'
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX_OR_PUBKEY> | jq '.data.validator.withdrawal_credentials'
+```
+
+</When>
+
+The first byte is the credential type (`0x01` or `0x02`). The last 40 hex characters are the withdrawal address. The source's withdrawal address is the wallet you must send the request from.
+
+## Consolidate
+
+:::danger[Check the target]
+The network doesn't check who owns the target. If you consolidate into someone else's validator, your ETH becomes theirs. Check the target's index and public key before you sign.
+:::
+
+<When net="mainnet">
+
+<Steps>
+
+1. **Open Validator actions** on the Staking Launchpad: `https://launchpad.ethereum.org/en/validator-actions`
+
+   Type the address yourself. Websites that offer to "help" with this step are phishing.
+
+2. **Connect the wallet** that controls the withdrawal address. The Launchpad lists the validators whose withdrawal address it is. It only consolidates between these validators.
+
+3. **Pick the validators**, either way:
+
+   - Select the target and choose **Absorb another validator**, then pick the source.
+   - Select the source and choose **Migrate funds**, then pick the target.
+
+   Check both indexes and public keys.
+
+4. **Sign and send the transaction** in your wallet. It pays gas plus a small request fee.
+
+</Steps>
+
+</When>
+<When net="hoodi">
+
+<Steps>
+
+1. **Open the Consolidate page** of the EthStaker console: `https://hoodi.console.ethstaker.org/consolidate`
+
+   Type the address yourself. Websites that offer to "help" with this step are phishing.
+
+2. **Connect the wallet** that controls the source's withdrawal address. The console lists its validators.
+
+3. **Select the target** with **Select Target Validator**. Only active `0x02` validators can be picked. To pick a validator that isn't yours, paste its full public key: the console marks it with a warning.
+
+4. **Select the sources**, check their index and public key, then click **Consolidate Selected**.
+
+5. **Sign and send the transaction** in your wallet. It pays gas plus a small request fee for each source.
+
+</Steps>
+
+</When>
+
+{/* Mainnet verified against ethereum/staking-launchpad (dev branch, src/pages/Actions), 2026-10; Hoodi against ethstaker/staker-console (src/pages/Consolidate, src/modals/TargetValidatorSelectionModal), 2026-10; consolidation rules against prysm beacon-chain/core/requests/consolidations.go */}
+
+:::caution[Keep the source running]
+The source still has duties until its balance has moved to the target, including sync committee duties, which can continue after it has exited. Keep it in your validator client until its status is `withdrawal_done`, or it loses balance.
+:::
+
+## Check that it works
+
+Once the request's block is processed, the source starts exiting. Run this for the source:
+
+<When os="unix">
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<SOURCE_INDEX_OR_PUBKEY> | jq '.data.status'
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<SOURCE_INDEX_OR_PUBKEY> | jq '.data.status'
+```
+
+</When>
+
+| Status | Meaning |
+| --- | --- |
+| `active_ongoing` | The request isn't processed yet, or it was ignored. |
+| `active_exiting` | The consolidation is underway. Keep the source running. |
+| `exited_unslashed` | The source has exited. Its balance moves to the target about 27 hours later. Keep the source running. |
+| `withdrawal_done` | The balance has moved to the target. You can remove the source's key. |
+
+Until the balance moves, the consolidation shows up in the pending queue:
+
+<When os="unix">
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/beacon/states/head/pending_consolidations | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/pending_consolidations | jq
+```
+
+</When>
+
+When many validators are exiting or consolidating, the exit can take days. Once the balance has moved, the target's balance includes the source's.

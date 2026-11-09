@@ -1,0 +1,1296 @@
+{
+	"minimal-config": {
+		"explain": "Switches the chain parameters to the spec `minimal` preset (8 slots per epoch, small committees). Only useful for local devnets and tests built with the minimal preset; never use it on a public network."
+	},
+	"e2e-config": {
+		"explain": "Loads Prysm's end-to-end test chain config. It exists for Prysm's own E2E test suite; operators never need it."
+	},
+	"verbosity": {
+		"explain": "Global log level for the terminal (and for `--log-file`). `debug` and `trace` are noisy; use `--log.vmodule` to raise the level of a single package instead of everything.",
+		"example": "--verbosity=debug",
+		"related": [
+			"log.vmodule",
+			"log-format",
+			"log-file"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"datadir": {
+		"explain": "Directory for the validator database: slashing protection history (`validator.db`, or `validator-client-data/` with minimal slashing protection), proposer settings saved at runtime, and the rolling debug log under `logs/`. The default is `~/.eth2` on Linux, `~/Library/Eth2` on macOS and `%LOCALAPPDATA%\\Eth2` on Windows.",
+		"example": "--datadir=/var/lib/ethereum/validator",
+		"related": [
+			"wallet-dir",
+			"clear-db"
+		],
+		"guide": "/validators/avoid-slashing/",
+		"caution": "This directory holds your slashing protection history. Back it up with the wallet and move it together with the keys; starting the same keys with an empty database removes the protection against double signing."
+	},
+	"wallet-dir": {
+		"explain": "Location of the Prysm wallet that holds imported (`direct/`) or HD-derived (`derived/`) keys. Defaults to `~/.eth2validators/prysm-wallet-v2` on Linux (`~/Library/Eth2Validators/prysm-wallet-v2` on macOS). Not needed when you sign with Web3Signer.",
+		"example": "--wallet-dir=/var/lib/ethereum/validator/wallet",
+		"related": [
+			"wallet-password-file",
+			"datadir",
+			"keymanager-token-file"
+		],
+		"guide": "/validators/import-keys/"
+	},
+	"wallet-password-file": {
+		"explain": "Plain-text file whose content unlocks the wallet, so the validator can start without a prompt (required for services). A trailing newline is ignored. If the flag is not set, Prysm uses `walletpassword.txt` inside `--wallet-dir` when that file exists and has `0600` permissions.",
+		"example": "--wallet-password-file=/var/lib/ethereum/validator/wallet-password.txt",
+		"related": [
+			"wallet-dir"
+		],
+		"guide": "/validators/import-keys/",
+		"caution": "Restrict the file to the user that runs the validator (`chmod 600`). It is ignored, with a warning, when `--validators-external-signer-url` is set."
+	},
+	"clear-db": {
+		"explain": "Asks for confirmation, then deletes the validator database in `--datadir` before starting. That database is your slashing protection history.",
+		"related": [
+			"force-clear-db",
+			"datadir"
+		],
+		"guide": "/validators/avoid-slashing/",
+		"caution": "Deleting slashing protection history removes the last safeguard against signing conflicting messages. Export it first with `validator slashing-protection-history export` if there is any chance you need it."
+	},
+	"force-clear-db": {
+		"explain": "Deletes the validator database (slashing protection history) without asking. Same effect as `--clear-db` without the prompt.",
+		"related": [
+			"clear-db",
+			"datadir"
+		],
+		"guide": "/validators/avoid-slashing/",
+		"caution": "Never leave this flag in a service file: every restart would wipe your slashing protection history."
+	},
+	"enable-tracing": {
+		"explain": "Exports OpenTelemetry traces of validator duties and beacon node calls to `--tracing-endpoint`. Useful for debugging latency; off by default because it costs CPU and network.",
+		"related": [
+			"tracing-endpoint",
+			"tracing-process-name",
+			"trace-sample-fraction"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"tracing-process-name": {
+		"explain": "Value of the `process_name` tag attached to every exported trace. Set it when several validator clients send traces to the same collector so you can tell them apart.",
+		"example": "--tracing-process-name=validator-1",
+		"related": [
+			"enable-tracing"
+		]
+	},
+	"tracing-endpoint": {
+		"explain": "OTLP/HTTP URL that receives traces when `--enable-tracing` is set, for example an OpenTelemetry Collector or Grafana Tempo receiver.",
+		"example": "--tracing-endpoint=http://127.0.0.1:4318/v1/traces",
+		"related": [
+			"enable-tracing"
+		]
+	},
+	"trace-sample-fraction": {
+		"explain": "Fraction of traces kept, from `0` to `1`. The default `0.2` keeps one trace in five; use `1` while you debug a specific problem.",
+		"related": [
+			"enable-tracing"
+		]
+	},
+	"monitoring-host": {
+		"explain": "Interface for the Prometheus metrics server (`/metrics` on `--monitoring-port`). Keep `127.0.0.1` unless Prometheus runs on another machine, then bind to a private interface and firewall it.",
+		"example": "--monitoring-host=0.0.0.0",
+		"related": [
+			"monitoring-port",
+			"disable-monitoring"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"monitoring-port": {
+		"explain": "Port of the validator client's Prometheus endpoint. The beacon node uses 8080 by default, so the validator's 8081 does not clash on a single machine.",
+		"example": "curl -s http://127.0.0.1:8081/metrics | head",
+		"related": [
+			"monitoring-host",
+			"disable-monitoring",
+			"disable-account-metrics"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"disable-monitoring": {
+		"explain": "Does not start the Prometheus metrics server at all. The validator logs `Prometheus service disabled` at startup.",
+		"related": [
+			"monitoring-port"
+		]
+	},
+	"disable-log-colors": {
+		"explain": "Removes ANSI color codes from text logs. Use it when logs go to a file or a log collector that shows the escape codes as garbage.",
+		"related": [
+			"log-format"
+		]
+	},
+	"log-format": {
+		"explain": "`text` (default, human-readable), `json` (one JSON object per line, for log pipelines), `fluentd`, or `journald` (writes straight to the systemd journal). Any other value stops startup with `unknown log format`.",
+		"example": "--log-format=json",
+		"related": [
+			"log-file",
+			"verbosity"
+		],
+		"guide": "/operate/check-health/"
+	},
+	"log-file": {
+		"explain": "Also appends logs to this file (created if missing), in addition to the terminal. Prysm does not rotate it; use logrotate or journald for long-running services.",
+		"example": "--log-file=/var/log/prysm/validator.log",
+		"related": [
+			"log-format",
+			"disable-ephemeral-log-file"
+		],
+		"guide": "/operate/check-health/"
+	},
+	"config-file": {
+		"explain": "YAML file whose keys are flag names without dashes, for example `wallet-dir: /path`. A flag passed on the command line wins over the same key in the file.",
+		"example": "wallet-dir: /var/lib/ethereum/validator/wallet\nsuggested-fee-recipient: \"0x0000000000000000000000000000000000000000\"\nhoodi: true",
+		"related": [
+			"chain-config-file"
+		]
+	},
+	"chain-config-file": {
+		"explain": "Loads chain parameters (fork epochs, genesis settings, preset overrides) from a YAML file in the consensus-specs `config.yaml` format. Needed only for custom devnets; the beacon node must use the same file.",
+		"example": "--chain-config-file=/path/to/devnet/config.yaml",
+		"related": [
+			"config-file"
+		]
+	},
+	"grpc-max-msg-size": {
+		"explain": "Largest gRPC response, in bytes, the validator accepts from the beacon node. The default (2 GiB) is effectively unlimited; the only reason to lower it is to limit memory use when talking to an untrusted node.",
+		"related": [
+			"beacon-rpc-provider"
+		]
+	},
+	"accept-terms-of-use": {
+		"explain": "Accepts the Prysm terms of use without the interactive prompt. After the first accepted run Prysm writes a `tosaccepted` file in `--datadir` and stops asking.",
+		"guide": "/setup/run-with-systemd/"
+	},
+	"api-timeout": {
+		"explain": "Registered on the validator for symmetry with the beacon node, where it sets the HTTP API timeout. The validator client does not read it; its calls to a beacon node REST API use a fixed 30-second timeout."
+	},
+	"disable-ephemeral-log-file": {
+		"explain": "By default the validator also writes debug-level logs to `<datadir>/logs/validator.log`, kept for about 24 hours (at most 250 MB), which is useful for bug reports. This flag turns that file off.",
+		"related": [
+			"log-file",
+			"datadir"
+		],
+		"guide": "/operate/check-health/"
+	},
+	"log.vmodule": {
+		"explain": "Overrides the log level for specific packages, as `package/path=level` pairs separated by commas. Package paths are those shown in the log prefix source, for example `validator/client`; a path also matches its subpackages. Applies to `text` output.",
+		"example": "--log.vmodule=validator/client=debug,validator/keymanager=trace",
+		"related": [
+			"verbosity"
+		],
+		"guide": "/operate/check-health/"
+	},
+	"pprof": {
+		"explain": "Starts Go's pprof HTTP server on `--pprofaddr:--pprofport` so you can capture CPU, heap and goroutine profiles. Leave it off unless you are debugging.",
+		"example": "go tool pprof http://127.0.0.1:6060/debug/pprof/heap",
+		"related": [
+			"pprofaddr",
+			"pprofport"
+		],
+		"caution": "pprof has no authentication. Keep it on localhost."
+	},
+	"pprofaddr": {
+		"explain": "Interface for the pprof server. Keep the default `127.0.0.1`.",
+		"related": [
+			"pprof",
+			"pprofport"
+		]
+	},
+	"pprofport": {
+		"explain": "Port for the pprof server. The beacon node uses the same default (6060), so change one of them if both run with `--pprof` on the same host.",
+		"related": [
+			"pprof",
+			"pprofaddr"
+		]
+	},
+	"memprofilerate": {
+		"explain": "Sets Go's `runtime.MemProfileRate`: one allocation sample per this many bytes. Lower values give more detailed heap profiles at a CPU cost. Only relevant with `--pprof`.",
+		"related": [
+			"pprof"
+		]
+	},
+	"blockprofilerate": {
+		"explain": "Sets Go's block profile rate (0 disables it). Enable it only to investigate goroutines blocked on channels or locks, together with `--pprof`.",
+		"related": [
+			"pprof",
+			"mutexprofilefraction"
+		]
+	},
+	"mutexprofilefraction": {
+		"explain": "Samples 1 in N mutex contention events for the mutex profile (0 disables it). Only useful with `--pprof` when debugging lock contention.",
+		"related": [
+			"pprof",
+			"blockprofilerate"
+		]
+	},
+	"tls-cert": {
+		"explain": "Certificate (PEM) the validator uses to verify the beacon node's gRPC TLS certificate. Pass the same certificate the beacon node serves with its `--tls-cert`/`--tls-key`. Without this flag the gRPC connection is unencrypted, which is fine on localhost.",
+		"example": "--tls-cert=/etc/prysm/beacon.crt",
+		"related": [
+			"beacon-rpc-provider"
+		],
+		"caution": "If the file cannot be read, the validator logs `Could not get valid credentials` and does not connect to the beacon node at all."
+	},
+	"beacon-rpc-provider": {
+		"explain": "`host:port` of the beacon node's gRPC API (beacon node `--rpc-port`, default 4000). Accepts a comma-separated list: one node is used at a time, and when it is not synced or unreachable the validator switches to the next one (checked once per slot).",
+		"example": "--beacon-rpc-provider=127.0.0.1:4000,10.0.0.2:4000",
+		"related": [
+			"beacon-rest-api-provider",
+			"tls-cert",
+			"grpc-headers",
+			"max-health-checks"
+		],
+		"guide": "/validators/connect-to-beacon-nodes/",
+		"caution": "Ignored once the REST API is enabled (`--beacon-rest-api-provider` or `--enable-beacon-rest-api`). A remote beacon node must listen on a reachable interface (its `--rpc-host`)."
+	},
+	"beacon-rest-api-headers": {
+		"explain": "Extra HTTP headers sent with every REST request to the beacon node, as `key=value` pairs separated by commas; repeat a key to send several values. Typical use: an authorization header for a beacon node behind a proxy. Malformed pairs are skipped silently.",
+		"example": "--beacon-rest-api-headers=Authorization=Bearer <TOKEN>",
+		"related": [
+			"beacon-rest-api-provider",
+			"grpc-headers"
+		]
+	},
+	"rpc": {
+		"explain": "Starts the validator's HTTP server (HTTP only; the validator runs no gRPC server) on `--http-host:--http-port`, which serves the Keymanager API and Prysm's validator API, authenticated with the token in `--keymanager-token-file`. Without `--rpc` (or `--web`) there is no validator API at all.",
+		"related": [
+			"http-host",
+			"http-port",
+			"keymanager-token-file",
+			"web"
+		],
+		"guide": "/validators/keymanager/"
+	},
+	"rpc-host": {
+		"explain": "No effect: the v7 validator client runs no gRPC server, and this flag is registered but never read. The API started by `--rpc` or `--web` is HTTP only, on `--http-host`.",
+		"related": [
+			"http-host",
+			"rpc"
+		]
+	},
+	"rpc-port": {
+		"explain": "No effect: the v7 validator client runs no gRPC server, so nothing listens on this port (default 7000). The API started by `--rpc` or `--web` is HTTP only, on `--http-port` (default 7500).",
+		"related": [
+			"http-port",
+			"rpc"
+		]
+	},
+	"http-port": {
+		"explain": "Port of the validator HTTP server (Keymanager API, Prysm validator API and web UI) started by `--rpc` or `--web`.",
+		"example": "curl -H \"Authorization: Bearer <TOKEN>\" http://127.0.0.1:7500/eth/v1/keystores",
+		"related": [
+			"rpc",
+			"http-host",
+			"keymanager-token-file"
+		],
+		"guide": "/validators/keymanager/"
+	},
+	"http-host": {
+		"explain": "Interface the validator HTTP server listens on. Any value other than `127.0.0.1` logs a warning, because the API is plain HTTP and can import, delete and exit keys.",
+		"related": [
+			"rpc",
+			"http-port",
+			"http-cors-domain"
+		],
+		"guide": "/validators/keymanager/",
+		"caution": "Never expose this port to the internet. If you must reach it remotely, use an SSH tunnel or a TLS-terminating proxy on a private network."
+	},
+	"grpc-retries": {
+		"explain": "How many times a failed gRPC call to the beacon node is retried before the error is returned. Applies to gRPC only.",
+		"related": [
+			"grpc-retry-delay",
+			"beacon-rpc-provider"
+		]
+	},
+	"grpc-retry-delay": {
+		"explain": "Base delay between gRPC retries; Prysm uses a linear backoff, so the Nth retry waits N times this value. Accepts Go durations such as `500ms` or `2s`.",
+		"related": [
+			"grpc-retries"
+		]
+	},
+	"http-cors-domain": {
+		"explain": "Origins a browser may call the validator HTTP API from. The default covers the Prysm web UI on common local ports. Only relevant for browser-based tools; it is not access control for scripts.",
+		"example": "--http-cors-domain=http://localhost:7500",
+		"related": [
+			"http-host",
+			"web"
+		]
+	},
+	"grpc-headers": {
+		"explain": "Extra metadata sent with every gRPC call to the beacon node, as `key=value` pairs separated by commas. Use it when a proxy in front of the beacon node needs an authorization header.",
+		"example": "--grpc-headers=authorization=Bearer <TOKEN>",
+		"related": [
+			"beacon-rpc-provider",
+			"beacon-rest-api-headers"
+		]
+	},
+	"beacon-rest-api-provider": {
+		"explain": "URL of the beacon node's REST API (beacon node `--http-port`, default 3500). Setting this flag switches the validator from gRPC to REST. A comma-separated list connects to every node at once: writes go to all of them, time-critical reads are raced and the answer matching the newest known head wins.",
+		"example": "--beacon-rest-api-provider=http://127.0.0.1:3500,http://10.0.0.2:3500",
+		"related": [
+			"enable-beacon-rest-api",
+			"beacon-rest-api-headers",
+			"beacon-rpc-provider",
+			"max-health-checks"
+		],
+		"guide": "/validators/connect-to-beacon-nodes/",
+		"caution": "Include the scheme (`http://` or `https://`). A remote beacon node must listen on a reachable interface (its `--http-host`)."
+	},
+	"proposer-settings-file": {
+		"explain": "JSON or YAML file with per-validator and default proposer settings: fee recipient, gas limit, graffiti and builder options. Read once at startup and saved to the validator database. Cannot be combined with `--proposer-settings-url`.",
+		"example": "--proposer-settings-file=/etc/prysm/proposer-settings.yaml",
+		"related": [
+			"proposer-settings-url",
+			"suggested-fee-recipient",
+			"enable-builder"
+		],
+		"guide": "/validators/fee-recipient/",
+		"caution": "When the file has a `proposer_config` section, it replaces the per-key settings saved in the database, including fee recipients you changed through the Keymanager API. Prysm logs a warning listing the replaced keys."
+	},
+	"proposer-settings-url": {
+		"explain": "Same as `--proposer-settings-file`, but fetched from a URL with an HTTP GET at startup. The response must be `200` with a JSON body (YAML is not accepted here), and unknown fields are rejected. The URL is not polled again.",
+		"example": "--proposer-settings-url=https://config.internal.example/proposer-settings.json",
+		"related": [
+			"proposer-settings-file",
+			"suggested-fee-recipient"
+		],
+		"guide": "/validators/fee-recipient/"
+	},
+	"suggested-fee-recipient": {
+		"explain": "Default execution-layer address that receives priority fees and MEV payments for every validator in this client. Per-validator values from a proposer settings file or the Keymanager API take precedence. The default is the burn address, so set it.",
+		"example": "--suggested-fee-recipient=<YOUR_ETH_ADDRESS>",
+		"related": [
+			"proposer-settings-file",
+			"enable-builder"
+		],
+		"guide": "/validators/fee-recipient/",
+		"caution": "Use an address you control. Prysm warns if the address is not checksummed (mixed case) and logs `Fee recipient is burn address` during builder registration if it was never set."
+	},
+	"enable-builder": {
+		"explain": "Turns on builder (MEV-Boost) registration for all validators: every epoch the validator signs a registration with its fee recipient and gas limit and sends it to the beacon node, which forwards it to the relays. The beacon node also needs `--http-mev-relay`. Equivalent to `builder.enabled: true` in `default_config` of a proposer settings file.",
+		"related": [
+			"suggested-fee-recipient",
+			"suggested-gas-limit",
+			"proposer-settings-file",
+			"validators-registration-batch-size"
+		],
+		"guide": "/validators/mev-boost/",
+		"caution": "Registrations are only sent for validators that have a fee recipient. From the Gloas fork on, this flag has no effect; builders are configured with version 2 proposer settings."
+	},
+	"suggested-gas-limit": {
+		"explain": "Default gas limit (in gas units) for all validators. Before the Gloas fork, it's sent to builders with the registrations. From Gloas on, it's signed into the proposer preferences and overrides the network gas limit schedule; remove it to follow the schedule. Per-key gas limits from a proposer settings file, a proposer settings URL or the Keymanager API take precedence. It doesn't change the gas limit of locally built blocks before Gloas, which your execution client decides.",
+		"example": "--suggested-gas-limit=60000000",
+		"related": [
+			"enable-builder",
+			"proposer-settings-file"
+		],
+		"guide": "/validators/fee-recipient/",
+		"caution": "`0` is replaced with the default. Prysm warns if the value is below 10% or above 150% of the default, and, on a network with Gloas scheduled, at startup and when the value exceeds the highest scheduled gas limit."
+	},
+	"validators-registration-batch-size": {
+		"explain": "Number of builder registrations sent to the beacon node per request. Lower it if a large validator set causes registration requests to time out; `0` or a negative value sends everything in one request.",
+		"related": [
+			"enable-builder"
+		]
+	},
+	"stateless": {
+		"explain": "Only matters from the Gloas fork on: the validator fetches the block and its execution payload envelope in one call and publishes the envelope itself. Prysm turns it on automatically when you configure multiple beacon nodes, because only the node that built a block can reveal its payload.",
+		"related": [
+			"beacon-rest-api-provider",
+			"beacon-rpc-provider"
+		],
+		"guide": "/validators/connect-to-beacon-nodes/"
+	},
+	"graffiti": {
+		"explain": "Text (up to 32 bytes) written into every block this validator client proposes. Prefix with `hex:` to pass raw bytes. Graffiti set in proposer settings or through the Keymanager API takes precedence over this flag.",
+		"example": "--graffiti=\"my node\"",
+		"related": [
+			"graffiti-file"
+		],
+		"guide": "/validators/graffiti/"
+	},
+	"graffiti-file": {
+		"explain": "YAML file with `default`, `ordered`, `random` and `specific` (by validator index) graffiti. Used only when neither proposer settings nor `--graffiti` provide one. A file that fails to parse is logged as a warning and ignored.",
+		"example": "default: \"my node\"\nspecific:\n  12345: \"validator 12345\"",
+		"related": [
+			"graffiti"
+		],
+		"guide": "/validators/graffiti/"
+	},
+	"validators-external-signer-url": {
+		"explain": "Base URL of a Web3Signer instance. Setting it switches the validator to remote signing: no Prysm wallet is opened, and every signature is requested from Web3Signer's `/api/v1/eth2/sign` endpoint. You must also say which keys to use.",
+		"example": "--validators-external-signer-url=http://127.0.0.1:9000",
+		"related": [
+			"validators-external-signer-public-keys",
+			"validators-external-signer-key-file"
+		],
+		"guide": "/validators/remote-signer/",
+		"caution": "Slashing protection still runs in the validator client, and Web3Signer can keep its own. Never let two validator clients sign with the same keys through one Web3Signer."
+	},
+	"validators-external-signer-public-keys": {
+		"explain": "Which Web3Signer keys this validator client uses: either a comma-separated list of public keys, or a single URL returning a JSON array of keys (usually `<web3signer>/api/v1/eth2/publicKeys`, which lists every key Web3Signer holds).",
+		"example": "--validators-external-signer-public-keys=0x<PUBKEY_1>,0x<PUBKEY_2>",
+		"related": [
+			"validators-external-signer-url",
+			"validators-external-signer-key-file",
+			"validators-external-signer-poll-interval"
+		],
+		"guide": "/validators/remote-signer/",
+		"caution": "The URL form validates every key Web3Signer serves. If several validator clients share one Web3Signer, give each an explicit key list instead."
+	},
+	"validators-external-signer-key-file": {
+		"explain": "Text file with one public key per line (with or without `0x`). Keys in it are validated in addition to those from `--validators-external-signer-public-keys`; the file is watched and reloaded when it changes. Keymanager API calls to `/eth/v1/remotekeys` write to this file, so they survive restarts.",
+		"example": "--validators-external-signer-key-file=/var/lib/ethereum/validator/remote-keys.txt",
+		"related": [
+			"validators-external-signer-url",
+			"validators-external-signer-public-keys"
+		],
+		"guide": "/validators/remote-signer/",
+		"caution": "The file must already exist (create an empty one); otherwise startup fails with `no file exists in remote signer key file path`. Its directory must be writable for API imports and deletions."
+	},
+	"validators-external-signer-poll-interval": {
+		"explain": "Re-fetches the public keys URL from `--validators-external-signer-public-keys` on this interval and starts or stops validating keys as they appear or disappear. With polling on, the validator also starts when the URL is temporarily unreachable.",
+		"example": "--validators-external-signer-poll-interval=1m",
+		"related": [
+			"validators-external-signer-public-keys"
+		],
+		"guide": "/validators/remote-signer/",
+		"caution": "Has no effect with a static key list. An error or an empty response keeps the current keys, so emptying Web3Signer does not stop validation; restart or remove keys through the API instead."
+	},
+	"disable-rewards-penalties-logging": {
+		"explain": "Stops the per-epoch log lines that summarize each validator's balance change and attestation performance. Useful for clients with many keys whose logs are dominated by these lines.",
+		"related": [
+			"disable-account-metrics"
+		]
+	},
+	"disable-account-metrics": {
+		"explain": "Drops the per-validator Prometheus metrics (labeled by public key). With thousands of keys these labels make metrics large and slow to scrape; aggregate metrics remain.",
+		"related": [
+			"monitoring-port",
+			"disable-rewards-penalties-logging"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"distributed": {
+		"explain": "Runs the validator as part of a distributed validator cluster (DVT middleware such as Obol Charon sits between the validator and the beacon node). Aggregation selection proofs are then exchanged through the middleware. Requires the REST API.",
+		"related": [
+			"beacon-rest-api-provider",
+			"enable-beacon-rest-api"
+		],
+		"caution": "Startup fails with `--distributed requires --enable-beacon-rest-api` unless the REST API is enabled (setting `--beacon-rest-api-provider` also counts)."
+	},
+	"keymanager-token-file": {
+		"explain": "File holding the bearer token for the validator HTTP API: a single line with a 256-bit hex string. Created on first start with `--rpc` if missing. Send it as `Authorization: Bearer <TOKEN>`. The file is watched, so you can rotate the token without a restart.",
+		"example": "--keymanager-token-file=/var/lib/ethereum/validator/auth-token",
+		"related": [
+			"rpc",
+			"http-port",
+			"wallet-dir"
+		],
+		"guide": "/validators/keymanager/",
+		"caution": "Without this flag, the token is `auth-token` in the wallet directory set by `--wallet-dir`."
+	},
+	"disable-duties-polling": {
+		"explain": "Meant to stop the validator re-fetching duties when the dependent root changes. In this release the flag is registered but not passed to the validator service, so duties polling stays on regardless."
+	},
+	"max-health-checks": {
+		"explain": "The validator client checks once per slot that at least one configured beacon node is ready (`/eth/v1/node/health` returns 200 for REST). After this many consecutive failures the validator client stops: `1` stops on the first failed check. `0` (default) keeps checking forever.",
+		"example": "--max-health-checks=10",
+		"related": [
+			"beacon-rpc-provider",
+			"beacon-rest-api-provider"
+		]
+	},
+	"write-wallet-password-on-web-onboarding": {
+		"explain": "When you create a wallet through the Prysm web UI, also saves the wallet password to a file in the wallet directory so later restarts do not ask for it.",
+		"related": [
+			"web",
+			"wallet-password-file"
+		],
+		"caution": "Anyone who can read the wallet directory then has both the keys and their password."
+	},
+	"holesky": {
+		"explain": "Uses the Holesky testnet config. Deprecated: the Holesky testnet has been shut down. Use `--hoodi` for test setups. Only one network flag can be set.",
+		"related": [
+			"hoodi",
+			"sepolia",
+			"mainnet"
+		],
+		"guide": "/reference/networks/"
+	},
+	"sepolia": {
+		"explain": "Uses the Sepolia testnet config. Sepolia has a permissioned validator set, so it is mostly for application testing, not staking practice. Only one network flag can be set.",
+		"related": [
+			"hoodi",
+			"mainnet"
+		],
+		"guide": "/reference/networks/"
+	},
+	"hoodi": {
+		"explain": "Uses the Hoodi testnet config, the recommended network for practicing validator operations. The beacon node must run on the same network. Only one network flag can be set.",
+		"related": [
+			"mainnet",
+			"sepolia"
+		],
+		"guide": "/reference/networks/"
+	},
+	"mainnet": {
+		"explain": "Uses Ethereum mainnet parameters. This is the default, so the flag only makes the choice explicit in service files. Only one network flag can be set.",
+		"related": [
+			"hoodi",
+			"sepolia"
+		],
+		"guide": "/reference/networks/"
+	},
+	"dynamic-key-reload-debounce-interval": {
+		"explain": "With a local wallet, the validator watches the wallet keystore file and reloads keys when it changes (for example after `accounts import` in another terminal). This is how long it waits for writes to settle before reloading. Accepts Go durations.",
+		"example": "--dynamic-key-reload-debounce-interval=5s",
+		"related": [
+			"wallet-dir"
+		]
+	},
+	"disable-attest-timely": {
+		"explain": "By default the validator attests as soon as the block for the slot is processed, instead of always waiting until the attestation deadline. This flag restores the old behavior of waiting for the deadline."
+	},
+	"enable-slashing-protection-history-pruning": {
+		"explain": "At startup, deletes attestation records older than the weak subjectivity period from the (complete) slashing protection database. Keeps `validator.db` from growing forever. Protection for recent epochs is unaffected.",
+		"related": [
+			"datadir",
+			"enable-minimal-slashing-protection"
+		],
+		"guide": "/validators/avoid-slashing/"
+	},
+	"enable-minimal-slashing-protection": {
+		"explain": "Stores only the minimum EIP-3076 needs (highest source/target epochs and highest proposed slot per key) in `<datadir>/validator-client-data/` instead of the full history in `validator.db`. Smaller and faster, especially with many keys. An existing complete database keeps being used until you convert it with `validator db convert-complete-to-minimal`.",
+		"related": [
+			"datadir",
+			"enable-slashing-protection-history-pruning"
+		],
+		"guide": "/validators/avoid-slashing/",
+		"caution": "Starting without this flag when only a minimal database exists converts it back to a complete one. If both databases exist, startup fails; delete one."
+	},
+	"enable-doppelganger": {
+		"explain": "At startup, asks the beacon node whether any of your keys were live on chain over roughly the last 2-3 epochs, and refuses to start (`Duplicate instances exists in the network for validator keys`) if so. Keys added while running are held out of duties for at least 2 epochs, until they pass the same check.",
+		"related": [
+			"datadir"
+		],
+		"caution": "Only detects a duplicate that is actively attesting. Keys whose local history shows a very recent attestation skip the check, and an instance that is offline at that moment is not detected. It does not replace shutting down the old machine."
+	},
+	"enable-beacon-rest-api": {
+		"explain": "Talks to the beacon node over its REST API (`--beacon-rest-api-provider`, default `http://127.0.0.1:3500`) instead of gRPC. Setting `--beacon-rest-api-provider` enables this implicitly, so the flag is only needed when you rely on the default URL.",
+		"related": [
+			"beacon-rest-api-provider",
+			"beacon-rpc-provider"
+		]
+	},
+	"disable-duties-v2": {
+		"explain": "Makes the gRPC client use the older get-duties endpoint instead of the v2 one. A compatibility switch for beacon nodes that lack the v2 endpoint; it does nothing with the REST API.",
+		"related": [
+			"beacon-rpc-provider"
+		]
+	},
+	"web": {
+		"explain": "Serves the Prysm web UI from the validator HTTP server (implies the API from `--rpc`). At startup the validator logs an `/initialize?token=...` link to open in a browser.",
+		"related": [
+			"rpc",
+			"http-port",
+			"keymanager-token-file"
+		],
+		"guide": "/validators/keymanager/",
+		"caution": "The web UI does not fully support Web3Signer; Prysm warns if you combine them."
+	},
+	"wallet create::wallet-dir": {
+		"explain": "Wallet to operate on. Defaults to `~/.eth2validators/prysm-wallet-v2` on Linux. The command fails if a wallet already exists there.",
+		"related": [
+			"wallet-dir"
+		]
+	},
+	"wallet create::keymanager-kind": {
+		"explain": "`imported` (also `local` or `direct`) for a wallet you import EIP-2335 keystores into, or `derived` for an HD wallet that generates a new mnemonic on this machine. `web3signer` is rejected: remote signing needs no wallet. Without the flag you are prompted.",
+		"example": "validator wallet create --keymanager-kind=imported --wallet-dir=<WALLET_DIR> --wallet-password-file=<PASSWORD_FILE>",
+		"guide": "/validators/import-keys/",
+		"caution": "Prefer `imported` with keys generated offline. A `derived` wallet displays a new mnemonic on the validator machine."
+	},
+	"wallet create::remote-signer-crt-path": {
+		"explain": "Left over from the removed gRPC remote-signer wallet type. The command does not read it; for remote signing use Web3Signer with `--validators-external-signer-url` instead.",
+		"related": [
+			"validators-external-signer-url"
+		]
+	},
+	"wallet create::remote-signer-key-path": {
+		"explain": "Left over from the removed gRPC remote-signer wallet type. The command does not read it; for remote signing use Web3Signer with `--validators-external-signer-url` instead.",
+		"related": [
+			"validators-external-signer-url"
+		]
+	},
+	"wallet create::remote-signer-ca-crt-path": {
+		"explain": "Left over from the removed gRPC remote-signer wallet type. The command does not read it; for remote signing use Web3Signer with `--validators-external-signer-url` instead.",
+		"related": [
+			"validators-external-signer-url"
+		]
+	},
+	"wallet create::wallet-password-file": {
+		"explain": "File containing the wallet password, so the command does not prompt for it. A trailing newline is ignored. The password must be at least 8 characters.",
+		"related": [
+			"wallet-password-file"
+		]
+	},
+	"wallet create::mnemonic-25th-word-file": {
+		"explain": "File containing the optional BIP-39 passphrase (\"25th word\") of the mnemonic. The same mnemonic with a different passphrase derives completely different keys.",
+		"caution": "If you lose the passphrase you cannot recover the keys from the mnemonic alone."
+	},
+	"wallet create::skip-mnemonic-25th-word-check": {
+		"explain": "Skips the \"do you use a 25th word?\" prompt, for non-interactive runs. Any value works; the flag only has to be present."
+	},
+	"wallet create::mainnet": {
+		"explain": "Uses mainnet parameters (the default). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"mainnet"
+		]
+	},
+	"wallet create::sepolia": {
+		"explain": "Uses Sepolia parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"sepolia"
+		]
+	},
+	"wallet create::holesky": {
+		"explain": "Uses Holesky parameters (network being retired). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"holesky"
+		]
+	},
+	"wallet create::hoodi": {
+		"explain": "Uses Hoodi parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"hoodi"
+		]
+	},
+	"wallet create::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"wallet recover::wallet-dir": {
+		"explain": "Wallet to operate on. Defaults to `~/.eth2validators/prysm-wallet-v2` on Linux. The recovered HD wallet is written here.",
+		"related": [
+			"wallet-dir"
+		]
+	},
+	"wallet recover::mnemonic-file": {
+		"explain": "Plain-text file containing the mnemonic, so it does not have to be typed in. Without it you are prompted.",
+		"caution": "This puts your mnemonic on the validator machine, which is what you should avoid. Delete the file securely afterwards, or import keystores generated offline instead."
+	},
+	"wallet recover::wallet-password-file": {
+		"explain": "File containing the wallet password, so the command does not prompt for it. A trailing newline is ignored. This sets the password of the new wallet (at least 8 characters).",
+		"related": [
+			"wallet-password-file"
+		]
+	},
+	"wallet recover::num-accounts": {
+		"explain": "How many keys to derive from the mnemonic, starting at index 0. Set it to the number of validators you created from this mnemonic.",
+		"example": "--num-accounts=4"
+	},
+	"wallet recover::mnemonic-25th-word-file": {
+		"explain": "File containing the optional BIP-39 passphrase (\"25th word\") of the mnemonic. The same mnemonic with a different passphrase derives completely different keys.",
+		"caution": "If you lose the passphrase you cannot recover the keys from the mnemonic alone."
+	},
+	"wallet recover::skip-mnemonic-25th-word-check": {
+		"explain": "Skips the \"do you use a 25th word?\" prompt, for non-interactive runs. Any value works; the flag only has to be present."
+	},
+	"wallet recover::mainnet": {
+		"explain": "Uses mainnet parameters (the default). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"mainnet"
+		]
+	},
+	"wallet recover::sepolia": {
+		"explain": "Uses Sepolia parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"sepolia"
+		]
+	},
+	"wallet recover::holesky": {
+		"explain": "Uses Holesky parameters (network being retired). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"holesky"
+		]
+	},
+	"wallet recover::hoodi": {
+		"explain": "Uses Hoodi parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"hoodi"
+		]
+	},
+	"wallet recover::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"accounts delete::wallet-dir": {
+		"explain": "Wallet to operate on. Defaults to `~/.eth2validators/prysm-wallet-v2` on Linux.",
+		"related": [
+			"wallet-dir"
+		]
+	},
+	"accounts delete::wallet-password-file": {
+		"explain": "File containing the wallet password, so the command does not prompt for it. A trailing newline is ignored.",
+		"related": [
+			"wallet-password-file"
+		]
+	},
+	"accounts delete::delete-public-keys": {
+		"explain": "Keys to remove from the wallet, as comma-separated hex public keys. Without it you choose interactively; you are asked to confirm either way.",
+		"example": "--delete-public-keys=0x<PUBKEY_1>,0x<PUBKEY_2>",
+		"caution": "Deleting a key does not exit the validator. It stops signing and starts losing rewards unless the key runs elsewhere, and its slashing protection history stays in `--datadir`."
+	},
+	"accounts delete::mainnet": {
+		"explain": "Uses mainnet parameters (the default). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"mainnet"
+		]
+	},
+	"accounts delete::sepolia": {
+		"explain": "Uses Sepolia parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"sepolia"
+		]
+	},
+	"accounts delete::holesky": {
+		"explain": "Uses Holesky parameters (network being retired). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"holesky"
+		]
+	},
+	"accounts delete::hoodi": {
+		"explain": "Uses Hoodi parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"hoodi"
+		]
+	},
+	"accounts delete::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"accounts list::wallet-dir": {
+		"explain": "Wallet to operate on. Defaults to `~/.eth2validators/prysm-wallet-v2` on Linux.",
+		"related": [
+			"wallet-dir"
+		]
+	},
+	"accounts list::wallet-password-file": {
+		"explain": "File containing the wallet password, so the command does not prompt for it. A trailing newline is ignored.",
+		"related": [
+			"wallet-password-file"
+		]
+	},
+	"accounts list::show-private-keys": {
+		"explain": "Prints the private key of each account next to its public key.",
+		"caution": "Anyone who sees the output can sign with your keys. Do not run it on a shared screen or in a logged session."
+	},
+	"accounts list::list-validator-indices": {
+		"explain": "Asks the beacon node for the validator index of each key and prints only the keys that have one. Needs a reachable beacon node at `--beacon-rpc-provider`."
+	},
+	"accounts list::beacon-rpc-provider": {
+		"explain": "gRPC `host:port` of a synced beacon node, used to look up validator indices. This command always uses gRPC, so the beacon node must serve it (`--rpc-port`, default 4000).",
+		"related": [
+			"beacon-rpc-provider"
+		]
+	},
+	"accounts list::grpc-max-msg-size": {
+		"explain": "Maximum gRPC response size in bytes. The default is effectively unlimited.",
+		"related": [
+			"grpc-max-msg-size"
+		]
+	},
+	"accounts list::tls-cert": {
+		"explain": "Certificate to verify the beacon node's gRPC TLS certificate, if it serves TLS.",
+		"related": [
+			"tls-cert"
+		]
+	},
+	"accounts list::grpc-headers": {
+		"explain": "Extra `key=value` gRPC metadata, comma-separated, for example an auth header for a proxy.",
+		"related": [
+			"grpc-headers"
+		]
+	},
+	"accounts list::grpc-retries": {
+		"explain": "Retries for a failed gRPC call before giving up.",
+		"related": [
+			"grpc-retries"
+		]
+	},
+	"accounts list::grpc-retry-delay": {
+		"explain": "Base delay between gRPC retries (linear backoff).",
+		"related": [
+			"grpc-retry-delay"
+		]
+	},
+	"accounts list::mainnet": {
+		"explain": "Uses mainnet parameters (the default). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"mainnet"
+		]
+	},
+	"accounts list::sepolia": {
+		"explain": "Uses Sepolia parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"sepolia"
+		]
+	},
+	"accounts list::holesky": {
+		"explain": "Uses Holesky parameters (network being retired). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"holesky"
+		]
+	},
+	"accounts list::hoodi": {
+		"explain": "Uses Hoodi parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"hoodi"
+		]
+	},
+	"accounts list::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"accounts backup::wallet-dir": {
+		"explain": "Wallet to operate on. Defaults to `~/.eth2validators/prysm-wallet-v2` on Linux.",
+		"related": [
+			"wallet-dir"
+		]
+	},
+	"accounts backup::wallet-password-file": {
+		"explain": "File containing the wallet password, so the command does not prompt for it. A trailing newline is ignored.",
+		"related": [
+			"wallet-password-file"
+		]
+	},
+	"accounts backup::backup-dir": {
+		"explain": "Directory where `backup.zip` is written. The command refuses to overwrite an existing `backup.zip` there.",
+		"example": "--backup-dir=/mnt/usb/prysm-backup"
+	},
+	"accounts backup::backup-public-keys": {
+		"explain": "Keys to include, as comma-separated hex public keys. Without it you choose interactively."
+	},
+	"accounts backup::backup-password-file": {
+		"explain": "File with the password used to encrypt the exported EIP-2335 keystores in the zip. You need it to import the backup later."
+	},
+	"accounts backup::mainnet": {
+		"explain": "Uses mainnet parameters (the default). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"mainnet"
+		]
+	},
+	"accounts backup::sepolia": {
+		"explain": "Uses Sepolia parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"sepolia"
+		]
+	},
+	"accounts backup::holesky": {
+		"explain": "Uses Holesky parameters (network being retired). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"holesky"
+		]
+	},
+	"accounts backup::hoodi": {
+		"explain": "Uses Hoodi parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"hoodi"
+		]
+	},
+	"accounts backup::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"accounts import::wallet-dir": {
+		"explain": "Wallet to operate on. Defaults to `~/.eth2validators/prysm-wallet-v2` on Linux. A new wallet is created if none exists.",
+		"related": [
+			"wallet-dir"
+		]
+	},
+	"accounts import::keys-dir": {
+		"explain": "A keystore file, or a directory searched up to two levels deep for EIP-2335 keystores (for example `validator_keys/` from the deposit CLI). Files that are not keystores, such as `deposit_data-*.json`, are skipped.",
+		"example": "--keys-dir=$HOME/validator_keys",
+		"guide": "/validators/import-keys/"
+	},
+	"accounts import::wallet-password-file": {
+		"explain": "File containing the wallet password, so the command does not prompt for it. A trailing newline is ignored.",
+		"related": [
+			"wallet-password-file"
+		]
+	},
+	"accounts import::account-password-file": {
+		"explain": "File with the keystore password. The same password is used for every keystore in the import, so import keystores with different passwords in separate runs.",
+		"related": [
+			"wallet-password-file"
+		],
+		"guide": "/validators/import-keys/"
+	},
+	"accounts import::import-private-key-file": {
+		"explain": "Imports one raw BLS private key (hex, with or without `0x`) from a text file instead of keystores. The key is encrypted with the wallet password.",
+		"caution": "A raw private key file is unencrypted. Delete it securely after the import."
+	},
+	"accounts import::mainnet": {
+		"explain": "Uses mainnet parameters (the default). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"mainnet"
+		]
+	},
+	"accounts import::sepolia": {
+		"explain": "Uses Sepolia parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"sepolia"
+		]
+	},
+	"accounts import::holesky": {
+		"explain": "Uses Holesky parameters (network being retired). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"holesky"
+		]
+	},
+	"accounts import::hoodi": {
+		"explain": "Uses Hoodi parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"hoodi"
+		]
+	},
+	"accounts import::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"accounts voluntary-exit::wallet-dir": {
+		"explain": "Wallet that holds the keys to exit. Unlike other commands, you must pass this flag explicitly (or use Web3Signer); the default location is not assumed.",
+		"related": [
+			"wallet-dir"
+		]
+	},
+	"accounts voluntary-exit::wallet-password-file": {
+		"explain": "File containing the wallet password, so the command does not prompt for it. A trailing newline is ignored.",
+		"related": [
+			"wallet-password-file"
+		]
+	},
+	"accounts voluntary-exit::account-password-file": {
+		"explain": "Accepted for compatibility; the exit is signed with keys from the unlocked wallet, so only the wallet password is needed."
+	},
+	"accounts voluntary-exit::public-keys": {
+		"explain": "Validators to exit, as comma-separated hex public keys. Without it (and without `--exit-all`) you pick them interactively.",
+		"example": "--public-keys=0x<PUBKEY>",
+		"guide": "/validators/exit/"
+	},
+	"accounts voluntary-exit::beacon-rpc-provider": {
+		"explain": "gRPC `host:port` of a synced beacon node, used to check sync status, fetch the fork and submit the exit. This command always uses gRPC, so the beacon node must serve it (`--rpc-port`, default 4000).",
+		"related": [
+			"beacon-rpc-provider"
+		]
+	},
+	"accounts voluntary-exit::grpc-max-msg-size": {
+		"explain": "Maximum gRPC response size in bytes. The default is effectively unlimited.",
+		"related": [
+			"grpc-max-msg-size"
+		]
+	},
+	"accounts voluntary-exit::tls-cert": {
+		"explain": "Certificate to verify the beacon node's gRPC TLS certificate, if it serves TLS.",
+		"related": [
+			"tls-cert"
+		]
+	},
+	"accounts voluntary-exit::grpc-headers": {
+		"explain": "Extra `key=value` gRPC metadata, comma-separated, for example an auth header for a proxy.",
+		"related": [
+			"grpc-headers"
+		]
+	},
+	"accounts voluntary-exit::grpc-retries": {
+		"explain": "Retries for a failed gRPC call before giving up.",
+		"related": [
+			"grpc-retries"
+		]
+	},
+	"accounts voluntary-exit::grpc-retry-delay": {
+		"explain": "Base delay between gRPC retries (linear backoff).",
+		"related": [
+			"grpc-retry-delay"
+		]
+	},
+	"accounts voluntary-exit::validators-external-signer-url": {
+		"explain": "Signs the exit with Web3Signer instead of a local wallet. Pass it with `--validators-external-signer-public-keys`.",
+		"related": [
+			"validators-external-signer-url"
+		],
+		"guide": "/validators/exit/"
+	},
+	"accounts voluntary-exit::validators-external-signer-public-keys": {
+		"explain": "Web3Signer keys available for the exit: a comma-separated list or a public keys URL. You then choose which of them to exit.",
+		"related": [
+			"validators-external-signer-public-keys"
+		],
+		"guide": "/validators/exit/"
+	},
+	"accounts voluntary-exit::exit-all": {
+		"explain": "Selects every key in the wallet or remote signer. You still have to confirm unless `--force-exit` is also set.",
+		"caution": "Exits are irreversible. Check the key list the command prints before confirming."
+	},
+	"accounts voluntary-exit::force-exit": {
+		"explain": "Skips the final `continue with the voluntary exit? (y/n)` confirmation. Meant for scripted exits where the key list is already fixed.",
+		"caution": "Combined with `--exit-all`, this exits every key without any prompt."
+	},
+	"accounts voluntary-exit::exit-json-output-dir": {
+		"explain": "Writes each signed exit to a JSON file in this directory instead of broadcasting it, so you can submit it later (for example with `curl` to `/eth/v1/beacon/pool/voluntary_exits`). Still needs a synced beacon node to sign.",
+		"guide": "/validators/exit/",
+		"caution": "A signed exit stays valid. Anyone who gets the file can broadcast it."
+	},
+	"accounts voluntary-exit::mainnet": {
+		"explain": "Uses mainnet parameters (the default). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"mainnet"
+		]
+	},
+	"accounts voluntary-exit::sepolia": {
+		"explain": "Uses Sepolia parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"sepolia"
+		]
+	},
+	"accounts voluntary-exit::holesky": {
+		"explain": "Uses Holesky parameters (network being retired). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"holesky"
+		]
+	},
+	"accounts voluntary-exit::hoodi": {
+		"explain": "Uses Hoodi parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"hoodi"
+		]
+	},
+	"accounts voluntary-exit::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"slashing-protection-history export::datadir": {
+		"explain": "Validator data directory whose database is read. Without the flag you are prompted. Stop the validator first: the database is locked while it runs.",
+		"related": [
+			"datadir"
+		]
+	},
+	"slashing-protection-history export::enable-minimal-slashing-protection": {
+		"explain": "Set it if the validator uses minimal slashing protection, so the command reads `validator-client-data/` instead of `validator.db`.",
+		"related": [
+			"enable-minimal-slashing-protection"
+		]
+	},
+	"slashing-protection-history export::mainnet": {
+		"explain": "Uses mainnet parameters (the default). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"mainnet"
+		]
+	},
+	"slashing-protection-history export::sepolia": {
+		"explain": "Uses Sepolia parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"sepolia"
+		]
+	},
+	"slashing-protection-history export::holesky": {
+		"explain": "Uses Holesky parameters (network being retired). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"holesky"
+		]
+	},
+	"slashing-protection-history export::hoodi": {
+		"explain": "Uses Hoodi parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"hoodi"
+		]
+	},
+	"slashing-protection-history export::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"slashing-protection-history import::datadir": {
+		"explain": "Validator data directory whose database is written. Without the flag you are prompted. Stop the validator first: the database is locked while it runs.",
+		"related": [
+			"datadir"
+		]
+	},
+	"slashing-protection-history import::enable-minimal-slashing-protection": {
+		"explain": "Set it if the validator uses minimal slashing protection, so the command writes `validator-client-data/` instead of `validator.db`.",
+		"related": [
+			"enable-minimal-slashing-protection"
+		]
+	},
+	"slashing-protection-history import::mainnet": {
+		"explain": "Uses mainnet parameters (the default). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"mainnet"
+		]
+	},
+	"slashing-protection-history import::sepolia": {
+		"explain": "Uses Sepolia parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"sepolia"
+		]
+	},
+	"slashing-protection-history import::holesky": {
+		"explain": "Uses Holesky parameters (network being retired). Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"holesky"
+		]
+	},
+	"slashing-protection-history import::hoodi": {
+		"explain": "Uses Hoodi parameters. Pass the same network flag you run the validator client with; only one network flag can be set.",
+		"related": [
+			"hoodi"
+		]
+	},
+	"slashing-protection-history import::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"slashing-protection-history export::slashing-protection-export-dir": {
+		"explain": "Directory where `slashing_protection.json` (EIP-3076 interchange format) is written. Import that file into any client before starting the same keys there.",
+		"example": "--slashing-protection-export-dir=$HOME/backup",
+		"guide": "/validators/avoid-slashing/"
+	},
+	"slashing-protection-history import::slashing-protection-json-file": {
+		"explain": "EIP-3076 interchange file to import, for example exported from another client when you switch. Import it before the validator signs anything with these keys.",
+		"example": "--slashing-protection-json-file=$HOME/backup/slashing_protection.json",
+		"guide": "/validators/avoid-slashing/"
+	},
+	"db restore::restore-source-file": {
+		"explain": "Backup of the validator database (a `validator.db` copy) to restore. It is copied to `<restore-target-dir>/validator.db`.",
+		"guide": "/operate/backup-and-restore/"
+	},
+	"db restore::restore-target-dir": {
+		"explain": "Validator data directory to restore into. If a `validator.db` already exists there you are asked before it is overwritten. Stop the validator first.",
+		"related": [
+			"datadir"
+		]
+	},
+	"db migrate up::datadir": {
+		"explain": "Validator data directory whose database schema is migrated forward. The validator runs these migrations itself at startup, so you rarely need this command.",
+		"related": [
+			"datadir"
+		]
+	},
+	"db migrate down::datadir": {
+		"explain": "Validator data directory whose database migrations are rolled back, for example before downgrading to a Prysm version that does not understand a newer schema. Stop the validator first.",
+		"related": [
+			"datadir"
+		]
+	},
+	"db convert-complete-to-minimal::source-data-dir": {
+		"explain": "Data directory containing the complete slashing protection database (`validator.db`) to convert.",
+		"related": [
+			"enable-minimal-slashing-protection",
+			"datadir"
+		]
+	},
+	"db convert-complete-to-minimal::target-data-dir": {
+		"explain": "Data directory where the minimal database (`validator-client-data/`) is created. Start the validator with `--enable-minimal-slashing-protection` afterwards, and remove the complete database: the validator refuses to start when both exist.",
+		"related": [
+			"enable-minimal-slashing-protection",
+			"datadir"
+		]
+	},
+	"web generate-auth-token::wallet-dir": {
+		"explain": "Only used when `--keymanager-token-file` is empty. Since that flag has a default, the token is normally written to the `--keymanager-token-file` path, not into this directory.",
+		"related": [
+			"wallet-dir",
+			"keymanager-token-file"
+		]
+	},
+	"web generate-auth-token::http-host": {
+		"explain": "Host used to print the web UI login link. It does not change where the validator listens.",
+		"related": [
+			"http-host"
+		]
+	},
+	"web generate-auth-token::http-port": {
+		"explain": "Port used to print the web UI login link. It does not change where the validator listens.",
+		"related": [
+			"http-port"
+		]
+	},
+	"web generate-auth-token::keymanager-token-file": {
+		"explain": "File to write the new token to. Use the same path the running validator uses: it watches that file and picks up the new token without a restart.",
+		"related": [
+			"keymanager-token-file"
+		],
+		"guide": "/validators/keymanager/"
+	},
+	"web generate-auth-token::accept-terms-of-use": {
+		"explain": "Skips the terms-of-use prompt, for scripts. Not needed once `tosaccepted` exists in `--datadir`.",
+		"related": [
+			"accept-terms-of-use"
+		]
+	},
+	"builder-urls": {
+		"explain": "From the Gloas fork on, comma-separated URLs of the builders to ask for execution payload bids, for all validators. Append the auth data agreed with a builder as a hex fragment (`https://builder.example#0x0123`); without it, Prysm derives it from the URL. Before Gloas, a non-empty list also turns on builder registration, like `--enable-builder`. Per-key settings from a proposer settings file, a proposer settings URL or the Keymanager API take precedence. The setting applies to this run only: restarting without the flag doesn't keep it.",
+		"example": "--builder-urls=https://builder.example",
+		"related": [
+			"builder-min-bid",
+			"builder-boost-factor",
+			"builder-max-execution-payment",
+			"proposer-settings-file"
+		]
+	},
+	"builder-min-bid": {
+		"explain": "From the Gloas fork on, the minimum total payment, in Gwei, a builder bid must offer to be considered, for all validators: the bid value plus its execution payment, counted up to `--builder-max-execution-payment`. Per-key settings take precedence.",
+		"example": "--builder-min-bid=1000000",
+		"related": [
+			"builder-urls",
+			"builder-boost-factor",
+			"builder-max-execution-payment",
+			"proposer-settings-file"
+		]
+	},
+	"builder-boost-factor": {
+		"explain": "From the Gloas fork on, the percentage applied to builder bid values when comparing them with the locally built payload, for all validators. `100` (default) compares them as they are, a lower value favors the local payload, and `0` always uses it. Per-key settings take precedence.",
+		"example": "--builder-boost-factor=90",
+		"related": [
+			"builder-urls",
+			"builder-min-bid",
+			"builder-max-execution-payment",
+			"proposer-settings-file"
+		]
+	},
+	"builder-max-execution-payment": {
+		"explain": "From the Gloas fork on, the maximum execution layer payment, in Gwei, counted toward a builder bid, for all validators. `0` (default) counts only the bid value backed by the builder's collateral; anything above rests on the builder's promise to pay. A builder with no maximum set gets a startup warning that its bids may lose to the local payload. Per-key settings take precedence.",
+		"example": "--builder-max-execution-payment=1000000",
+		"related": [
+			"builder-urls",
+			"builder-min-bid",
+			"builder-boost-factor",
+			"proposer-settings-file"
+		]
+	},
+	"disable-duty-aware-shutdown": {
+		"explain": "By default, when you stop the validator client (SIGINT or SIGTERM), it first waits until the current slot's attestations, sync committee messages and block proposals are done, and, if too little of the slot is left to restart in time, also the next slot's. It waits at most 8 seconds, and a second stop signal stops it at once. This flag stops it immediately instead.",
+		"guide": "/install/update/"
+	}
+}
