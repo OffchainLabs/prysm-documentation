@@ -5,7 +5,7 @@ description: "Build the beacon-chain, validator and prysmctl binaries with Bazel
 
 import { Steps } from '@site/src/components/ui';
 
-Build Prysm's binaries from your working tree. Bazel rebuilds only what changed, so after the first build a small edit recompiles in seconds.
+Build Prysm's binaries from your working tree. Bazel rebuilds only what changed, so after the first build, a small edit recompiles in seconds.
 
 ## Before you begin
 
@@ -107,7 +107,7 @@ bazel build \
 The preset changes the size of consensus types at compile time. A `--config=minimal` binary can only follow minimal-preset chains, and a default build can only follow mainnet-preset chains, which includes mainnet and every public testnet.
 :::
 
-For a build that fails in a way you don't understand, add `--config=debug`. For builds it turns on `--verbose_failures`, `--sandbox_debug`, toolchain resolution debugging and printed commands.
+For a build that fails in a way you don't understand, add `--config=debug`. For builds, it turns on `--verbose_failures`, `--sandbox_debug`, toolchain resolution debugging, and printed commands.
 
 ## Cross-compile
 
@@ -120,4 +120,4 @@ bazel build \
   //cmd/beacon-chain
 ```
 
-All of them except `linux_amd64` use Prysm's cross toolchain (`--config=cross`), which needs clang and the cross compilers installed on the host; `tools/cross-toolchain/` shows what's required. Adding `_docker` to the config name (for example `--config=linux_arm64_docker`) runs every action in a Docker sandbox instead. That works only from a Linux x86-64 host and is very slow.
+All of them except `linux_amd64` use Prysm's cross toolchain (`--config=cross`), which needs clang and the cross compilers installed on the host; `tools/cross-toolchain/` shows what's required. Adding `_docker` to the config name (for example, `--config=linux_arm64_docker`) runs every action in a Docker sandbox instead. That works only from a Linux x86-64 host and is very slow.
