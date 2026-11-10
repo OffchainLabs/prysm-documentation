@@ -1,0 +1,45 @@
+---
+title: "Avoid slashing"
+description: "The rules that keep your validators from being slashed, the common ways people get slashed, and how to move keys safely."
+---
+
+import { Steps } from '@site/src/components/ui';
+
+Honest operators get slashed for one reason: **the same validator key signed from multiple places**. A slashed validator is forced out of the network, loses part of its balance, and waits about 36 days before it can withdraw the rest. Prysm stops one validator client from contradicting itself, but it can't see what another copy of your key is doing. This page is about never creating that second copy.
+
+:::danger[The two rules]
+1. **Never run the same keys in multiple places**, not even briefly, not as a "backup" or "failover". There is no safe overlap.
+2. **When you move keys, stop the old setup for good and wait** at least two epochs (about 13 minutes) before starting the new one.
+:::
+
+:::tip[Better down than slashed]
+(Nakamortard precept)
+:::
+
+Being offline is **not** slashable. It costs small penalties, but a few hours of downtime during a migration is far cheaper than a slashing.
+
+## How people get slashed
+
+- Starting the new machine while the old one still runs, or the old one restarting after a reboot because its service was still enabled.
+- Two validator clients with the same keys for "redundancy", or a watchdog that starts a standby when it thinks the primary is down.
+- Restoring a VM snapshot or backup while the original still runs.
+- Importing the same keys into Prysm and another client during a client switch.
+- Using keys from a staking service that still runs them.
+
+## Move keys safely
+
+When you move keys to a new machine, the safety-critical steps are:
+
+<Steps>
+
+1. **Stop the old validator client and disable its service** so it can't come back.
+
+2. **Remove the keys** from the old machine, or make them unreadable.
+
+3. **[Move the slashing protection history](/validators/slashing-protection-history/)**: export it from the old machine and import it on the new one.
+
+4. **Wait** at least two epochs after the old client stopped. On a block explorer, check that your validators are missing attestations.
+
+5. **Start the new validator client** with [doppelganger protection](/validators/doppelganger-protection/) on.
+
+</Steps>

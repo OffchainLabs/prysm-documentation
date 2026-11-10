@@ -1,0 +1,94 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"reflect"
+	"strings"
+
+	"github.com/urfave/cli/v2"
+)
+
+type docFlag struct {
+	Name       string   `json:"name"`
+	Aliases    []string `json:"aliases,omitempty"`
+	Usage      string   `json:"usage"`
+	Default    string   `json:"default,omitempty"`
+	Type       string   `json:"type"`
+	TakesValue bool     `json:"takesValue"`
+	Hidden     bool     `json:"hidden,omitempty"`
+}
+
+type docGroup struct {
+	Name  string    `json:"name"`
+	Flags []docFlag `json:"flags"`
+}
+
+type docCmd struct {
+	Name        string    `json:"name"`
+	Aliases     []string  `json:"aliases,omitempty"`
+	Usage       string    `json:"usage"`
+	Description string    `json:"description,omitempty"`
+	Flags       []docFlag `json:"flags,omitempty"`
+	Subcommands []docCmd  `json:"subcommands,omitempty"`
+}
+
+func toDocFlag(f cli.Flag) docFlag {
+	names := f.Names()
+	d := docFlag{Name: names[0], Aliases: names[1:]}
+	t := reflect.TypeOf(f).String()
+	t = strings.TrimPrefix(strings.TrimPrefix(t, "*cli."), "*")
+	d.Type = strings.TrimSuffix(t, "Flag")
+	if df, ok := f.(cli.DocGenerationFlag); ok {
+		d.Usage = df.GetUsage()
+		d.TakesValue = df.TakesValue()
+		d.Default = df.GetDefaultText()
+		if d.Default == "" {
+			d.Default = df.GetValue()
+		}
+	}
+	if vf, ok := f.(cli.VisibleFlag); ok {
+		d.Hidden = !vf.IsVisible()
+	}
+	return d
+}
+
+func toDocCmd(c *cli.Command) docCmd {
+	d := docCmd{Name: c.Name, Aliases: c.Aliases, Usage: c.Usage, Description: c.Description}
+	for _, f := range c.Flags {
+		d.Flags = append(d.Flags, toDocFlag(f))
+	}
+	for _, s := range c.Subcommands {
+		if s.Hidden {
+			continue
+		}
+		d.Subcommands = append(d.Subcommands, toDocCmd(s))
+	}
+	return d
+}
+
+func dumpDocs(groups []flagGroup, cmds []*cli.Command) {
+	out := struct {
+		Groups   []docGroup `json:"groups"`
+		Commands []docCmd   `json:"commands"`
+	}{}
+	for _, g := range groups {
+		dg := docGroup{Name: g.Name}
+		for _, f := range g.Flags {
+			dg.Flags = append(dg.Flags, toDocFlag(f))
+		}
+		out.Groups = append(out.Groups, dg)
+	}
+	for _, c := range cmds {
+		out.Commands = append(out.Commands, toDocCmd(c))
+	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(out); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	os.Exit(0)
+}

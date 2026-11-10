@@ -1,0 +1,275 @@
+{
+	"checkpoint-sync download::beacon-node-host": {
+		"explain": "Beacon node REST API to download the finalized state and block from, as a URL or `host:port` (then `http://` is assumed). Use a node you trust: the files become the starting point of your own node.",
+		"example": "prysmctl checkpoint-sync download --beacon-node-host=https://<TRUSTED_BEACON_NODE>"
+	},
+	"checkpoint-sync download::http-timeout": {
+		"explain": "Timeout for each HTTP request, as a Go duration. Mainnet states are several hundred megabytes, so raise it on slow links.",
+		"example": "--http-timeout=10m"
+	},
+	"db query::bucket": {
+		"explain": "Name of the BoltDB bucket to scan, for example `blocks` or `state`. List the names with `prysmctl db buckets`."
+	},
+	"db query::path": {
+		"explain": "Path to the BoltDB file itself, typically `<datadir>/beaconchaindata/beaconchain.db`, despite the flag description mentioning a directory. Stop the beacon node first: the command gives up after one second if the database is locked.",
+		"example": "--path=/var/lib/ethereum/beacon/beaconchaindata/beaconchain.db",
+		"caution": "The file is opened read-write, and a missing file is created empty. Work on a copy if you are unsure."
+	},
+	"db query::prefix": {
+		"explain": "Hex key prefix (with `0x`) to match in the bucket. Without it the command does nothing.",
+		"example": "--prefix=0xa1"
+	},
+	"db query::print-keys": {
+		"explain": "Prints the matching keys. Printing values is not implemented, so a prefix scan fails unless this flag is set."
+	},
+	"db buckets::path": {
+		"explain": "Accepted but not read: the command prints the bucket names compiled into this `prysmctl` version without opening any database."
+	},
+	"db slasher-span-display::db-path-directory": {
+		"explain": "Directory that contains `slasher.db` (the slasher database of a beacon node running with `--slasher`). Required. Stop the beacon node first."
+	},
+	"db slasher-span-display::validator-index": {
+		"explain": "Validator whose min or max spans are shown. Required."
+	},
+	"db slasher-span-display::epoch": {
+		"explain": "Source epoch to show. The command displays the chunk containing this epoch. Required."
+	},
+	"db slasher-span-display::chunk-kind": {
+		"explain": "`minspan` or `maxspan`: which of the two surround-vote span arrays to read."
+	},
+	"db slasher-span-display::chunk-size": {
+		"explain": "Epochs per chunk. Must match the slasher parameters the database was written with; leave it unset to use the defaults."
+	},
+	"db slasher-span-display::validator-chunk-size": {
+		"explain": "Validators per chunk. Must match the slasher parameters the database was written with; leave it unset to use the defaults."
+	},
+	"db slasher-span-display::history-length": {
+		"explain": "Epochs of history the slasher keeps. Must match the slasher parameters the database was written with; leave it unset to use the defaults."
+	},
+	"db slasher-span-display::display-all-validators-in-chunk": {
+		"explain": "Shows a row for every validator stored in the same chunk, not only `--validator-index`."
+	},
+	"db slasher-span-display::display-all-epochs-in-chunk": {
+		"explain": "Shows every epoch of the chunk as columns, not only `--epoch`."
+	},
+	"p2p send beacon-blocks-by-range::chain-config-file": {
+		"explain": "Chain config YAML for a custom network. Loaded after the network selection, so it overrides it."
+	},
+	"p2p send beacon-blocks-by-range::peer-multiaddrs": {
+		"explain": "Peers to send the blocks-by-range request to, as comma-separated libp2p multiaddrs including the peer ID. Without it, the peers are read from the Prysm beacon node at `--prysm-api-endpoints`.",
+		"example": "--peer-multiaddrs=/ip4/127.0.0.1/tcp/13000/p2p/<PEER_ID>"
+	},
+	"p2p send beacon-blocks-by-range::client-port-tcp": {
+		"explain": "Local TCP port of the temporary libp2p host. Change it if 13001 is in use."
+	},
+	"p2p send beacon-blocks-by-range::client-port-quic": {
+		"explain": "Local QUIC (UDP) port of the temporary libp2p host."
+	},
+	"p2p send beacon-blocks-by-range::prysm-api-endpoints": {
+		"explain": "gRPC endpoint(s) of Prysm beacon nodes. Always needed: the first one provides genesis and head information for the status handshake, and they supply peers when `--peer-multiaddrs` is not set.",
+		"example": "--prysm-api-endpoints=127.0.0.1:4000"
+	},
+	"p2p send beacon-blocks-by-range::start-slot": {
+		"explain": "First slot requested. `0` means the first slot of the previous epoch, taken from the beacon node head."
+	},
+	"p2p send beacon-blocks-by-range::network": {
+		"explain": "`mainnet`, `sepolia`, `holesky` or `hoodi`: sets fork digests and parameters so the handshake with the peer succeeds.",
+		"example": "--network=hoodi"
+	},
+	"p2p send beacon-blocks-by-range::count": {
+		"explain": "Number of slots to request, starting at `--start-slot`."
+	},
+	"p2p send beacon-blocks-by-range::step": {
+		"explain": "Slot step of the request. Recent specs deprecate `step` and expect `1`; other values are only useful for testing how peers respond."
+	},
+	"p2p send blobs-by-range::chain-config-file": {
+		"explain": "Chain config YAML for a custom network. Loaded after the network selection, so it overrides it."
+	},
+	"p2p send blobs-by-range::peer-multiaddrs": {
+		"explain": "Peers to send the blob-sidecars-by-range request to, as comma-separated libp2p multiaddrs including the peer ID. Without it, the peers are read from the Prysm beacon node at `--prysm-api-endpoints`.",
+		"example": "--peer-multiaddrs=/ip4/127.0.0.1/tcp/13000/p2p/<PEER_ID>"
+	},
+	"p2p send blobs-by-range::client-port-tcp": {
+		"explain": "Local TCP port of the temporary libp2p host. Change it if 13001 is in use."
+	},
+	"p2p send blobs-by-range::client-port-quic": {
+		"explain": "Local QUIC (UDP) port of the temporary libp2p host."
+	},
+	"p2p send blobs-by-range::prysm-api-endpoints": {
+		"explain": "gRPC endpoint(s) of Prysm beacon nodes. Always needed: the first one provides genesis and head information for the status handshake, and they supply peers when `--peer-multiaddrs` is not set.",
+		"example": "--prysm-api-endpoints=127.0.0.1:4000"
+	},
+	"p2p send blobs-by-range::start-slot": {
+		"explain": "First slot requested. `0` means the first slot of the previous epoch, taken from the beacon node head."
+	},
+	"p2p send blobs-by-range::count": {
+		"explain": "Number of slots whose blob sidecars are requested.",
+		"caution": "This command has no `--network` flag and assumes mainnet unless you pass `--chain-config-file`. Since Fulu (PeerDAS), peers serve data columns instead of blob sidecars for new slots."
+	},
+	"testnet generate-genesis::chain-config-file": {
+		"explain": "Chain config YAML (consensus-specs `config.yaml` format) of the new network. Required in practice: the command stops with `No chain config file was provided` without it."
+	},
+	"testnet generate-genesis::deposit-json-file": {
+		"explain": "`deposit_data-*.json` from the deposit CLI. Its validators are placed in the genesis state instead of deterministically generated ones."
+	},
+	"testnet generate-genesis::num-validators": {
+		"explain": "Number of validators generated from the well-known interop keys (insecure, test only). The flag is required even with `--deposit-json-file`.",
+		"example": "--num-validators=64"
+	},
+	"testnet generate-genesis::genesis-time": {
+		"explain": "Genesis Unix timestamp in seconds. If unset, the timestamp of `--geth-genesis-json-in` is used, and failing that the current time."
+	},
+	"testnet generate-genesis::genesis-time-delay": {
+		"explain": "Seconds added to the genesis time, which gives you time to start the nodes before the chain begins.",
+		"example": "--genesis-time-delay=120"
+	},
+	"testnet generate-genesis::override-eth1data": {
+		"explain": "Sets the state's `eth1_data` from block 0 of the execution client at `--execution-endpoint` (with an empty deposit tree)."
+	},
+	"testnet generate-genesis::geth-genesis-json-in": {
+		"explain": "Execution genesis (`genesis.json`) to base the network on. Its fork times (Shanghai, Cancun, Prague, Osaka) are rewritten to match the chain config and genesis time. Post-merge forks require `baseFeePerGas` in the file."
+	},
+	"testnet generate-genesis::geth-genesis-json-out": {
+		"explain": "Where to write the resulting execution `genesis.json`. Initialize your execution client with this file so both layers agree on genesis."
+	},
+	"testnet generate-genesis::execution-endpoint": {
+		"explain": "Execution client JSON-RPC URL, used only with `--override-eth1data`."
+	},
+	"testnet generate-genesis::fork": {
+		"explain": "Fork whose `BeaconState` layout the genesis uses, for example `electra` or `fulu`. It should match the fork active at epoch 0 in your chain config.",
+		"example": "--fork=electra"
+	},
+	"testnet generate-genesis::output-ssz": {
+		"explain": "Output path for the SSZ-encoded state, the format beacon nodes load with `--genesis-state`. At least one output flag is required.",
+		"example": "--output-ssz=genesis.ssz"
+	},
+	"testnet generate-genesis::output-yaml": {
+		"explain": "Output path for a YAML dump of the state, for inspection."
+	},
+	"testnet generate-genesis::output-json": {
+		"explain": "Output path for a JSON dump of the state, for inspection."
+	},
+	"weak-subjectivity checkpoint::beacon-node-host": {
+		"explain": "Trusted beacon node REST API. Prysm nodes answer from their weak subjectivity endpoint; for other clients the checkpoint is computed from the head state. Prints a `--weak-subjectivity-checkpoint=<root>:<epoch>` value for the beacon node.",
+		"example": "prysmctl weak-subjectivity checkpoint --beacon-node-host=http://127.0.0.1:3500"
+	},
+	"weak-subjectivity checkpoint::http-timeout": {
+		"explain": "Timeout for each HTTP request. Raise it if the fallback path has to download a full state from a slow node."
+	},
+	"validator withdraw::beacon-node-host": {
+		"explain": "REST API of a synced beacon node that receives the signed messages, as `host:port` or a URL.",
+		"example": "--beacon-node-host=http://127.0.0.1:3500",
+		"guide": "/validators/add-withdrawal-address/"
+	},
+	"validator withdraw::path": {
+		"explain": "A JSON file, or a directory searched for `.json` files, containing signed BLS-to-execution changes (the `bls_to_execution_change-*.json` output of the deposit CLI). Files that are not such lists are skipped with a warning.",
+		"example": "--path=./bls_to_execution_changes",
+		"guide": "/validators/add-withdrawal-address/"
+	},
+	"validator withdraw::confirm": {
+		"explain": "Confirms that you checked the withdrawal addresses. Required together with `--accept-terms-of-use`; without both, the command prints a warning and stops.",
+		"caution": "Once included on chain, the withdrawal address cannot be changed. Check every address before you run this."
+	},
+	"validator withdraw::verify-only": {
+		"explain": "Does not submit anything: only checks whether the messages in `--path` are in the beacon node's operation pool. Messages already included in a block are no longer in the pool, so check a block explorer too.",
+		"guide": "/validators/add-withdrawal-address/"
+	},
+	"validator withdraw::config-file": {
+		"explain": "YAML file with values for this command's flags (keys are flag names). Flags on the command line win."
+	},
+	"validator withdraw::accept-terms-of-use": {
+		"explain": "Accepts the Prysm terms of use. This command requires it on every run, together with `--confirm`."
+	},
+	"validator proposer-settings::config-file": {
+		"explain": "YAML file with values for this command's flags. Flags on the command line win."
+	},
+	"validator proposer-settings::default-fee-recipient": {
+		"explain": "Fee recipient written to `default_config` of the generated file. Only used with `--output-proposer-settings-path`; if omitted there, you are prompted for it.",
+		"guide": "/validators/fee-recipient/"
+	},
+	"validator proposer-settings::token": {
+		"explain": "The validator's Keymanager API token (contents of its `--keymanager-token-file`). Required.",
+		"guide": "/validators/fee-recipient/"
+	},
+	"validator proposer-settings::validator-host": {
+		"explain": "URL of the running validator's HTTP API (started with `--rpc`). Required: you must pass it even for the default `http://127.0.0.1:7500`.",
+		"example": "--validator-host=http://127.0.0.1:7500",
+		"guide": "/validators/fee-recipient/"
+	},
+	"validator proposer-settings::output-proposer-settings-path": {
+		"explain": "Writes the validator's current fee recipients as a proposer settings JSON file you can pass to `--proposer-settings-file`. Without it, the command only prints them. Gas limits and builder options are not exported.",
+		"example": "--output-proposer-settings-path=./proposer-settings.json",
+		"guide": "/validators/fee-recipient/"
+	},
+	"validator exit::wallet-dir": {
+		"explain": "Prysm wallet holding the keys to exit. You must pass it explicitly (or use the Web3Signer flags); the default location is not assumed.",
+		"guide": "/validators/exit/"
+	},
+	"validator exit::wallet-password-file": {
+		"explain": "File with the wallet password, to skip the prompt. A trailing newline is ignored."
+	},
+	"validator exit::account-password-file": {
+		"explain": "Accepted for compatibility; exits are signed with keys from the unlocked wallet, so only the wallet password is needed."
+	},
+	"validator exit::public-keys": {
+		"explain": "Validators to exit, as comma-separated hex public keys. Without it (and without `--exit-all`) you pick them interactively.",
+		"example": "--public-keys=0x<PUBKEY>",
+		"guide": "/validators/exit/"
+	},
+	"validator exit::beacon-rpc-provider": {
+		"explain": "gRPC `host:port` of a synced beacon node (its `--rpc-port`, default 4000). The command refuses to run while that node is syncing.",
+		"example": "--beacon-rpc-provider=127.0.0.1:4000",
+		"guide": "/validators/exit/"
+	},
+	"validator exit::validators-external-signer-url": {
+		"explain": "Signs the exits with Web3Signer instead of a local wallet. Pass it with `--validators-external-signer-public-keys`.",
+		"guide": "/validators/exit/"
+	},
+	"validator exit::validators-external-signer-public-keys": {
+		"explain": "Web3Signer keys available for the exit: a comma-separated list or a public keys URL.",
+		"guide": "/validators/exit/"
+	},
+	"validator exit::grpc-max-msg-size": {
+		"explain": "Maximum gRPC response size in bytes. The default is effectively unlimited."
+	},
+	"validator exit::tls-cert": {
+		"explain": "Certificate to verify the beacon node's gRPC TLS certificate, if it serves TLS."
+	},
+	"validator exit::grpc-headers": {
+		"explain": "Extra `key=value` gRPC metadata, comma-separated, for example an auth header for a proxy."
+	},
+	"validator exit::grpc-retries": {
+		"explain": "Retries for a failed gRPC call before giving up."
+	},
+	"validator exit::grpc-retry-delay": {
+		"explain": "Base delay between gRPC retries (linear backoff)."
+	},
+	"validator exit::exit-all": {
+		"explain": "Selects every key in the wallet or remote signer. You still have to confirm unless `--force-exit` is set.",
+		"caution": "Exits are irreversible. Check the printed key list before confirming."
+	},
+	"validator exit::force-exit": {
+		"explain": "Skips the final `continue with the voluntary exit? (y/n)` confirmation, for scripts.",
+		"caution": "Combined with `--exit-all`, this exits every key without any prompt."
+	},
+	"validator exit::exit-json-output-dir": {
+		"explain": "Writes each signed exit to a JSON file in this directory instead of broadcasting it. Still needs a synced beacon node to sign.",
+		"guide": "/validators/exit/",
+		"caution": "A signed exit stays valid. Anyone who gets the file can broadcast it."
+	},
+	"validator exit::mainnet": {
+		"explain": "Signs the exit for mainnet (the default). Use the network your validators run on; only one network flag can be set."
+	},
+	"validator exit::sepolia": {
+		"explain": "Signs the exit for Sepolia. Use the network your validators run on; only one network flag can be set."
+	},
+	"validator exit::holesky": {
+		"explain": "Signs the exit for Holesky (being retired). Use the network your validators run on; only one network flag can be set."
+	},
+	"validator exit::hoodi": {
+		"explain": "Signs the exit for Hoodi. Use the network your validators run on; only one network flag can be set."
+	},
+	"validator exit::accept-terms-of-use": {
+		"explain": "Accepts the terms of use without the interactive prompt. Pass it in scripts and other non-interactive runs."
+	}
+}

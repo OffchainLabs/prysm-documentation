@@ -1,0 +1,129 @@
+---
+title: "Run an archive node"
+description: Set up a Prysm beacon node that keeps every block and every historical state, for explorers, indexers and research.
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+<SetupPicker groups="os net" />
+
+An archive node quickly answers questions about any past slot for explorers, indexers, and research. You don’t need one to stake. It needs far more disk space than a staking node; see [Disk space](/setup/storage/) for what a regular node uses.
+
+The node starts from a [checkpoint](/setup/checkpoint-sync/), so it follows the chain within minutes. In the background, it then downloads every block back to genesis and rebuilds every historical state.
+
+## Before you begin
+
+- A connected execution client, with the folder layout from [Connect your execution client](/setup/connect-execution-client/).
+- * A beacon node data directory that’s **empty**. Archive mode needs a database; it can’t convert an existing one.
+- A checkpoint sync provider: your own synced beacon node, or a public endpoint from the community [checkpoint sync endpoints list](https://eth-clients.github.io/checkpoint-sync-endpoints/).
+
+## Set it up
+
+<Steps>
+
+1. **Start the beacon node.** From the `consensus` folder, with an **empty** data directory:
+
+	<When os="unix" conn="jwt">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/beacon \
+	  --execution-endpoint=http://localhost:8551 \
+	  --jwt-secret=$HOME/ethereum/data/jwt.hex \
+	  --checkpoint-sync-url={checkpoint} \
+	  --enable-archive
+	```
+
+	</When>
+	<When os="win" conn="jwt">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\beacon `
+	  --execution-endpoint=http://localhost:8551 `
+	  --jwt-secret=$HOME\ethereum\data\jwt.hex `
+	  --checkpoint-sync-url={checkpoint} `
+	  --enable-archive
+	```
+
+	</When>
+	<When os="unix" conn="ipc">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/beacon \
+	  --execution-endpoint=$HOME/ethereum/data/{net}/execution/geth.ipc \
+	  --checkpoint-sync-url={checkpoint} \
+	  --enable-archive
+	```
+
+	</When>
+	<When os="win" conn="ipc">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\beacon `
+	  --execution-endpoint=\\.\pipe\geth.ipc `
+	  --checkpoint-sync-url={checkpoint} `
+	  --enable-archive
+	```
+
+	</When>
+
+	<Flag name="enable-archive" /> is what makes it an archive node. It also turns on <Flag name="enable-state-diff" />, which stores historical states compactly, and <Flag name="enable-backfill" />, which downloads the blocks older than the checkpoint. Don't add <Flag name="beacon-db-pruning" />: it deletes the history the archive is built from, and Prysm refuses to start with both.
+
+	{/* Verified against prysm v7.3.1 beacon-chain/node/archive.go and config/features/config.go, 2026-11. */}
+
+2. **Watch the logs.** The node downloads the checkpoint, catches up with the chain, then downloads older blocks back to genesis:
+
+	```text
+	INFO backfill: Backfill in progress batchesRemaining=… completion=…% lowestBackfilledSlot=… targetSlot=…
+	```
+
+	Once it has every block, it rebuilds the historical states, oldest first:
+
+	```text
+	INFO archive: Archive state regeneration in progress completion=…% originSlot=0 regeneratedThroughSlot=… targetSlot=…
+	```
+
+	1. On mainnet, both phases take days. The node follows the chain the whole time, and a restart resumes where it left off. When it’s done, Prysm logs:
+
+	```text
+	INFO archive: Archive state regeneration finished; all historical states are available regeneratedThroughSlot=…
+	```
+
+</Steps>
+
+## Check that it works
+
+Ask for the state root of an old slot, such as slot 1000:
+
+<When os="unix">
+
+```bash
+curl -s http://localhost:3500/eth/v1/beacon/states/1000/root
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://localhost:3500/eth/v1/beacon/states/1000/root
+```
+
+</When>
+
+Once regeneration finishes, it returns a root for any slot back to genesis. Compare it with the same query on another archive node or a block explorer.
+
+## Good to know
+
+- **Don't need history back to genesis?** Start the archive at a later state with <Flag name="archive-origin-state" value="<PATH>" />: an SSZ-encoded beacon state at the first slot of an epoch, from a source you trust. The node keeps nothing older than it. You can't change it later without deleting the database.
+- **How fine-grained the history is** depends on <Flag name="state-diff-exponents" />, which is fixed when the database is created. The default stores a state at every epoch boundary; larger exponents use less disk and make queries between those points slower.
+
+For the remaining storage flags, see the [beacon-chain reference](/reference/cli/beacon-chain/).

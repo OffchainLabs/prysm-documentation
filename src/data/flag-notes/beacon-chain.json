@@ -1,0 +1,1425 @@
+{
+	"accept-terms-of-use": {
+		"explain": "Without this flag the node prompts you to type `accept` on first start, which fails in systemd, Docker and other non-interactive environments. Once accepted (by flag or prompt), Prysm writes an empty `tosaccepted` file into `--datadir` and never asks again for that directory.",
+		"example": "--accept-terms-of-use",
+		"related": [
+			"datadir"
+		]
+	},
+	"config-file": {
+		"explain": "Loads flag values from a YAML file whose keys are flag names without dashes (aliases also work). A flag passed on the command line always wins over the same key in the file. List flags such as `bootstrap-node` or `peer` must be written as YAML lists, and durations as strings like `30s`.",
+		"example": "--config-file=/var/lib/ethereum/beacon/config.yaml",
+		"caution": "A comma-separated string for a list flag (for example `peer: a,b`) is rejected with a type error; use a YAML list instead."
+	},
+	"api-timeout": {
+		"explain": "Wraps every Beacon API (HTTP) request in a timeout, except the `/eth/v1/events` stream. By default there is no timeout. The value is a Go duration, so include a unit (`30s`, `2m`); `0` disables the timeout.",
+		"example": "--api-timeout=30s",
+		"related": [
+			"http-port"
+		],
+		"guide": "/reference/apis/"
+	},
+	"chain-config-file": {
+		"explain": "Runs the node on a custom network defined by a consensus spec `config.yaml` (the format published with every devnet and testnet). Keys you don't set fall back to mainnet values, or to minimal-preset values if the file declares `PRESET_BASE: minimal`. Built-in bootnodes are cleared and the deposit contract deployment block is reset to 0, so pass `--bootstrap-node` and usually `--genesis-state` too.",
+		"example": "--chain-config-file=/data/devnet/config.yaml",
+		"related": [
+			"genesis-state",
+			"bootstrap-node",
+			"chain-id"
+		],
+		"guide": "/reference/networks/",
+		"caution": "It can't be combined with a network flag (`--mainnet`, `--hoodi`, `--sepolia`); the node exits with `chain-config-file cannot be passed concurrently with network flag`."
+	},
+	"e2e-config": {
+		"explain": "Switches to the configuration used by Prysm's own end-to-end test suite (short epochs, test fork schedule). It has no use on a public network.",
+		"related": [
+			"minimal-config"
+		],
+		"guide": "/reference/networks/"
+	},
+	"grpc-max-msg-size": {
+		"explain": "Maximum size in bytes of a single message the beacon node's gRPC server accepts from a client (receive side only). The default is 2147483647 bytes (about 2 GiB), which is fine when the validator client is local. Lower it, for example to 50 MB, if you expose gRPC to untrusted clients.",
+		"example": "--grpc-max-msg-size=52428800",
+		"related": [
+			"rpc-host",
+			"rpc-port"
+		]
+	},
+	"minimal-config": {
+		"explain": "Activates the spec's `minimal` preset (8-slot epochs, small committees) for local devnets and tests. Preset-dependent data structure sizes are fixed when the binary is compiled (the `minimal` Go build tag), so this flag is meant for binaries built for the minimal preset, not for release binaries on a public network.",
+		"related": [
+			"e2e-config",
+			"chain-config-file"
+		],
+		"guide": "/reference/networks/"
+	},
+	"rpc-max-page-size": {
+		"explain": "Caps the `page_size` accepted by Prysm's paginated gRPC list methods (validators, blocks, attestations, assignments); larger requests fail with `Requested page size ... can not be greater than max size`. When unset the effective limit is 250, not the `0` shown. `--historical-slasher-node` raises it to 4096 automatically.",
+		"example": "--rpc-max-page-size=1000",
+		"related": [
+			"historical-slasher-node"
+		],
+		"guide": "/reference/apis/"
+	},
+	"tls-cert": {
+		"explain": "PEM certificate for the gRPC server (port `--rpc-port`). TLS is enabled only when both `--tls-cert` and `--tls-key` are set; otherwise the node logs `You are using an insecure gRPC server` and serves plaintext. It doesn't affect the HTTP Beacon API, which has no built-in TLS. Give the same certificate to the validator client's `--tls-cert` so it trusts the server.",
+		"example": "--tls-cert=/var/lib/ethereum/beacon/tls/beacon.crt",
+		"related": [
+			"tls-key",
+			"rpc-host",
+			"rpc-port"
+		]
+	},
+	"chain-id": {
+		"explain": "Overrides the execution chain ID Prysm expects (1 on mainnet, 560048 on Hoodi, 11155111 on Sepolia). On connection the node calls `eth_chainId` and refuses the execution client with `wanted chain ID X, got Y` if they differ; the value is also reported by `/eth/v1/config/deposit_contract`. You only need it for custom networks, and it takes precedence over `DEPOSIT_CHAIN_ID` in `--chain-config-file`.",
+		"example": "--chain-id=560048",
+		"related": [
+			"network-id",
+			"chain-config-file",
+			"execution-endpoint"
+		]
+	},
+	"disable-debug-rpc-endpoints": {
+		"explain": "Removes the `/eth/*/debug/*` Beacon API routes (full states, fork choice dump, heads, data column sidecars) and the Prysm debug gRPC service. These endpoints are enabled by default and can return very large responses, so disable them on nodes whose API is reachable by others.",
+		"example": "--disable-debug-rpc-endpoints",
+		"related": [
+			"http-host"
+		],
+		"guide": "/reference/apis/"
+	},
+	"http-cors-domain": {
+		"explain": "Browser origins allowed to call the Beacon API, split on commas. `*` allows any origin, and a single `*` inside an entry acts as a wildcard (`https://*.example.com`). Needed only for browser-based tools; `curl` and the validator client ignore CORS. Alias: `--grpc-gateway-corsdomain`.",
+		"example": "--http-cors-domain=http://localhost:3000,https://dashboard.example.com",
+		"related": [
+			"http-host",
+			"http-port"
+		],
+		"guide": "/reference/apis/",
+		"caution": "Entries are not trimmed, so don't put spaces after the commas: ` https://a.example` never matches. The built-in default is joined with `, `, so only its first entry (`http://localhost:3000`) is effective."
+	},
+	"http-host": {
+		"explain": "Interface the Beacon API HTTP server binds to. The default `127.0.0.1` accepts only local connections; use `0.0.0.0` to accept connections from other machines or containers, and protect the port with a firewall. Alias: `--grpc-gateway-host`.",
+		"example": "--http-host=0.0.0.0",
+		"related": [
+			"http-port",
+			"http-cors-domain",
+			"disable-debug-rpc-endpoints"
+		],
+		"guide": "/reference/apis/"
+	},
+	"http-port": {
+		"explain": "Port of the Beacon API (the standard REST API used by other validator clients, MEV tooling, dashboards and `curl`). The Prysm validator client uses it when started with `--enable-beacon-rest-api`, pointing `--beacon-rest-api-provider` at it. Alias: `--grpc-gateway-port`.",
+		"example": "--http-port=3500",
+		"related": [
+			"http-host",
+			"rpc-port"
+		],
+		"guide": "/reference/apis/"
+	},
+	"tls-key": {
+		"explain": "PEM private key matching `--tls-cert`. If either file can't be loaded, the node exits at startup with `Could not load TLS keys`.",
+		"example": "--tls-key=/var/lib/ethereum/beacon/tls/beacon.key",
+		"related": [
+			"tls-cert"
+		]
+	},
+	"network-id": {
+		"explain": "Overrides the `DEPOSIT_NETWORK_ID` config value (1 on mainnet, 560048 on Hoodi, 11155111 on Sepolia). Prysm doesn't use it to check the execution client or for anything else at runtime; it only shows up in `/eth/v1/config/spec`. Use `--chain-id` for custom networks; this flag is cosmetic.",
+		"example": "--network-id=560048",
+		"related": [
+			"chain-id",
+			"chain-config-file"
+		]
+	},
+	"rpc-host": {
+		"explain": "Interface the gRPC server binds to. The Prysm validator client connects here by default (its `--beacon-rpc-provider` is `127.0.0.1:4000`). Change it to `0.0.0.0` only when the validator client runs on another machine or container, and consider enabling TLS.",
+		"example": "--rpc-host=0.0.0.0",
+		"related": [
+			"rpc-port",
+			"tls-cert",
+			"tls-key"
+		]
+	},
+	"rpc-port": {
+		"explain": "Port of the Prysm gRPC API, used by the Prysm validator client unless it runs in REST mode. On startup the node logs `Beacon chain gRPC server listening` with the address. Prysm plans to replace gRPC with the REST API, but it stays supported through v8.",
+		"example": "--rpc-port=4000",
+		"related": [
+			"rpc-host",
+			"http-port"
+		]
+	},
+	"batch-verifier-limit": {
+		"explain": "Gossip messages that carry signatures (mainly attestations) are queued and verified in one BLS batch, flushed when the queue reaches this size or every 5 ms, whichever comes first. If a batch fails, each signature is re-verified individually. The default suits nearly all nodes; lower it only when experimenting with verification latency.",
+		"example": "--batch-verifier-limit=1000"
+	},
+	"state-diff-exponents": {
+		"explain": "Used only with `--enable-state-diff`; otherwise it's ignored with a warning. Each exponent `n` defines a level of the historical-state tree that stores a state every 2^n slots: the first level holds full snapshots, the others hold diffs against the level above. Rules: 1 to 15 values, strictly decreasing, at most 30, last at least 5 (one epoch). The default `21,18,16,13,11,9,5` puts a full snapshot roughly every 291 days of slots.",
+		"example": "--state-diff-exponents=21,18,16,13,11,9,5",
+		"related": [
+			"enable-state-diff"
+		],
+		"guide": "/setup/archive-node/",
+		"caution": "The exponents are stored in the database when it's created. Starting later with different values fails with `state-diff exponents changed; database incompatible`, and the only fixes are the original values or a resync."
+	},
+	"postpone-shutdown-for-proposals": {
+		"explain": "On SIGINT or SIGTERM, the node checks whether any validator a connected validator client has subscribed has a proposal in the current or next epoch, and waits until that slot has passed, logging `Postponing shutdown: a connected validator client has an upcoming block proposal`. A second signal stops it immediately. Useful for planned restarts and upgrades.",
+		"example": "--postpone-shutdown-for-proposals",
+		"guide": "/validators/mev-boost/",
+		"caution": "Service managers kill processes that don't stop in time (systemd's default `TimeoutStopSec` is 90 s, Docker's stop timeout is 10 s). Raise those timeouts, or the wait of up to two epochs (about 13 minutes) is cut short."
+	},
+	"disable-graffiti-client-append": {
+		"explain": "By default the beacon node appends short client identifiers after your graffiti when space allows: execution client code and commit plus `PM` and the Prysm commit, for example `Sushi GEabcdPMe4f6`, shortened as your text gets longer. The execution client information comes from `engine_getClientVersionV1`. Set this flag to keep the graffiti exactly as the validator client sends it.",
+		"example": "--disable-graffiti-client-append",
+		"guide": "/validators/mev-boost/"
+	},
+	"bootstrap-node": {
+		"explain": "Sets the discv5 bootnodes used to find the first peers. The default shown here is the mainnet list; `--hoodi` and `--sepolia` load their own lists automatically, so you only need this flag on custom networks or to use your own bootnodes. Passing it replaces the whole built-in list rather than adding to it. Only `enr:` and `enode:` records are used (multiaddrs are dropped), and a value ending in `.yaml` is read as a YAML list of records.",
+		"example": "--bootstrap-node=enr:-Ku4Q... --bootstrap-node=/path/to/bootnodes.yaml",
+		"related": [
+			"no-discovery",
+			"peer"
+		],
+		"caution": "Because the flag replaces the defaults, a single wrong or unreachable ENR leaves the node with no way to discover peers."
+	},
+	"enable-upnp": {
+		"explain": "Asks your router, through UPnP/NAT-PMP, to forward the libp2p listening ports (TCP and QUIC) to this machine. Use it on a home network where you can't or don't want to set up manual port forwarding; the router must have UPnP turned on. It does not map the discv5 UDP port (`--p2p-udp-port`), so forward that one yourself if you want to be discoverable.",
+		"related": [
+			"p2p-host-ip",
+			"p2p-tcp-port",
+			"p2p-quic-port",
+			"p2p-udp-port"
+		],
+		"guide": "/setup/networking/"
+	},
+	"no-discovery": {
+		"explain": "Turns off discv5 entirely: the node doesn't open the discovery UDP socket, doesn't contact bootnodes, and only connects to peers you list with `--peer` (and inbound connections from nodes that already know you). Use it for private devnets or a node that must only talk to your own nodes.",
+		"example": "--no-discovery --peer=/ip4/10.0.0.5/tcp/13000/p2p/16Uiu2HAm...",
+		"related": [
+			"peer",
+			"bootstrap-node"
+		],
+		"caution": "On a public network without `--peer` entries, the node ends up with no peers and can't sync."
+	},
+	"p2p-allowlist": {
+		"explain": "Accepts a single CIDR, or the keywords `public` or `private`. With a CIDR (or `private`), the node only dials and accepts peers whose IP falls in that range and rejects everything else. `public` works differently: it adds the private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 100.64.0.0/10, 169.254.0.0/16) to the deny list, so only public addresses are allowed.",
+		"example": "--p2p-allowlist=public",
+		"related": [
+			"p2p-denylist"
+		],
+		"guide": "/setup/networking/",
+		"caution": "A CIDR such as `192.168.0.0/16` blocks every internet peer; only use it for a node that talks exclusively to nodes on your LAN."
+	},
+	"p2p-denylist": {
+		"explain": "Rejects dials to and connections from peers in the given CIDR ranges; everything else is still allowed. The keyword `private` denies all private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 100.64.0.0/10, 169.254.0.0/16), which cloud hosts often use to avoid abuse reports for scanning internal networks. Repeat the flag or separate values with commas; a deny rule that conflicts with an allow rule logs `Address ... is in conflict with previous rule.`",
+		"example": "--p2p-denylist=private",
+		"related": [
+			"p2p-allowlist"
+		],
+		"guide": "/setup/networking/"
+	},
+	"p2p-colocation-whitelist": {
+		"explain": "Prysm treats many peer identities coming from one IP as suspicious: more than 5 peers from the same IP are marked bad, and gossipsub scoring penalizes IPs with more than 10 peers. Addresses in these CIDR ranges are exempt from both checks. Use it when you run several of your own nodes behind one public IP (or on one host) and they peer with each other.",
+		"example": "--p2p-colocation-whitelist=10.0.0.0/24",
+		"related": [
+			"peer"
+		],
+		"guide": "/setup/networking/"
+	},
+	"p2p-host-ip": {
+		"explain": "Sets the public IP written into your node record (ENR) and advertised to libp2p peers. Without it, discv5 learns your external address from what other peers report, which works on most networks but can be slow or wrong behind NAT. When set, Prysm also tries a TCP connection to this IP and port at startup and logs `IP address is not accessible` if it fails, a quick way to spot missing port forwarding. The value must be a literal IPv4 or IPv6 address.",
+		"example": "--p2p-host-ip=203.0.113.10",
+		"related": [
+			"p2p-host-dns",
+			"p2p-tcp-port",
+			"enable-upnp"
+		],
+		"guide": "/setup/networking/"
+	},
+	"p2p-host-dns": {
+		"explain": "Advertises a DNS name instead of an IP, for hosts with a dynamic public IP. The name is resolved once at startup: the first returned IP goes into the ENR, and libp2p advertises `/dns4/<name>/tcp/<port>` (TCP only). If the IP changes later, restart the node or rely on discv5's address detection.",
+		"example": "--p2p-host-dns=node.example.com",
+		"related": [
+			"p2p-host-ip"
+		],
+		"guide": "/setup/networking/"
+	},
+	"p2p-local-ip": {
+		"explain": "Binds libp2p (TCP and QUIC) and the discv5 UDP socket to one local interface address. By default libp2p listens on the first non-loopback interface address the node finds (IPv4 first), and discv5 listens on all interfaces. Set it on machines with several network interfaces, or when the auto-picked address is the wrong one.",
+		"example": "--p2p-local-ip=192.168.1.20",
+		"related": [
+			"p2p-host-ip",
+			"p2p-tcp-port",
+			"p2p-udp-port"
+		],
+		"guide": "/setup/networking/"
+	},
+	"p2p-max-peers": {
+		"explain": "Target number of connected peers; the node keeps looking for peers until it reaches it and refuses new ones above it. At most 80% of the slots go to inbound connections (with a small buffer of 20), so the rest are always outbound peers the node chose itself. Raise it for better subnet coverage on a well-connected server; lower it (for example to 30-50) to save bandwidth and CPU on a home connection. `--min-sync-peers` is capped at this value.",
+		"example": "--p2p-max-peers=100",
+		"related": [
+			"min-sync-peers",
+			"max-concurrent-dials",
+			"peer"
+		],
+		"guide": "/setup/networking/"
+	},
+	"p2p-priv-key": {
+		"explain": "Path to a file holding the node's secp256k1 network private key as a hex string. The key determines your peer ID and discv5 node ID (which, from Fulu, also decides which data columns you custody). Without this flag, Prysm uses `<datadir>/network-keys` if it exists, and otherwise generates a key.",
+		"example": "--p2p-priv-key=/var/lib/ethereum/beacon/network-keys",
+		"related": [
+			"p2p-static-id",
+			"datadir"
+		],
+		"guide": "/setup/networking/",
+		"caution": "Never share one key between two running nodes: they would claim the same peer ID."
+	},
+	"p2p-quic-port": {
+		"explain": "UDP port for libp2p's QUIC transport. QUIC is on by default and advertised in the ENR alongside TCP; open this port as UDP in your firewall and router. It can be the same number as the TCP port because the protocols differ. Turn QUIC off with `--disable-quic`.",
+		"example": "--p2p-quic-port=13000",
+		"related": [
+			"p2p-tcp-port",
+			"p2p-udp-port",
+			"disable-quic"
+		],
+		"guide": "/setup/networking/"
+	},
+	"p2p-static-id": {
+		"explain": "Saves the generated network key to `<datadir>/network-keys` so the peer ID survives restarts. On networks where Fulu is scheduled (mainnet, Hoodi, Sepolia) Prysm already does this by default, because a changing node ID would change which data columns the node custodies, so the flag only matters on networks without Fulu. To start with a new identity, stop the node and delete that file.",
+		"related": [
+			"p2p-priv-key",
+			"datadir"
+		],
+		"guide": "/setup/networking/"
+	},
+	"p2p-tcp-port": {
+		"explain": "TCP port libp2p listens on for peer connections (gossip and req/resp). Forward it to this machine and allow it inbound in your firewall so other nodes can connect to you. If you change it, change your port forwarding to match; the port you set is also the one written into your ENR.",
+		"example": "--p2p-tcp-port=13000",
+		"related": [
+			"p2p-quic-port",
+			"p2p-udp-port",
+			"p2p-host-ip"
+		],
+		"guide": "/setup/networking/"
+	},
+	"p2p-udp-port": {
+		"explain": "UDP port for discv5 peer discovery. Other nodes find you through this port, so forward and allow it (UDP) for good peer counts. UPnP (`--enable-upnp`) does not open this port for you.",
+		"example": "--p2p-udp-port=12000",
+		"related": [
+			"p2p-tcp-port",
+			"p2p-quic-port",
+			"no-discovery"
+		],
+		"guide": "/setup/networking/"
+	},
+	"pubsub-queue-size": {
+		"explain": "Sets both the gossipsub validation queue and the per-peer outbound queue sizes, in messages. When a queue is full, gossip messages are dropped, which shows up as missed attestations or blocks arriving late on busy machines. The default is fine for most setups; a value of 0 or less is replaced with 600 and logs `Invalid pubsub queue size`.",
+		"example": "--pubsub-queue-size=1000",
+		"related": [
+			"batch-verifier-limit"
+		]
+	},
+	"relay-node": {
+		"explain": "Multiaddr of a libp2p circuit relay. Prysm connects to it at startup, keeps that connection alive, and additionally advertises `/p2p-circuit` addresses through it so peers that can't reach you directly can connect through the relay. Relaying is off when this flag is empty. Mostly useful for test setups; public networks don't run public relays for beacon nodes.",
+		"example": "--relay-node=/ip4/203.0.113.5/tcp/4001/p2p/16Uiu2HAm...",
+		"related": [
+			"peer"
+		]
+	},
+	"peer": {
+		"explain": "Adds a trusted peer. Prysm dials it at startup, re-dials it whenever the connection drops, never disconnects or prunes it for a bad score, and treats it as a gossipsub direct peer. Repeat the flag or separate addresses with commas. Use it to pair your own nodes, or to always stay connected to a known-good node; the peer's host must also accept your connection (for example, add you as a peer too).",
+		"example": "--peer=/ip4/10.0.0.5/tcp/13000/p2p/16Uiu2HAm...",
+		"related": [
+			"no-discovery",
+			"p2p-colocation-whitelist",
+			"p2p-max-peers"
+		],
+		"guide": "/setup/networking/"
+	},
+	"blob-batch-limit": {
+		"explain": "Rate limit for serving blob sidecars to peers: the node answers up to this many blobs per second per peer, with bursts up to this value times `--blob-batch-limit-burst-factor`. It also caps how many blobs are returned for one by-root request. Only relevant for blob sidecars (Deneb and Electra); after Fulu, data columns replace them.",
+		"example": "--blob-batch-limit=384",
+		"related": [
+			"blob-batch-limit-burst-factor",
+			"data-column-batch-limit",
+			"block-batch-limit"
+		]
+	},
+	"blob-batch-limit-burst-factor": {
+		"explain": "Multiplier on `--blob-batch-limit` that sets the burst capacity of the per-peer blob rate limiter, and the maximum number of blobs returned for one by-range request.",
+		"example": "--blob-batch-limit-burst-factor=3",
+		"related": [
+			"blob-batch-limit"
+		]
+	},
+	"data-column-batch-limit": {
+		"explain": "Rate limit for serving PeerDAS data column sidecars: up to this many columns per second per peer, with bursts up to this value times `--data-column-batch-limit-burst-factor`. It also caps the size of a by-root data column response. Lower it if serving columns to peers uses too much upload bandwidth.",
+		"example": "--data-column-batch-limit=4096",
+		"related": [
+			"data-column-batch-limit-burst-factor",
+			"blob-batch-limit"
+		]
+	},
+	"data-column-batch-limit-burst-factor": {
+		"explain": "Multiplier on `--data-column-batch-limit` that sets the burst capacity of the per-peer data column rate limiter.",
+		"example": "--data-column-batch-limit-burst-factor=4",
+		"related": [
+			"data-column-batch-limit"
+		]
+	},
+	"block-batch-limit": {
+		"explain": "Blocks per request during initial sync, and the per-peer rate (blocks per second) at which the node serves blocks to others. Values above the protocol maximum (`MAX_REQUEST_BLOCKS_DENEB`, 128) are lowered for requests. Raising it can speed up sync from fast peers at the cost of memory and more bursts of bandwidth.",
+		"example": "--block-batch-limit=64",
+		"related": [
+			"block-batch-limit-burst-factor",
+			"min-sync-peers"
+		]
+	},
+	"block-batch-limit-burst-factor": {
+		"explain": "Multiplier on `--block-batch-limit` that sets the burst capacity of the block rate limiter, both for serving peers and for the node's own initial-sync fetcher.",
+		"example": "--block-batch-limit-burst-factor=2",
+		"related": [
+			"block-batch-limit"
+		]
+	},
+	"max-concurrent-dials": {
+		"explain": "Caps how many peers found through discovery the node dials at the same time. The default `0` means no limit. Set a limit if a burst of outgoing connection attempts overwhelms a consumer router (NAT table) or triggers abuse detection at your provider.",
+		"example": "--max-concurrent-dials=10",
+		"related": [
+			"p2p-max-peers"
+		],
+		"guide": "/setup/networking/"
+	},
+	"minimum-peers-per-subnet": {
+		"explain": "For each attestation, sync committee or data column subnet the node needs, it searches discovery for more peers until at least this many connected peers are on the subnet. Raising it improves gossip reliability for your validators' duties but means more discovery work and peer churn; subnets short of peers are logged at debug level as `Not enough connected peers`.",
+		"example": "--minimum-peers-per-subnet=6",
+		"related": [
+			"subscribe-all-subnets",
+			"p2p-max-peers"
+		],
+		"guide": "/setup/networking/"
+	},
+	"min-sync-peers": {
+		"explain": "Number of peers that must agree on the chain before initial sync starts, and the minimum number used when choosing which peers to sync from. It's capped at `--p2p-max-peers` and, internally, at 15. Setting it to `0` skips initial sync and marks the node synced immediately, which only makes sense for a single-node devnet.",
+		"example": "--min-sync-peers=3",
+		"related": [
+			"p2p-max-peers",
+			"block-batch-limit"
+		],
+		"guide": "/setup/networking/"
+	},
+	"subscribe-all-subnets": {
+		"explain": "Subscribes to all 64 attestation subnets and all sync committee subnets, instead of the 2 long-lived subnets derived from your node ID plus those your validators need. It lets the node see (and aggregate from) every attestation, which helps large validator operators, relays and data collectors, but it uses much more bandwidth and CPU. It does not affect data column custody; use `--supernode` for that.",
+		"related": [
+			"minimum-peers-per-subnet",
+			"supernode"
+		],
+		"guide": "/setup/networking/",
+		"caution": "Expect several times more gossip traffic; not recommended on home connections."
+	},
+	"supernode": {
+		"explain": "Custodies, stores and serves all 128 data column groups instead of the minimum for your validator count, and subscribes to every data column subnet. It's what you want for a node that serves full blob data (for example, an RPC provider or a node backing a rollup). It needs far more disk and bandwidth. Deprecated alias: `--subscribe-all-data-subnets`.",
+		"related": [
+			"semi-supernode",
+			"data-column-path",
+			"subscribe-all-subnets"
+		],
+		"guide": "/setup/storage/",
+		"caution": "The choice is stored in the database: if you remove the flag later, the node logs a warning and keeps acting as a supernode. To go back to normal custody, resync with an empty database."
+	},
+	"semi-supernode": {
+		"explain": "Custodies the minimum number of column groups needed to reconstruct all blobs (half of them: 64 of 128), so the Beacon API blob and blob sidecar endpoints can always answer, at roughly half the storage of `--supernode`. Starting with both `--supernode` and `--semi-supernode` fails with `cannot set both`.",
+		"related": [
+			"supernode",
+			"data-column-path"
+		],
+		"guide": "/setup/storage/",
+		"caution": "The custody group count stored in the database never decreases. Removing this flag doesn't reduce custody; resync with an empty database to do that."
+	},
+	"backfill-batch-size": {
+		"explain": "Blocks requested from a peer per backfill batch. Memory use grows with `batch size × worker count × block size`, so raise it only if backfill is slow and you have RAM to spare.",
+		"example": "--backfill-batch-size=64",
+		"related": [
+			"backfill-worker-count",
+			"enable-backfill"
+		],
+		"guide": "/setup/storage/"
+	},
+	"backfill-worker-count": {
+		"explain": "Number of backfill batches downloaded in parallel. More workers use more bandwidth and memory; the effect multiplies with `--backfill-batch-size`.",
+		"example": "--backfill-worker-count=4",
+		"related": [
+			"backfill-batch-size",
+			"enable-backfill"
+		],
+		"guide": "/setup/storage/"
+	},
+	"enable-backfill": {
+		"explain": "After a checkpoint sync, downloads the blocks older than the checkpoint (and the blobs and data columns still inside their retention window) in the background, so the node can serve them to peers. By default it goes back `MIN_EPOCHS_FOR_BLOCK_REQUESTS` (33024 epochs, about 5 months on mainnet); it does nothing on a node synced from genesis. Deprecated alias: `--enable-experimental-backfill`.",
+		"related": [
+			"backfill-oldest-slot",
+			"backfill-batch-size",
+			"backfill-worker-count",
+			"checkpoint-sync-url"
+		],
+		"guide": "/setup/storage/"
+	},
+	"clear-db": {
+		"explain": "Asks for confirmation at startup, then deletes the beacon database, the saved genesis state file, blob storage, data column storage and (if `--slasher` is set) the slasher database, and starts syncing from scratch. Files in the `backups` directory are kept. Remove the flag after the run you needed it for.",
+		"related": [
+			"force-clear-db",
+			"datadir",
+			"checkpoint-sync-url"
+		],
+		"guide": "/setup/storage/"
+	},
+	"datadir": {
+		"explain": "Root of everything the beacon node stores: the database in `beaconchaindata/beaconchain.db`, the genesis state file (`genesis-<time>-<root>.ssz`), and by default the `blobs/` and `data-columns/` directories. The default depends on the OS: `~/.eth2` on Linux, `~/Library/Eth2` on macOS, `%LOCALAPPDATA%\\Eth2` on Windows.",
+		"example": "--datadir=/var/lib/ethereum/beacon",
+		"related": [
+			"blob-path",
+			"data-column-path",
+			"slasher-datadir",
+			"clear-db"
+		],
+		"guide": "/setup/storage/",
+		"caution": "Use a separate `--datadir` per network. Prysm refuses a database whose stored deposit contract differs from the selected network's (`database contract is … but tried to run with …`), but mainnet and Hoodi use the same address, so that check doesn't catch a mix-up between those two."
+	},
+	"force-clear-db": {
+		"explain": "Same as `--clear-db`, but deletes without asking. Use it in non-interactive setups (systemd, Docker) where there is no terminal to answer the prompt.",
+		"related": [
+			"clear-db",
+			"datadir"
+		],
+		"guide": "/setup/storage/",
+		"caution": "If you leave this flag in a service definition, the node wipes its database and resyncs on every restart."
+	},
+	"restore-source-file": {
+		"explain": "Only read by the `beacon-chain db restore` subcommand; setting it on a normal beacon node run does nothing. Point it at a copy of a `beaconchain.db` file.",
+		"related": [
+			"restore-target-dir",
+			"datadir"
+		],
+		"guide": "/operate/backup-and-restore/"
+	},
+	"restore-target-dir": {
+		"explain": "Only read by the `beacon-chain db restore` subcommand; setting it on a normal beacon node run does nothing. Use the same value you pass to `--datadir`.",
+		"related": [
+			"restore-source-file",
+			"datadir"
+		],
+		"guide": "/operate/backup-and-restore/"
+	},
+	"backfill-oldest-slot": {
+		"explain": "Makes backfill go further back than the spec minimum, down to this slot (for example `1` for the full history). A value newer than `current slot - MIN_EPOCHS_FOR_BLOCK_REQUESTS` is ignored, with the warning `Ignoring user-specified slot > MIN_EPOCHS_FOR_BLOCK_REQUESTS.`",
+		"example": "--backfill-oldest-slot=1",
+		"related": [
+			"enable-backfill"
+		],
+		"guide": "/setup/archive-node/"
+	},
+	"blob-retention-epochs": {
+		"explain": "How many epochs of blobs and data columns the node keeps before deleting them. The same value applies to both; the minimum is the spec value of 4096 epochs (about 18 days), and a lower value stops the node at startup. Raise it if you run an indexer or L2 tooling that needs older blob data. Deprecated alias: `--extend-blob-retention-epoch`.",
+		"example": "--blob-retention-epochs=8192",
+		"related": [
+			"blob-path",
+			"data-column-path",
+			"supernode"
+		],
+		"guide": "/setup/storage/"
+	},
+	"beacon-db-pruning": {
+		"explain": "Starts a pruner that deletes blocks and states older than the retention window from the database, once per epoch (at mid-epoch), after initial sync and backfill have finished. Blobs and data columns are always pruned by their own retention setting, with or without this flag.",
+		"related": [
+			"pruner-retention-epochs",
+			"enable-backfill"
+		],
+		"guide": "/setup/storage/",
+		"caution": "Pruned history is gone: the node can no longer answer API queries for blocks or states before the window. Don't enable it on a node that serves historical data."
+	},
+	"pruner-retention-epochs": {
+		"explain": "How many epochs of blocks and states the pruner keeps. Only used with `--beacon-db-pruning`. The minimum is `MIN_EPOCHS_FOR_BLOCK_REQUESTS + 1` (33025 epochs on mainnet); lower values are replaced by the minimum with the warning `Retention period too low, ignoring and using minimum required value`.",
+		"example": "--pruner-retention-epochs=50000",
+		"related": [
+			"beacon-db-pruning"
+		],
+		"guide": "/setup/storage/"
+	},
+	"slots-per-archive-point": {
+		"explain": "How often a full finalized state is saved to the database (default every 2048 slots, 64 epochs). Any other historical state is regenerated by replaying blocks from the closest saved one, so a lower value makes historical state queries faster at the cost of much more disk. Not used when `--enable-state-diff` is on, which stores history differently.",
+		"example": "--slots-per-archive-point=256",
+		"related": [
+			"historical-slasher-node",
+			"enable-state-diff"
+		],
+		"caution": "An explicit value also overrides the 128 slots set by `--historical-slasher-node`."
+	},
+	"blob-storage-layout": {
+		"explain": "Only affects blob sidecars, which are stored for the Deneb and Electra forks; from Fulu on, data column sidecars are stored separately and this flag doesn't apply to them. `by-epoch` groups blob files in per-epoch directories, which makes startup and pruning faster; `flat` is the old one-directory-per-block layout. Without the flag, Prysm detects the layout already on disk and warns if it is `flat`; set `--blob-storage-layout=by-epoch` once to migrate it on the next restart.",
+		"example": "--blob-storage-layout=by-epoch",
+		"related": [
+			"blob-path"
+		],
+		"guide": "/setup/storage/"
+	},
+	"blob-path": {
+		"explain": "Directory for blob sidecars (Deneb to Electra); defaults to `<datadir>/blobs`. Useful to put blobs on a different disk than the database. Since Fulu, new blob data is stored as data columns under `--data-column-path` instead.",
+		"example": "--blob-path=/mnt/bulk/prysm/blobs",
+		"related": [
+			"data-column-path",
+			"blob-storage-layout",
+			"blob-retention-epochs"
+		],
+		"guide": "/setup/storage/"
+	},
+	"data-column-path": {
+		"explain": "Directory for PeerDAS data column sidecars (Fulu onward); defaults to `<datadir>/data-columns`. How much it holds depends on how many columns the node custodies: a `--supernode` stores all of them.",
+		"example": "--data-column-path=/mnt/bulk/prysm/data-columns",
+		"related": [
+			"blob-path",
+			"blob-retention-epochs",
+			"supernode",
+			"semi-supernode"
+		],
+		"guide": "/setup/storage/"
+	},
+	"local-block-value-boost": {
+		"explain": "Handicaps builder bids against your locally built block. The beacon node picks the builder block only if `builder_bid_gwei * builder_boost_factor > local_value_gwei * (100 + local-block-value-boost)`, where `builder_boost_factor` is the per-request value sent by the validator client (default 100). The check runs after `--min-builder-bid` and `--min-builder-to-local-difference`, and applies to blocks up to the Fulu fork.",
+		"example": "--local-block-value-boost=20",
+		"related": [
+			"min-builder-bid",
+			"min-builder-to-local-difference",
+			"http-mev-relay"
+		],
+		"guide": "/validators/mev-boost/",
+		"caution": "Set it to 0 if you want the builder block whenever it pays more, however slightly. If you also send a non-default `builder_boost_factor` from the validator client, both boosts apply and the node logs a warning."
+	},
+	"max-builder-consecutive-missed-slots": {
+		"explain": "First circuit breaker: if the gap between the proposal slot and the highest slot the node has received a block for reaches this number, the node stops asking the relay and builds the block locally. It protects chain liveness when relays fail. The node logs `Circuit breaker activated due to missing consecutive slot` when it trips.",
+		"example": "--max-builder-consecutive-missed-slots=3",
+		"related": [
+			"max-builder-epoch-missed-slots",
+			"http-mev-relay"
+		],
+		"guide": "/validators/mev-boost/"
+	},
+	"max-builder-epoch-missed-slots": {
+		"explain": "Second circuit breaker: if the number of empty slots in the last 32 slots (a rolling epoch window) reaches this number, the node builds locally instead of using the relay. It logs `Circuit breaker activated due to missing enough slots last epoch` when it trips.",
+		"example": "--max-builder-epoch-missed-slots=5",
+		"related": [
+			"max-builder-consecutive-missed-slots",
+			"http-mev-relay"
+		],
+		"guide": "/validators/mev-boost/"
+	},
+	"http-mev-relay": {
+		"explain": "Point this at MEV-Boost (or another Builder API endpoint), not at an individual relay. With it set, the node asks the builder for a bid on proposals from validators that registered with the builder (validator client `--enable-builder` or the builder section of the proposer settings file); other proposals, and proposals where the circuit breaker is tripped, use the local execution client.",
+		"example": "--http-mev-relay=http://127.0.0.1:18550",
+		"related": [
+			"disable-builder-ssz",
+			"builder-header-timeout",
+			"local-block-value-boost",
+			"max-builder-consecutive-missed-slots"
+		],
+		"guide": "/validators/mev-boost/"
+	},
+	"min-builder-bid": {
+		"explain": "Floor for builder bids, in Gwei. If a bid is below this value the node uses the local payload and logs `Proposer: using local execution payload because min bid not attained`. 1 ETH is `1000000000` Gwei. Applies to blocks up to the Fulu fork.",
+		"example": "--min-builder-bid=10000000",
+		"related": [
+			"min-builder-to-local-difference",
+			"local-block-value-boost"
+		],
+		"guide": "/validators/mev-boost/"
+	},
+	"min-builder-to-local-difference": {
+		"explain": "When the builder bid is below the local block value plus this many Gwei, the node builds locally and logs `Proposer: using local execution payload because min difference with local value was not attained`. It is checked after `--min-builder-bid` and before `--local-block-value-boost`. Applies to blocks up to the Fulu fork.",
+		"example": "--min-builder-to-local-difference=5000000",
+		"related": [
+			"min-builder-bid",
+			"local-block-value-boost"
+		],
+		"guide": "/validators/mev-boost/"
+	},
+	"builder-header-timeout": {
+		"explain": "How long the node waits for the `getHeader` response from MEV-Boost before giving up and proposing the local block. Accepts Go durations (`950ms`, `1s`). Zero or negative values stop the node at startup, and any override logs a warning at startup.",
+		"example": "--builder-header-timeout=1s",
+		"related": [
+			"http-mev-relay"
+		],
+		"guide": "/validators/mev-boost/",
+		"caution": "Raising it delays your block. The default already matches the builder spec's proposal delay tolerance of 1 second; a much higher value risks a missed or orphaned proposal."
+	},
+	"suggested-fee-recipient": {
+		"explain": "Fallback fee recipient for blocks proposed through this node. A fee recipient sent by the validator client (from its `--suggested-fee-recipient` or proposer settings file) takes precedence; this value is used when the validator client sends none or sends the zero address. Without it, the default is the burn address and the node logs a warning at startup; a non-checksummed address is accepted with a warning.",
+		"example": "--suggested-fee-recipient=0x0000000000000000000000000000000000000000",
+		"related": [
+			"http-mev-relay"
+		],
+		"guide": "/validators/mev-boost/",
+		"caution": "An invalid address is ignored with only a warning (`... is not a valid fee recipient address`), leaving the burn address as the fallback. Check the `Default fee recipient is set to` line at startup."
+	},
+	"disable-builder-ssz": {
+		"explain": "By default the node talks SSZ to the Builder API and, if the builder answers 415 or 406, automatically retries in JSON and keeps using JSON for later requests. Use this flag only if your builder or MEV-Boost version misbehaves with SSZ in another way.",
+		"related": [
+			"http-mev-relay"
+		],
+		"guide": "/validators/mev-boost/"
+	},
+	"checkpoint-block": {
+		"explain": "The block matching `--checkpoint-state`, as a local SSZ file. Both files must be given together, and the block must be the one the state was built from.",
+		"example": "--checkpoint-block=/data/block_mainnet_fulu_12345678-0x….ssz",
+		"related": [
+			"checkpoint-state",
+			"checkpoint-sync-url"
+		],
+		"guide": "/setup/checkpoint-sync/"
+	},
+	"checkpoint-sync-url": {
+		"explain": "Downloads the latest finalized state and its block from this Beacon API (`/eth/v2/debug/beacon/states/finalized`) and starts from there, so the node is synced in minutes instead of days. It is only used on an empty database: if one already exists, the log shows `Origin checkpoint found in the database, ignoring checkpoint sync flags`. When `--genesis-beacon-api-url` is not set, the same URL is also used to fetch the genesis state.",
+		"example": "--checkpoint-sync-url=https://hoodi.beaconstate.ethstaker.cc",
+		"related": [
+			"genesis-beacon-api-url",
+			"weak-subjectivity-checkpoint",
+			"enable-backfill",
+			"checkpoint-state"
+		],
+		"guide": "/setup/checkpoint-sync/",
+		"caution": "You trust this endpoint to give you the canonical chain. Use a provider you trust, and compare the finalized block root with a second source."
+	},
+	"checkpoint-state": {
+		"explain": "Starts from a finalized state stored in a local SSZ file instead of a URL, for example one saved with `prysmctl checkpoint-sync download`. It needs `--checkpoint-block` too; the node refuses to start with only one of the two. If `--checkpoint-sync-url` is also set, the URL wins and the files are ignored.",
+		"example": "--checkpoint-state=/data/state_mainnet_fulu_12345678-0x….ssz",
+		"related": [
+			"checkpoint-block",
+			"checkpoint-sync-url",
+			"genesis-state"
+		],
+		"guide": "/setup/checkpoint-sync/"
+	},
+	"weak-subjectivity-checkpoint": {
+		"explain": "A block root and epoch the chain must pass through. Once the node finalizes past that epoch, it checks that the block is in its database and finalized, and logs `Weak subjectivity check has passed!!`; otherwise it exits with `Could not verify weak subjectivity checkpoint`. Use it with checkpoint sync to detect a dishonest checkpoint provider. A `0x` prefix on the root is accepted.",
+		"example": "--weak-subjectivity-checkpoint=0x<BLOCK_ROOT>:<EPOCH>",
+		"related": [
+			"checkpoint-sync-url",
+			"genesis-beacon-api-url"
+		],
+		"guide": "/setup/checkpoint-sync/"
+	},
+	"genesis-beacon-api-url": {
+		"explain": "Fetches the genesis state from this Beacon API (the debug state endpoint for `genesis`) when there is none in the data directory. You rarely need it: it defaults to the value of `--checkpoint-sync-url`, and mainnet's genesis is embedded. Set it for a testnet you sync from genesis without a local genesis file.",
+		"example": "--genesis-beacon-api-url=https://hoodi.beaconstate.ethstaker.cc",
+		"related": [
+			"genesis-state",
+			"checkpoint-sync-url",
+			"weak-subjectivity-checkpoint"
+		],
+		"guide": "/setup/storage/"
+	},
+	"genesis-state": {
+		"explain": "Loads the genesis state from a local SSZ file. Only mainnet's genesis state is built into Prysm; other networks get it from this flag, `--genesis-beacon-api-url` or `--checkpoint-sync-url`. It is only needed once: the state is saved in the data directory and reused. This flag takes priority over `--genesis-beacon-api-url`.",
+		"example": "--genesis-state=/data/hoodi/genesis.ssz",
+		"related": [
+			"genesis-beacon-api-url",
+			"checkpoint-sync-url",
+			"chain-config-file"
+		],
+		"guide": "/setup/storage/"
+	},
+	"contract-deployment-block": {
+		"explain": "Execution block number where Prysm starts reading deposit contract logs. The default shown is mainnet's; each network flag sets its own value (0 for Hoodi, 1273020 for Sepolia). Only needed for custom networks, and only until EIP-6110 deposit requests are active.",
+		"example": "--contract-deployment-block=0",
+		"related": [
+			"deposit-contract",
+			"eth1-header-req-limit"
+		]
+	},
+	"deposit-contract": {
+		"explain": "Overrides the deposit contract address of the selected network. The default shown is mainnet's; each network flag sets the right address for its network. The address is saved in the database, and the node refuses to start if it later differs (mainnet and Hoodi share the same address, so this doesn't tell those two apart). Only needed for custom networks.",
+		"example": "--deposit-contract=0x0000000000000000000000000000000000000000",
+		"related": [
+			"contract-deployment-block",
+			"chain-id",
+			"chain-config-file"
+		]
+	},
+	"engine-endpoint-timeout-seconds": {
+		"explain": "Timeout, in seconds, for `engine_newPayload` and `engine_forkchoiceUpdated` calls. When not set, Prysm uses 8 seconds (the Engine API spec value); the `0` shown as default means \"not set\". Raise it only if a slow execution client times out while importing blocks.",
+		"example": "--engine-endpoint-timeout-seconds=12",
+		"related": [
+			"execution-endpoint"
+		],
+		"guide": "/setup/connect-execution-client/",
+		"caution": "Explicitly setting `0` means a zero timeout, so every call fails."
+	},
+	"eth1-header-req-limit": {
+		"explain": "Maximum block range per request when reading deposit contract logs and headers from the execution client; Prysm shrinks the range automatically when requests fail. Lower it if your execution client or provider rejects large log queries. It only matters until the chain uses EIP-6110 deposit requests (Electra): after that, Prysm stops reading deposit logs.",
+		"example": "--eth1-header-req-limit=150",
+		"related": [
+			"contract-deployment-block",
+			"execution-endpoint"
+		],
+		"guide": "/setup/connect-execution-client/"
+	},
+	"execution-endpoint": {
+		"explain": "Engine API endpoint of your execution client, normally its authenticated port 8551. Also accepts an IPC socket path (a plain path or `ipc://`), which needs no JWT. If the endpoint is down, Prysm keeps retrying and logs `Connected to new endpoint` once it reconnects. An `Authorization` suffix after a comma (`<URL>,Basic <USER:PASSWORD>`) is a legacy option: with `--jwt-secret` set, Prysm replaces it with JWT authentication.",
+		"example": "--execution-endpoint=http://localhost:8551",
+		"related": [
+			"jwt-secret",
+			"execution-headers",
+			"engine-endpoint-timeout-seconds"
+		],
+		"guide": "/setup/connect-execution-client/"
+	},
+	"execution-headers": {
+		"explain": "Extra HTTP headers sent with every call to the execution client, for example an API key for an authenticating proxy or hosted endpoint. Pairs are split on `,` and each key on the first `=`, so values can contain `=` but not commas. A pair without `=` is skipped with a warning. An `Authorization` header set here is overwritten by the JWT on every request when `--jwt-secret` is set.",
+		"example": "--execution-headers=X-Api-Key=<API_KEY>",
+		"related": [
+			"execution-endpoint"
+		],
+		"guide": "/setup/connect-execution-client/"
+	},
+	"jwt-secret": {
+		"explain": "Path to the file with the shared secret the execution client also uses: 32 bytes as hex, with or without `0x`. Whitespace around it is ignored; an empty, unreadable or wrong-length file stops the node at startup. On success it logs `Finished reading JWT secret from <path>`. Create one with `beacon-chain generate-auth-secret` or `openssl rand -hex 32`.",
+		"example": "--jwt-secret=/var/lib/ethereum/jwt.hex",
+		"related": [
+			"execution-endpoint",
+			"jwt-id"
+		],
+		"guide": "/setup/connect-execution-client/",
+		"caution": "Without it, HTTP calls to the execution client get `401 Unauthorized`, and your validators can't do their duties."
+	},
+	"jwt-id": {
+		"explain": "Sets the optional `id` claim in every JWT sent to the execution client. It doesn't change authentication; use it to tell several consensus clients apart in the execution client's logs.",
+		"example": "--jwt-id=prysm-node-1",
+		"related": [
+			"jwt-secret"
+		],
+		"guide": "/setup/connect-execution-client/"
+	},
+	"disable-monitoring": {
+		"explain": "Turns off the Prometheus HTTP server on `--monitoring-host`:`--monitoring-port`. That also removes `/healthz`, `/goroutinez` and `/p2p`, which are served on the same port, so don't use it if a health check or dashboard depends on them.",
+		"related": [
+			"monitoring-host",
+			"monitoring-port"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"enable-tracing": {
+		"explain": "Starts an OpenTelemetry tracer that exports spans over OTLP/HTTP to `--tracing-endpoint` with service name `beacon-chain`. It adds CPU and network overhead, so enable it for debugging rather than permanently.",
+		"example": "--enable-tracing",
+		"related": [
+			"tracing-endpoint",
+			"trace-sample-fraction",
+			"tracing-process-name"
+		]
+	},
+	"monitoring-host": {
+		"explain": "Interface the metrics server binds to. The same server also serves `/healthz`, `/goroutinez` and `/p2p`. Set `0.0.0.0` only if Prometheus runs on another machine or in another container, and firewall the port.",
+		"example": "--monitoring-host=0.0.0.0",
+		"related": [
+			"monitoring-port",
+			"disable-monitoring"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"trace-sample-fraction": {
+		"explain": "Fraction of traces kept, from `0` to `1`. It is a head-based ratio sampler on the trace ID, so a trace is kept or dropped as a whole. Lower it on busy nodes to reduce overhead; only used with `--enable-tracing`.",
+		"example": "--trace-sample-fraction=0.05",
+		"related": [
+			"enable-tracing",
+			"tracing-endpoint"
+		]
+	},
+	"tracing-endpoint": {
+		"explain": "Full URL, including the path, that spans are posted to with the OTLP/HTTP exporter. The default points at the old Jaeger collector path; for an OpenTelemetry Collector, Tempo or recent Jaeger, use the OTLP/HTTP receiver, usually port 4318 with path `/v1/traces`.",
+		"example": "--tracing-endpoint=http://127.0.0.1:4318/v1/traces",
+		"related": [
+			"enable-tracing",
+			"trace-sample-fraction",
+			"tracing-process-name"
+		]
+	},
+	"tracing-process-name": {
+		"explain": "Adds a `process_name` resource attribute (and sets `service.instance.id`) on every exported span, so you can tell several beacon nodes apart in the same tracing backend.",
+		"example": "--tracing-process-name=beacon-hoodi-1",
+		"related": [
+			"enable-tracing",
+			"tracing-endpoint"
+		]
+	},
+	"monitor-indices": {
+		"explain": "Starts the validator monitor for these validator indices (not public keys). After initial sync the node logs events such as `Proposed beacon block was included`, `Attestation included` and a periodic `Aggregated performance since launch`, and exports `monitor_*` Prometheus metrics labeled by `validator_index`. Pass a comma-separated list or repeat the flag.",
+		"example": "--monitor-indices=1234,5678",
+		"related": [
+			"monitoring-port"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"monitoring-port": {
+		"explain": "Port of the metrics server. Prometheus scrapes `/metrics` here; the same port serves `/healthz` (HTTP 503 if any service reports an error), `/goroutinez` (goroutine dump) and `/p2p` (peer summary). If the port is taken, the node keeps running without metrics and logs `Port already in use; cannot start prometheus service`.",
+		"example": "--monitoring-port=8080",
+		"related": [
+			"monitoring-host",
+			"disable-monitoring",
+			"healthz-max-goroutines"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"historical-slasher-node": {
+		"explain": "Prepares a beacon node to feed historical data to a slasher: it saves a full state every 4 epochs (128 slots) instead of every 2048 slots, and raises the maximum API page size to 4096 items. This uses much more disk.",
+		"related": [
+			"slasher",
+			"slots-per-archive-point",
+			"rpc-max-page-size"
+		],
+		"guide": "/setup/storage/",
+		"caution": "An explicit `--slots-per-archive-point` overrides the 128-slot setting."
+	},
+	"slasher-datadir": {
+		"explain": "Base directory for the slasher database, stored at `<dir>/beaconchaindata/slasher.db`. Defaults to `--datadir`, so the slasher database sits next to the beacon database; set it to put the slasher on another disk.",
+		"example": "--slasher-datadir=/mnt/slasher",
+		"related": [
+			"slasher",
+			"datadir"
+		],
+		"guide": "/setup/storage/"
+	},
+	"slasher": {
+		"explain": "Runs a slasher inside the beacon node: it watches attestations and blocks from gossip, detects double votes, surround votes and double proposals, and adds the slashings to the pool so they get included in blocks. It starts detecting only after the node has synced (`Completed chain sync, starting slashing detection`), and needs extra disk, memory and CPU. It is not required to protect your own validators; slashing protection lives in the validator client.",
+		"related": [
+			"slasher-datadir",
+			"historical-slasher-node",
+			"disable-broadcast-slashings"
+		],
+		"guide": "/setup/storage/"
+	},
+	"disable-log-colors": {
+		"explain": "Removes ANSI color codes from terminal output in the `text` format. Useful when stdout goes to a file or log collector that shows escape codes. Files written with `--log-file` and the debug log file never contain colors.",
+		"related": [
+			"log-format",
+			"log-file"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"log-format": {
+		"explain": "`text` (default) is the human-readable format and the only one that honors `--log.vmodule`. `json` and `fluentd` write one JSON object per line to stderr for log shippers. `journald` sends entries straight to the systemd journal; it works only on Linux, and if the journal isn't reachable the node logs a warning and ignores the setting.",
+		"example": "--log-format=json",
+		"related": [
+			"log-file",
+			"verbosity",
+			"disable-log-colors"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"log-file": {
+		"explain": "Also writes logs to this file, appending on restart and creating parent directories as needed. With `--log-format=text` the file gets uncolored Prysm text logs that honor `--log.vmodule`; with other formats the file is written in logrus's plain `key=value` format rather than JSON. Prysm does not rotate this file, so use logrotate or similar.",
+		"example": "--log-file=/var/log/prysm/beacon.log",
+		"related": [
+			"log-format",
+			"disable-ephemeral-log-file"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"verbosity": {
+		"explain": "Minimum level printed to the terminal and to `--log-file`. `debug` is useful for troubleshooting but very noisy; `trace` is for developers. Independently of this flag, the node keeps a debug-level log file in `<datadir>/logs/` unless you pass `--disable-ephemeral-log-file`.",
+		"example": "--verbosity=debug",
+		"related": [
+			"log.vmodule",
+			"log-format",
+			"disable-ephemeral-log-file"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"disable-ephemeral-log-file": {
+		"explain": "By default the node writes a debug-level, uncolored copy of its logs to `<datadir>/logs/beacon-chain.log`, whatever `--verbosity` is set to. The file rotates at 250 MB, keeps one backup, and removes files older than one day. Disable it to save disk writes, at the cost of losing the debug history support usually asks for.",
+		"related": [
+			"verbosity",
+			"log-file",
+			"datadir"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"log.vmodule": {
+		"explain": "Overrides `--verbosity` for specific packages. Keys are Prysm package paths without the module prefix, as shown in the `package` field of JSON logs (for example `beacon-chain/sync`). An entry also covers its subpackages, and the longest match wins. Wildcards, leading or trailing slashes and duplicates are rejected at startup. Only the `text` log format honors it.",
+		"example": "--log.vmodule=beacon-chain/sync=debug,beacon-chain/p2p=trace",
+		"related": [
+			"verbosity",
+			"log-format"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"dev": {
+		"explain": "A shortcut that turns on the feature flags Prysm's developers want tested before they become defaults. In this release it only sets `--enable-backfill` (unless you set that flag yourself) and logs `Enabling development mode flags` at startup. The set changes between releases, so don't use it in production; enable the individual flags you want instead. Deprecated: it still works, but will be removed.",
+		"related": [
+			"enable-backfill"
+		]
+	},
+	"save-invalid-block-temp": {
+		"explain": "When a gossiped block fails validation, Prysm writes it as SSZ to the operating system's temp directory (`$TMPDIR` or `/tmp` on Linux) as `beacon_block_<slot>.ssz` and logs `Writing invalid block to disk at <path>`. Use it to capture a block for a bug report; it is safe in production but files accumulate until you delete them.",
+		"related": [
+			"save-invalid-blob-temp"
+		]
+	},
+	"save-invalid-blob-temp": {
+		"explain": "When a gossiped blob sidecar fails validation, Prysm writes it as SSZ to the temp directory as `blob_sidecar_<block root>_<slot>_<index>.ssz` and logs `Writing invalid blob sidecar to disk at <path>`. A debugging aid for bug reports; files are never cleaned up automatically.",
+		"related": [
+			"save-invalid-block-temp"
+		]
+	},
+	"disable-grpc-connection-logging": {
+		"explain": "Suppresses the `gRPC client connected to beacon node` info log that Prysm prints the first time each gRPC client address connects. Useful when many short-lived clients (or a load balancer) connect and the line floods your logs. It only affects logging.",
+		"related": [
+			"rpc-host",
+			"rpc-port"
+		]
+	},
+	"holesky": {
+		"explain": "Loads the Holesky chain config, bootnodes and deposit contract (`0x4242…4242`, chain ID 17000), and logs `Running on the Holesky Beacon Chain Testnet`. Only the mainnet genesis state is built in, so pass `--genesis-state`, `--genesis-beacon-api-url` or `--checkpoint-sync-url` as well. Deprecated: the Holesky testnet has been shut down. Use `--hoodi` for test setups.",
+		"related": [
+			"hoodi",
+			"sepolia",
+			"checkpoint-sync-url"
+		],
+		"guide": "/reference/networks/"
+	},
+	"sepolia": {
+		"explain": "Loads the Sepolia chain config, bootnodes and deposit contract (deployed at execution block 1273020) and logs `Running on the Sepolia Beacon Chain Testnet`. Sepolia has a permissioned validator set, so it suits application testing rather than staking practice. Only mainnet's genesis state is embedded: also pass `--checkpoint-sync-url`, `--genesis-beacon-api-url` or `--genesis-state`.",
+		"example": "--sepolia --checkpoint-sync-url=<SEPOLIA_BEACON_NODE_URL>",
+		"related": [
+			"hoodi",
+			"checkpoint-sync-url",
+			"genesis-state"
+		],
+		"guide": "/reference/networks/"
+	},
+	"hoodi": {
+		"explain": "Loads the Hoodi chain config (deposit chain ID 560048), its bootnodes and deposit contract, and logs `Running on the Hoodi Beacon Chain Testnet`. Hoodi is the public testnet for practicing staking. Only mainnet's genesis state is embedded, so also pass `--checkpoint-sync-url` (which Prysm also uses to fetch genesis), `--genesis-beacon-api-url` or `--genesis-state`. Use the same network flag on the beacon node and the validator client.",
+		"example": "--hoodi --checkpoint-sync-url=https://hoodi.beaconstate.ethstaker.cc",
+		"related": [
+			"checkpoint-sync-url",
+			"genesis-beacon-api-url",
+			"genesis-state",
+			"sepolia"
+		],
+		"guide": "/reference/networks/"
+	},
+	"mainnet": {
+		"explain": "Mainnet is what Prysm runs when no other network flag is given, so this flag changes nothing; it exists so scripts can name the network explicitly. Prysm refuses to start if you pass more than one network flag (for example `--mainnet --hoodi`). Without a network flag but with `--chain-config-file`, Prysm runs a custom network and logs a warning instead.",
+		"related": [
+			"hoodi",
+			"sepolia",
+			"chain-config-file"
+		],
+		"guide": "/reference/networks/"
+	},
+	"disable-peer-scorer": {
+		"explain": "Turns off peer scoring: gossip scores no longer mark peers as bad, and peer pruning falls back to an older algorithm that ignores scores. Your node then keeps misbehaving peers connected. Only useful for isolating P2P bugs on devnets.",
+		"caution": "Never use this on mainnet or a public testnet; it removes your node's defense against spamming and faulty peers."
+	},
+	"disable-broadcast-slashings": {
+		"explain": "Stops the node from gossiping proposer and attester slashings, both those submitted through the Beacon API (or gRPC) and the proposer slashings it builds when it sees two blocks for the same slot. The slashings still go into the local pool, so your own proposals still include them. Use it on test setups where you don't want slashings to propagate; there is no reason to set it in production.",
+		"related": [
+			"slasher"
+		]
+	},
+	"disable-staking-contract-check": {
+		"explain": "When proposing, lets the node build `eth1_data` without looking up the deposit block on the execution client if the chain has no deposit block hash yet (an all-zero hash), which happens on devnets without a deposit contract. On mainnet and public testnets it has no benefit.",
+		"related": [
+			"deposit-contract",
+			"contract-deployment-block"
+		]
+	},
+	"save-full-execution-payloads": {
+		"explain": "By default Prysm stores blocks blinded (with only the execution payload header) and fetches payloads from the execution client when it needs them, which saves a lot of disk. This flag stores full payloads instead. It only works on a database created with the flag: an existing blinded database makes the node refuse to start, so resync from scratch (for example with checkpoint sync) if you need it.",
+		"caution": "Once a database stores blinded blocks it can't be switched to full payloads; the node exits with an error until you remove the flag or resync.",
+		"related": [
+			"checkpoint-sync-url",
+			"datadir"
+		],
+		"guide": "/setup/storage/"
+	},
+	"ignore-unviable-attestations": {
+		"explain": "Tightens which blocks fork choice accepts as attestation targets: without the flag, any block from the epoch before the checkpoint epoch counts as viable, which can force expensive state replays when lagging nodes attest to old targets. With it, those attestations are dropped. It replaced `--disable-last-epoch-targets`; off by default and still considered an advanced tuning option.",
+		"related": [
+			"disable-last-epoch-targets"
+		]
+	},
+	"disable-track-equivocations": {
+		"explain": "Prysm records proposer equivocations (two blocks for the same slot and proposer) that arrive early in the slot and feeds them into fork choice. This flag turns that tracking off and returns to the older behavior. Leave it off unless the Prysm team asks you to disable it while diagnosing a problem."
+	},
+	"enable-full-ssz-data-logging": {
+		"explain": "Adds the full hex-encoded message (field `message`) to the `Gossip message was rejected` log. That log is written at debug level, so this only has an effect with `--verbosity=debug` or a matching `--log.vmodule` entry. Use it briefly to capture a bad message for a bug report.",
+		"caution": "Messages can be large (blocks, blobs, data columns), so this can grow log files quickly.",
+		"related": [
+			"verbosity",
+			"log.vmodule"
+		]
+	},
+	"disable-verbose-sig-verification": {
+		"explain": "By default, when the batched signature check of a block fails, Prysm checks each signature individually so the error says which one is invalid. This flag skips that step: invalid blocks are still rejected, but with a generic `batch block signature verification failed` error. It saves a little CPU only when invalid blocks arrive, so most operators should leave the default."
+	},
+	"enable-proposer-preprocessing": {
+		"explain": "When the node computes the state root for a block it is about to propose, it also verifies the block's batched signatures (attestations, RANDAO, BLS-to-execution changes; not the proposer signature, which doesn't exist yet) and fails the proposal if one is invalid. Without the flag the state root is computed without any signature checks. It adds a little CPU work per proposal in exchange for never proposing a block with a bad signature in it.",
+		"guide": "/validators/mev-boost/"
+	},
+	"prepare-all-payloads": {
+		"explain": "Makes the beacon node send payload attributes to the execution client in every `forkchoiceUpdated` call, so a payload is prepared for every slot, not only for proposers whose validator client is connected. For proposers it doesn't know, it uses `--suggested-fee-recipient`. It also fires the `payload_attributes` event stream every slot, which is what block builders and relays need; regular stakers don't need it, and it costs execution client work every slot.",
+		"related": [
+			"suggested-fee-recipient",
+			"http-mev-relay"
+		],
+		"guide": "/validators/mev-boost/"
+	},
+	"disable-resource-manager": {
+		"explain": "Replaces libp2p's resource manager, which caps connections, streams and memory used by peers, with a no-op manager that enforces no limits. Only try it if you see libp2p resource-limit errors that block legitimate peers, and watch memory afterwards.",
+		"caution": "Without resource limits, a flood of peer connections can exhaust memory or file descriptors.",
+		"related": [
+			"p2p-max-peers"
+		]
+	},
+	"enable-light-client": {
+		"explain": "Turns on light client server support: the node builds light client updates for every block after Altair, serves the `/eth/v1/beacon/light_client/*` Beacon API endpoints, answers the light client P2P requests (bootstrap, updates by range, finality and optimistic updates) and gossips the light client topics. Enable it if you want to serve light clients; it adds some CPU and storage.",
+		"guide": "/reference/apis/"
+	},
+	"blob-save-fsync": {
+		"explain": "Makes the node call `fsync` on each new blob file before it counts the blob as available, so a crash or power loss can't leave a blob that the node already considered stored. It applies to blob storage in `--blob-path` and slows writes on slow disks. Use it where blob durability matters (for example nodes that serve blobs to others).",
+		"related": [
+			"blob-path",
+			"blob-retention-epochs"
+		],
+		"guide": "/setup/storage/"
+	},
+	"disable-quic": {
+		"explain": "QUIC is on by default: the node listens on UDP `--p2p-quic-port` and advertises a `quic-v1` address in its ENR alongside TCP. This flag turns QUIC off so the node only uses TCP. Use it if your network drops or rate-limits UDP traffic on that port, or to rule QUIC out while debugging peering.",
+		"related": [
+			"p2p-quic-port",
+			"p2p-tcp-port"
+		]
+	},
+	"enable-discovery-reboot": {
+		"explain": "Every minute the node checks whether its outbound peer count is below target. With this flag, if that stays true for more than five consecutive checks, it restarts the discv5 listener and logs `Rebooting discovery listener, reached threshold.` Experimental; try it if discovery stalls after network changes (for example a changed public IP) and peers don't recover.",
+		"related": [
+			"p2p-udp-port",
+			"bootstrap-node"
+		]
+	},
+	"enable-experimental-attestation-pool": {
+		"explain": "Replaces Prysm's separate aggregated and unaggregated attestation pools with a single new attestation cache used by gossip handling, fork choice, aggregation, the Beacon API pool endpoints and block packing. Experimental; run it on a testnet first and don't rely on it for production validators."
+	},
+	"enable-fast-confirmation": {
+		"explain": "Runs the fast confirmation rule, which confirms blocks within a few slots when the network is behaving synchronously. The confirmed block becomes the `safe` block hash that Prysm sends to the execution client (instead of the unrealized justified block), and each run emits a `fast_confirmation` event on the Beacon API event stream. Experimental and off by default."
+	},
+	"enable-state-diff": {
+		"explain": "Stores finalized (cold) states as a hierarchy of snapshots and diffs, controlled by `--state-diff-exponents`, instead of full states at archive points. It must be enabled on a fresh database: on an existing database created without it, the node logs `Disabling state-diff feature` and continues without it. Changing `--state-diff-exponents` later makes the node refuse to start. Overrides `--enable-historical-state-representation`.",
+		"caution": "The exponents are fixed when the database is created. To change them you must delete the database and resync.",
+		"related": [
+			"state-diff-exponents",
+			"enable-archive",
+			"slots-per-archive-point",
+			"enable-historical-state-representation"
+		],
+		"guide": "/setup/archive-node/"
+	},
+	"sync-from": {
+		"explain": "By default the node restarts with the justified checkpoint as its head. `--sync-from=head` restarts from the head block saved in the database instead, and `--sync-from=<0x block root>` from a specific known block, which helps during long periods of non-finality or to move off a bad fork. If the block is unknown or older than the finalized checkpoint, the node logs an error and starts from the finalized block. Remove the flag after the restart.",
+		"example": "--sync-from=head",
+		"related": [
+			"blacklist-roots",
+			"weak-subjectivity-checkpoint"
+		]
+	},
+	"blacklist-roots": {
+		"explain": "Treats blocks with the given roots as invalid everywhere: gossip validation rejects them (downscoring the sending peer), initial sync discards them, and block processing refuses them. Use it during an incident to keep your node off a known-bad block. Entries must be 32-byte `0x` hex; malformed entries are skipped with a `Failed to parse blacklisted root` warning.",
+		"example": "--blacklist-roots=0x<BLOCK_ROOT_1>,0x<BLOCK_ROOT_2>",
+		"related": [
+			"sync-from"
+		]
+	},
+	"enable-hashtree": {
+		"explain": "Switches Merkle hashing (hash tree roots of states and blocks) from the default `gohashtree` library to the `hashtree` library, which Prysm builds from source. The results are identical; only speed differs by CPU. Experimental: benchmark it on a testnet node before you use it in production."
+	},
+	"disable-last-epoch-targets": {
+		"explain": "Deprecated and has no effect. Prysm still accepts it so existing configs don't break, and doesn't print a warning. Its replacement is `--ignore-unviable-attestations`. Remove it from your config.",
+		"related": [
+			"ignore-unviable-attestations"
+		]
+	},
+	"enable-historical-state-representation": {
+		"explain": "Migrates the database to store validator registries in a separate, deduplicated bucket so historical states take less space. This is a one-way schema migration: once it has run, the node behaves as if the flag is set, even if you remove it. It is pending deprecation (the node warns at startup that the node needs to be resynced after flag removal) and is ignored when `--enable-state-diff` is set.",
+		"caution": "The migration can't be undone, and the flag is scheduled for removal. Don't enable it on new nodes; consider `--enable-state-diff` on a fresh database for space-efficient history.",
+		"related": [
+			"enable-state-diff",
+			"slots-per-archive-point"
+		]
+	},
+	"terminal-total-difficulty-override": {
+		"explain": "Overrides `TERMINAL_TOTAL_DIFFICULTY`, the proof-of-work difficulty at which the Merge happened. Mainnet and the public testnets are past the Merge, so this only matters for a devnet that starts before it. When set, Prysm logs the warning `Terminal block difficult overridden`. Deprecated, as the Merge is complete; it still works.",
+		"related": [
+			"terminal-block-hash-override",
+			"terminal-block-hash-epoch-override",
+			"chain-config-file"
+		],
+		"guide": "/setup/connect-execution-client/",
+		"caution": "A wrong value on a live network causes a consensus failure."
+	},
+	"terminal-block-hash-override": {
+		"explain": "Overrides `TERMINAL_BLOCK_HASH`, which pins the Merge to a specific proof-of-work block, and logs `Terminal block hash overridden`. Only relevant to pre-Merge devnets; use it with `--terminal-block-hash-epoch-override`. Deprecated, as the Merge is complete; it still works.",
+		"related": [
+			"terminal-block-hash-epoch-override",
+			"terminal-total-difficulty-override"
+		],
+		"guide": "/setup/connect-execution-client/",
+		"caution": "A wrong value on a live network causes a consensus failure."
+	},
+	"terminal-block-hash-epoch-override": {
+		"explain": "Overrides `TERMINAL_BLOCK_HASH_ACTIVATION_EPOCH`, the epoch from which the terminal block hash override applies, and logs `Terminal block hash activation epoch overridden`. Only relevant to pre-Merge devnets. Deprecated, as the Merge is complete; it still works.",
+		"related": [
+			"terminal-block-hash-override",
+			"terminal-total-difficulty-override"
+		],
+		"guide": "/setup/connect-execution-client/",
+		"caution": "A wrong value on a live network causes a consensus failure."
+	},
+	"healthz-max-goroutines": {
+		"explain": "Threshold for the blockchain service's health status. If the average goroutine count exceeds it, the service reports an error and `/healthz` on the monitoring port returns HTTP 503. Raise it if your node is healthy but trips this check under heavy load. `--max-goroutines` is a deprecated alias.",
+		"example": "--healthz-max-goroutines=10000",
+		"related": [
+			"monitoring-port"
+		],
+		"guide": "/operate/metrics/"
+	},
+	"blockprofilerate": {
+		"explain": "Sets Go's `runtime.SetBlockProfileRate`: about one blocking event is sampled per this many nanoseconds spent blocked (`1` records every event). `0` (default) leaves block profiling off. Read results from `/debug/pprof/block` with `--pprof`.",
+		"example": "--blockprofilerate=1",
+		"related": [
+			"pprof",
+			"mutexprofilefraction"
+		]
+	},
+	"memprofilerate": {
+		"explain": "Sets Go's `runtime.MemProfileRate`: one allocation sampled per this many bytes allocated. The default 524288 (512 KiB) is Go's own default. Lower values give more precise heap profiles at a CPU cost; `0` turns heap profiling off.",
+		"related": [
+			"pprof"
+		]
+	},
+	"mutexprofilefraction": {
+		"explain": "Sets Go's `runtime.SetMutexProfileFraction`: on average one in this many mutex contention events is recorded. `0` (default) leaves mutex profiling off. Read results from `/debug/pprof/mutex` with `--pprof`.",
+		"example": "--mutexprofilefraction=5",
+		"related": [
+			"pprof",
+			"blockprofilerate"
+		]
+	},
+	"pprofaddr": {
+		"explain": "Interface for the pprof server started by `--pprof`. Keep the default `127.0.0.1`: the endpoints are unauthenticated and can be used to trigger expensive profiles.",
+		"related": [
+			"pprof",
+			"pprofport"
+		]
+	},
+	"pprof": {
+		"explain": "Starts Go's standard pprof HTTP server at `http://<pprofaddr>:<pprofport>/debug/pprof/`, for CPU, heap, goroutine, block and mutex profiles (`go tool pprof` reads them directly). The node logs `Starting pprof server` with the address. Overhead is negligible until you request a profile.",
+		"example": "--pprof",
+		"related": [
+			"pprofaddr",
+			"pprofport",
+			"memprofilerate",
+			"blockprofilerate",
+			"mutexprofilefraction"
+		]
+	},
+	"pprofport": {
+		"explain": "Port for the pprof server. Change it if 6060 is taken, for example when a validator client with `--pprof` runs on the same host.",
+		"example": "--pprofport=6061",
+		"related": [
+			"pprof",
+			"pprofaddr"
+		]
+	},
+	"gc-percent": {
+		"explain": "Sets Go's garbage collection target (the same as the `GOGC` environment variable): a GC runs when new allocations reach this percentage of the live heap. Lower values reduce peak memory at the cost of CPU; higher values do the opposite. It is only applied when you set the flag.",
+		"example": "--gc-percent=50",
+		"related": [
+			"memprofilerate"
+		]
+	},
+	"db restore::restore-source-file": {
+		"explain": "Path to the database file to restore. The file is copied as is to `<restore-target-dir>/beaconchaindata/beaconchain.db`; blobs and data columns are not part of it. Stop the beacon node before restoring.",
+		"example": "beacon-chain db restore --restore-source-file=/backups/beaconchain.db --restore-target-dir=/var/lib/ethereum/beacon",
+		"guide": "/operate/backup-and-restore/"
+	},
+	"db restore::restore-target-dir": {
+		"explain": "The beacon node data directory to restore into, the same value as `--datadir`. If a database already exists there, the command asks before overwriting it.",
+		"guide": "/operate/backup-and-restore/"
+	},
+	"generate-auth-secret::output-file": {
+		"explain": "Where to write the new JWT secret: a `0x`-prefixed 64-character hex string (32 random bytes), with `0600` permissions. Without this flag the file is `jwt.hex` in the current directory; missing parent directories are created. Give the same file to the beacon node (`--jwt-secret`) and the execution client.",
+		"example": "beacon-chain generate-auth-secret --output-file=/var/lib/ethereum/jwt.hex",
+		"guide": "/setup/connect-execution-client/",
+		"caution": "An existing file at that path is overwritten without asking. Restart both clients if the secret changes."
+	},
+	"disable-partial-data-columns": {
+		"explain": "Partial data columns are on by default: the node gossips PeerDAS data columns cell by cell instead of as whole columns, so it can send and receive the cells it has, and builds cells from blobs already in the execution client's mempool when the execution client supports it. This flag falls back to gossiping whole columns. `--partial-data-columns`, which turned the feature on in earlier releases, is deprecated and has no effect.",
+		"example": "--disable-partial-data-columns",
+		"related": [
+			"supernode",
+			"data-column-batch-limit"
+		]
+	},
+	"enable-archive": {
+		"explain": "Turns the node into an archive node. Start it with checkpoint sync and an empty data directory: the node follows the chain within minutes, downloads every block back to the archive origin (genesis by default, see `--archive-origin-state`), then rebuilds every historical state. Implies `--enable-state-diff` and `--enable-backfill`. Progress is logged as `Archive state regeneration in progress`, and a restart resumes where it stopped.",
+		"example": "--enable-archive",
+		"caution": "It needs a database created with it, and it can't be combined with `--beacon-db-pruning`: the node refuses to start.",
+		"related": [
+			"archive-origin-state",
+			"enable-state-diff",
+			"state-diff-exponents",
+			"checkpoint-sync-url"
+		],
+		"guide": "/setup/archive-node/"
+	},
+	"archive-origin-state": {
+		"explain": "Path to an SSZ-encoded beacon state to use as the oldest state of an archive node, instead of genesis. The state must be at the first slot of an epoch and belong to the network you run; it can't be newer than the checkpoint the node synced from. It's trusted like a checkpoint state, so take it from a source you trust. Requires `--enable-archive`.",
+		"example": "--archive-origin-state=/path/to/state.ssz",
+		"caution": "The origin is stored in the database. Starting later with a different state makes the node refuse to start; delete the database to change it.",
+		"related": [
+			"enable-archive"
+		],
+		"guide": "/setup/archive-node/"
+	},
+	"builder-bid-timeout": {
+		"explain": "From the Gloas fork on, how long the node waits for execution payload bids from builders when it builds a block. Accepts Go durations (`600ms`, `1s`). Must be greater than 0. Has no effect before Gloas; `--builder-header-timeout` plays that role for MEV-Boost.",
+		"example": "--builder-bid-timeout=600ms",
+		"caution": "Raising it delays your block, which risks a missed or orphaned proposal.",
+		"related": [
+			"builder-header-timeout"
+		]
+	},
+	"builder-allowed-failures": {
+		"explain": "From the Gloas fork on, the builder circuit breaker blacklists a builder that wins an auction but doesn't deliver its payload. This sets how many such failures a builder is allowed before it's blacklisted. `0` (default) blacklists it on the first failure.",
+		"example": "--builder-allowed-failures=1",
+		"related": [
+			"builder-critical-failures",
+			"builder-blacklist-period",
+			"builder-critical-blacklist-period",
+			"builder-failure-backoff-period",
+			"builder-critical-failed-builders",
+			"builder-relay-blacklist-period",
+			"disable-builder-relay-circuit-breaker"
+		]
+	},
+	"builder-critical-failures": {
+		"explain": "From the Gloas fork on, the failure count at which a builder is blacklisted for the longer `--builder-critical-blacklist-period` instead of `--builder-blacklist-period`.",
+		"example": "--builder-critical-failures=3",
+		"related": [
+			"builder-allowed-failures",
+			"builder-blacklist-period",
+			"builder-critical-blacklist-period",
+			"builder-failure-backoff-period",
+			"builder-critical-failed-builders",
+			"builder-relay-blacklist-period",
+			"disable-builder-relay-circuit-breaker"
+		]
+	},
+	"builder-blacklist-period": {
+		"explain": "From the Gloas fork on, how many epochs a builder stays blacklisted after its first payload delivery failure. Must be greater than 0.",
+		"example": "--builder-blacklist-period=2",
+		"related": [
+			"builder-allowed-failures",
+			"builder-critical-failures",
+			"builder-critical-blacklist-period",
+			"builder-failure-backoff-period",
+			"builder-critical-failed-builders",
+			"builder-relay-blacklist-period",
+			"disable-builder-relay-circuit-breaker"
+		]
+	},
+	"builder-critical-blacklist-period": {
+		"explain": "From the Gloas fork on, how many epochs a builder stays blacklisted once it reaches `--builder-critical-failures` failures. The default, 256 epochs, is a bit more than a day.",
+		"example": "--builder-critical-blacklist-period=512",
+		"related": [
+			"builder-allowed-failures",
+			"builder-critical-failures",
+			"builder-blacklist-period",
+			"builder-failure-backoff-period",
+			"builder-critical-failed-builders",
+			"builder-relay-blacklist-period",
+			"disable-builder-relay-circuit-breaker"
+		]
+	},
+	"builder-failure-backoff-period": {
+		"explain": "From the Gloas fork on, the number of epochs without a failure after which a builder's failure count goes back to zero.",
+		"example": "--builder-failure-backoff-period=10",
+		"related": [
+			"builder-allowed-failures",
+			"builder-critical-failures",
+			"builder-blacklist-period",
+			"builder-critical-blacklist-period",
+			"builder-critical-failed-builders",
+			"builder-relay-blacklist-period",
+			"disable-builder-relay-circuit-breaker"
+		]
+	},
+	"builder-critical-failed-builders": {
+		"explain": "From the Gloas fork on, when this many builders are blacklisted at the same time, the node stops using builders and builds every block locally. Must be greater than 0.",
+		"example": "--builder-critical-failed-builders=5",
+		"related": [
+			"builder-allowed-failures",
+			"builder-critical-failures",
+			"builder-blacklist-period",
+			"builder-critical-blacklist-period",
+			"builder-failure-backoff-period",
+			"builder-relay-blacklist-period",
+			"disable-builder-relay-circuit-breaker"
+		]
+	},
+	"builder-relay-blacklist-period": {
+		"explain": "From the Gloas fork on, the circuit breaker also bans the builder endpoints that served a builder which failed to deliver its payload. This sets the maximum number of epochs an endpoint stays banned; it never exceeds the failing builder's own blacklist.",
+		"example": "--builder-relay-blacklist-period=16",
+		"related": [
+			"builder-allowed-failures",
+			"builder-critical-failures",
+			"builder-blacklist-period",
+			"builder-critical-blacklist-period",
+			"builder-failure-backoff-period",
+			"builder-critical-failed-builders",
+			"disable-builder-relay-circuit-breaker"
+		]
+	},
+	"disable-builder-relay-circuit-breaker": {
+		"explain": "From the Gloas fork on, stops the circuit breaker from tracking which builders each builder endpoint serves, so a failing builder no longer gets the endpoints that served it banned. Builders themselves are still blacklisted.",
+		"related": [
+			"builder-allowed-failures",
+			"builder-critical-failures",
+			"builder-blacklist-period",
+			"builder-critical-blacklist-period",
+			"builder-failure-backoff-period",
+			"builder-critical-failed-builders",
+			"builder-relay-blacklist-period"
+		]
+	},
+	"subscribe-all-data-subnets": {
+		"explain": "Deprecated alias of `--supernode`. It still works; use `--supernode` instead.",
+		"related": [
+			"supernode"
+		]
+	},
+	"enable-experimental-backfill": {
+		"explain": "Deprecated alias of `--enable-backfill`. It still works; use `--enable-backfill` instead.",
+		"related": [
+			"enable-backfill"
+		]
+	},
+	"extend-blob-retention-epoch": {
+		"explain": "Deprecated alias of `--blob-retention-epochs`. It still works; use `--blob-retention-epochs` instead.",
+		"related": [
+			"blob-retention-epochs"
+		]
+	},
+	"max-goroutines": {
+		"explain": "Deprecated alias of `--healthz-max-goroutines`. It still works; use `--healthz-max-goroutines` instead.",
+		"related": [
+			"healthz-max-goroutines"
+		]
+	}
+}

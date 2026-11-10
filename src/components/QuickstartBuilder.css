@@ -1,0 +1,333 @@
+/* Scoped under .qs; the extra class keeps these above Infima's .markdown rules. */
+.qs {
+	display: block;
+	margin-top: 1.5rem;
+}
+.qs .qs-config {
+	background: var(--site-color-bg-nav);
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	padding: 1rem 1.1rem 1.1rem;
+	box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--site-color-accent) 45%, transparent);
+}
+.qs .qs-config-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 1rem;
+	flex-wrap: wrap;
+	margin-bottom: 0.6rem;
+}
+.qs .qs-config-title {
+	font-family: var(--prysm-display);
+	font-weight: 650;
+	font-size: 1.1rem;
+	color: var(--site-color-white);
+	margin: 0;
+}
+.qs .qs-share {
+	font: inherit;
+	font-size: 0.8rem;
+	background: none;
+	border: 0;
+	color: var(--site-color-accent);
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	padding: 0;
+}
+.qs .qs-groups {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.75rem 1.25rem;
+}
+@media (max-width: 60rem) {
+	.qs .qs-groups {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+@media (max-width: 36rem) {
+	.qs .qs-groups {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+.qs .qs-group {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+}
+.qs .qs-wide {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.5rem;
+	align-items: flex-start;
+}
+.qs .qs-group legend {
+	font-size: 0.75rem;
+	color: var(--site-color-gray-3);
+	margin-bottom: 0.3rem;
+	padding: 0;
+}
+.qs .qs-wide legend {
+	width: 100%;
+	float: left;
+	margin-bottom: 0;
+}
+.qs .qs-seg {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+.qs .qs-seg label {
+	position: relative;
+}
+.qs .qs-seg input {
+	position: absolute;
+	opacity: 0;
+	inset: 0;
+	margin: 0;
+	cursor: pointer;
+}
+.qs .qs-seg span {
+	display: inline-block;
+	padding: 0.3rem 0.65rem;
+	border-radius: 999px;
+	border: 1px solid var(--site-color-gray-5);
+	font-size: 0.85rem;
+	color: var(--site-color-gray-2);
+	transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+	cursor: pointer;
+	user-select: none;
+}
+.qs .qs-seg input:hover + span {
+	border-color: var(--site-color-accent);
+}
+.qs .qs-seg input:checked + span {
+	background: var(--site-color-accent);
+	border-color: var(--site-color-accent);
+	color: var(--site-color-black);
+	font-weight: 600;
+}
+.qs .qs-seg input:focus-visible + span {
+	outline: 2px solid var(--site-color-accent-high);
+	outline-offset: 2px;
+}
+.qs .qs-seg input:disabled + span {
+	opacity: 0.4;
+	cursor: not-allowed;
+	text-decoration: line-through;
+}
+.qs .qs-check {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	font-size: 0.9rem;
+	padding-top: 0.35rem;
+	cursor: pointer;
+}
+.qs .qs-check input {
+	accent-color: var(--site-color-accent);
+	width: 1rem;
+	height: 1rem;
+}
+.qs .qs-text {
+	display: grid;
+	gap: 0.2rem;
+	flex: 1 1 18rem;
+	min-width: 0;
+	font-size: 0.85rem;
+}
+.qs .qs-text input {
+	font: inherit;
+	font-family: var(--site-font-mono);
+	font-size: 0.85rem;
+	padding: 0.4rem 0.6rem;
+	border-radius: 0.5rem;
+	border: 1px solid var(--site-color-gray-5);
+	background: var(--site-color-bg);
+	color: var(--site-color-white);
+	width: 100%;
+	box-sizing: border-box;
+}
+.qs .qs-text input:invalid {
+	border-color: #e5484d;
+}
+.qs .qs-text small {
+	color: var(--site-color-gray-3);
+	font-size: 0.75rem;
+}
+.qs .qs-text small.bad {
+	color: #e5484d;
+}
+.qs .qs-note {
+	margin: 0.8rem 0 0;
+	font-size: 0.85rem;
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.5rem;
+	background: color-mix(in srgb, var(--prysm-amber) 16%, transparent);
+	color: var(--site-color-white);
+}
+
+.qs .qs-steps {
+	list-style: none;
+	counter-reset: step;
+	padding: 0;
+	margin: 2.5rem 0 0;
+}
+.qs .qs-steps > li {
+	counter-increment: step;
+	position: relative;
+	padding: 0 0 2.25rem 3.25rem;
+	border-left: 1px solid var(--site-color-gray-5);
+	margin: 0 0 0 1rem;
+}
+.qs .qs-steps > li[hidden] {
+	display: none;
+}
+.qs .qs-steps > li:last-of-type {
+	border-left-color: transparent;
+}
+.qs .qs-steps > li::before {
+	content: counter(step);
+	position: absolute;
+	left: -1.05rem;
+	top: -0.1rem;
+	width: 2.1rem;
+	height: 2.1rem;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	font-family: var(--prysm-display);
+	font-weight: 700;
+	background: var(--site-color-bg);
+	border: 1.5px solid var(--site-color-accent);
+	color: var(--site-color-accent-high);
+}
+.qs .qs-steps h2 {
+	font-family: var(--prysm-display);
+	font-size: 1.35rem;
+	font-weight: 650;
+	letter-spacing: -0.015em;
+	margin: 0 0 0.5rem;
+	color: var(--site-color-white);
+	scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem);
+}
+.qs .qs-steps p {
+	margin: 0.6rem 0;
+	color: var(--site-color-gray-2);
+	line-height: 1.65;
+	max-width: 42rem;
+}
+.qs .qs-steps p[hidden] {
+	display: none;
+}
+.qs .qs-steps ul {
+	margin: 0.6rem 0;
+	padding-left: 1.25rem;
+	color: var(--site-color-gray-2);
+	line-height: 1.65;
+	max-width: 42rem;
+}
+.qs .qs-steps ul li + li {
+	margin-top: 0.3rem;
+}
+.qs .qs-steps a {
+	color: var(--site-color-text-accent);
+}
+.qs .qs-steps code {
+	font-family: var(--site-font-mono);
+	font-size: 0.85em;
+	background: color-mix(in srgb, var(--site-color-accent) 12%, transparent);
+	border: 0;
+	padding: 0.08em 0.3em;
+	border-radius: 0.25rem;
+	vertical-align: baseline;
+}
+
+/* Command blocks keep a dark look in both themes. */
+.qs .qs-code {
+	position: relative;
+	margin: 0.75rem 0;
+}
+.qs .qs-code pre {
+	margin: 0;
+	padding: 0.9rem 5rem 0.9rem 1rem;
+	border-radius: 0.6rem;
+	background: #0e1c26;
+	border: 1px solid #1d3240;
+	/* Long lines (relay URLs) scroll instead of wrapping mid-argument. */
+	white-space: pre;
+	overflow-x: auto;
+	font-family: var(--site-font-mono);
+	font-size: 0.84rem;
+	line-height: 1.6;
+	color: #d8e5ee;
+}
+.qs .qs-code code {
+	background: none;
+	border: 0;
+	padding: 0;
+	font-size: inherit;
+	color: inherit;
+}
+.qs .qs-code .fl {
+	color: #67b4e8;
+}
+.qs .qs-code mark.ph {
+	background: color-mix(in srgb, var(--prysm-amber) 22%, transparent);
+	color: #ffd58a;
+	border-radius: 0.2rem;
+	padding: 0 0.1rem;
+}
+.qs .qs-copy {
+	position: absolute;
+	top: 0.55rem;
+	right: 0.55rem;
+	font: inherit;
+	font-size: 0.75rem;
+	padding: 0.25rem 0.6rem;
+	border-radius: 0.4rem;
+	border: 1px solid #2c4658;
+	background: #132a3a;
+	color: #cfdfea;
+	cursor: pointer;
+}
+.qs .qs-copy:hover {
+	border-color: #67b4e8;
+}
+.qs .qs-tree {
+	font-family: var(--site-font-mono);
+	font-size: 0.82rem;
+	line-height: 1.5;
+	color: var(--site-color-gray-2);
+	background: var(--site-color-gray-6);
+	border: 0;
+	border-radius: 0.5rem;
+	padding: 0.6rem 0.9rem;
+	display: inline-block;
+	max-width: 100%;
+	overflow-x: auto;
+	margin: 0.25rem 0 0;
+}
+.qs .qs-card {
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 0.5rem;
+	padding: 0.6rem 0.9rem;
+	margin: 0.8rem 0;
+	max-width: 42rem;
+}
+.qs .qs-card p,
+.qs .qs-card ul {
+	margin: 0.2rem 0;
+}
+.qs .qs-card .qs-card-title {
+	font-weight: 650;
+	color: var(--site-color-white);
+}
+.qs .qs-warn {
+	padding: 0.6rem 0.8rem;
+	border-radius: 0.5rem;
+	background: color-mix(in srgb, var(--prysm-amber) 16%, transparent);
+}

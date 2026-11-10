@@ -1,0 +1,66 @@
+.life {
+	margin: 1.5rem 0;
+	padding: 1rem;
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	background: var(--site-color-bg-nav);
+	overflow-x: auto;
+}
+.life svg {
+	width: 100%;
+	min-width: 36rem;
+	height: auto;
+	display: block;
+}
+.life text {
+	font-family: var(--site-font);
+	text-anchor: middle;
+	fill: var(--site-color-gray-2);
+}
+.life .l-box rect {
+	fill: var(--site-color-bg);
+	stroke: var(--site-color-gray-4);
+	stroke-width: 1.5;
+}
+.life .l-active rect {
+	stroke: var(--site-color-accent);
+	fill: color-mix(in srgb, var(--site-color-accent) 12%, var(--site-color-bg));
+}
+.life .l-slashed rect {
+	stroke: var(--site-color-red, #d33);
+	stroke-dasharray: 6 4;
+}
+.life .l-title {
+	font-family: var(--prysm-display);
+	font-weight: 650;
+	font-size: 15px;
+	fill: var(--site-color-white);
+}
+.life .l-api {
+	font-family: var(--site-font-mono);
+	font-size: 10.5px;
+	fill: var(--site-color-gray-3);
+}
+.life .l-api-long {
+	font-size: 9px;
+}
+.life .l-note {
+	font-size: 11.5px;
+	fill: var(--site-color-gray-2);
+}
+.life .l-left {
+	text-anchor: start;
+	fill: var(--site-color-gray-3);
+}
+.life .l-step,
+.life .l-link path {
+	stroke: var(--site-color-gray-3);
+	stroke-width: 1.5;
+}
+.life .l-danger path {
+	stroke: var(--site-color-red, #d33);
+	stroke-dasharray: 5 4;
+}
+.life .l-arrowhead {
+	fill: var(--site-color-gray-3);
+}

@@ -1,0 +1,121 @@
+/* Scoped under .nt; the extra class keeps these above Infima's .markdown rules. */
+.nt {
+	display: grid;
+	gap: 1rem;
+	margin: 1.5rem 0 var(--ifm-spacing-vertical);
+}
+.nt .nt-card {
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	padding: 1.1rem 1.25rem;
+	background: var(--site-color-bg-nav);
+	min-width: 0;
+}
+.nt .nt-card a {
+	color: var(--site-color-text-accent);
+}
+.nt .nt-card header {
+	display: flex;
+	align-items: baseline;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+.nt .nt-card h3 {
+	margin: 0;
+	font-family: var(--prysm-display);
+	font-size: 1.35rem;
+	font-weight: 650;
+	color: var(--site-color-white);
+	scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem);
+}
+.nt .nt-card code {
+	font-family: var(--site-font-mono);
+	font-size: 0.82rem;
+	color: var(--site-color-accent-high);
+	background: none;
+	border: 0;
+	padding: 0;
+}
+.nt .nt-purpose {
+	margin: 0.35rem 0 0.9rem;
+	color: var(--site-color-gray-2);
+}
+.nt .nt-live {
+	display: flex;
+	gap: 0.75rem 2rem;
+	flex-wrap: wrap;
+	margin: 0;
+}
+.nt .nt-live dt,
+.nt .nt-facts dt {
+	font-size: 0.75rem;
+	font-weight: 400;
+	color: var(--site-color-gray-3);
+}
+.nt .nt-live dd {
+	margin: 0;
+	font-family: var(--prysm-display);
+	font-size: 1.5rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--site-color-white);
+}
+.nt .nt-next {
+	margin: 0.6rem 0 0;
+	font-size: 0.88rem;
+	padding: 0.4rem 0.7rem;
+	border-radius: 0.5rem;
+	background: color-mix(in srgb, var(--prysm-violet) 16%, transparent);
+	color: var(--site-color-white);
+	display: inline-block;
+}
+.nt .nt-next[hidden] {
+	display: none;
+}
+.nt .nt-facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+	gap: 0.75rem 1.5rem;
+	margin: 1rem 0 0;
+	padding-top: 0.9rem;
+	border-top: 1px solid var(--site-color-hairline-light);
+}
+.nt .nt-facts dd {
+	margin: 0.1rem 0 0;
+	font-size: 0.9rem;
+	overflow-wrap: anywhere;
+}
+.nt .nt-card .nt-addr {
+	font-size: 0.75rem;
+}
+.nt .nt-forks {
+	margin-top: 0.9rem;
+	font-size: 0.88rem;
+}
+.nt .nt-forks summary {
+	cursor: pointer;
+	color: var(--site-color-text-accent);
+}
+.nt .nt-forks table {
+	display: table;
+	margin: 0.5rem 0 0;
+	width: 100%;
+	border-collapse: collapse;
+	font-variant-numeric: tabular-nums;
+}
+.nt .nt-forks tr {
+	background: none;
+	border: 0;
+}
+.nt .nt-forks th,
+.nt .nt-forks td {
+	text-align: left;
+	padding: 0.3rem 0.5rem;
+	border: 0;
+	border-bottom: 1px solid var(--site-color-hairline-light);
+	background: none;
+}
+.nt .nt-forks tr.future td {
+	color: var(--site-color-accent-high);
+	font-weight: 600;
+}

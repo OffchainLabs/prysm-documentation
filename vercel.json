@@ -1,221 +1,345 @@
 {
-  "buildCommand": "npx docusaurus build --out-dir build/docs",
-  "outputDirectory": "build",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "docusaurus",
-  "installCommand": "npm install",
+  "buildCommand": "npm run build && node tools/nest-under-base.mjs",
+  "outputDirectory": "build",
+  "installCommand": "npm ci",
   "trailingSlash": true,
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/robots.txt",
-      "destination": "/docs/robots.txt"
-    }
-  ],
   "headers": [
     {
       "source": "/docs/:path*",
-      "headers": [{ "key": "Vary", "value": "Accept" }]
+      "headers": [
+        {
+          "key": "Vary",
+          "value": "Accept"
+        }
+      ]
     },
     {
       "source": "/docs/:path*.md",
-      "headers": [{ "key": "Content-Type", "value": "text/markdown; charset=utf-8" }]
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/markdown; charset=utf-8"
+        }
+      ]
     }
   ],
   "redirects": [
-    { "source": "/prysm/docs/(.*)", 
-      "destination": "/docs/$1", 
-      "permanent": false },
-    { "source": "/", 
-      "destination": "/docs/", 
-      "permanent": false },
-    { "source": "", 
-      "destination": "/docs/", 
-      "permanent": false },
-    { "source": "/docs", 
-      "destination": "/docs/", 
-      "permanent": false },
-    { "source": "/(docs/getting-started/?)", 
-      "destination": "/docs/", 
-      "permanent": false },
-    { "source": "/(docs/advanced/beacon_node_api/?)", 
-      "destination": "/docs/configure-prysm/beacon_node_api/", 
-      "permanent": false },
-    { "source": "/(docs/advanced/builder/?)", 
-      "destination": "/docs/configure-prysm/builder/", 
-      "permanent": false },
-    { "source": "/(docs/advanced/maintaining-uptime/?)", 
-      "destination": "/docs/manage-wallet/maintaining-uptime/", 
-      "permanent": false },
-    { "source": "/(docs/advanced/migrating-keys/?)", 
-      "destination": "/docs/backup-and-migration/migrating-keys/", 
-      "permanent": false },
-    { "source": "/(docs/advanced/switch-clients/?)", 
-      "destination": "/docs/backup-and-migration/switch-clients/", 
-      "permanent": false },
-    { "source": "/(docs/audits/phase0/?)", 
-      "destination": "/docs/misc/phase0/", 
-      "permanent": false },
-    { "source": "/(docs/concepts/blobs/?)", 
-      "destination": "/docs/learn/concepts/blobs/", 
-      "permanent": false },
-    { "source": "/(docs/concepts/execution-requests/?)", 
-      "destination": "/docs/learn/concepts/execution-requests/", 
-      "permanent": false },
-    { "source": "/(docs/concepts/nodes-networks/?)", 
-      "destination": "/docs/learn/concepts/nodes-networks/", 
-      "permanent": false },
-    { "source": "/(docs/concepts/slashing/?)", 
-      "destination": "/docs/learn/concepts/slashing/", 
-      "permanent": false },
-    { "source": "/(docs/contribute/prysms-golang-principles/?)", 
-      "destination": "/docs/learn/tools/golang-principles/", 
-      "permanent": false },
-    { "source": "/(docs/contribute/required-reading/?)", 
-      "destination": "/docs/learn/required-reading/", 
-      "permanent": false },
-    { "source": "/(docs/devtools/block-explorers/?)",
-      "destination": "/docs/misc/block-explorers/",
-      "permanent": false },
-    { "source": "/(docs/devtools/end-to-end/?)", 
-      "destination": "/docs/learn/dev-concepts/end-to-end/", 
-      "permanent": false },
-    { "source": "/(docs/devtools/init-state/?)", 
-      "destination": "/docs/learn/dev-concepts/init-state/", 
-      "permanent": false },
-    { "source": "/(docs/devtools/net-design/?)", 
-      "destination": "/docs/learn/dev-concepts/net-design/", 
-      "permanent": false },
-    { "source": "/(docs/execution-node/authentication/?)", 
-      "destination": "/docs/configure-prysm/authentication/", 
-      "permanent": false },
-    { "source": "/(docs/execution-node/configuring-for-prysm/?)", 
-      "destination": "/docs/configure-prysm/configuring-for-prysm/", 
-      "permanent": false },
-    { "source": "/(docs/execution-node/fee-recipient/?)", 
-      "destination": "/docs/configure-prysm/fee-recipient/", 
-      "permanent": false },
-    { "source": "/(docs/how-prysm/works/beacon-node/?)", 
-      "destination": "/docs/learn/dev-concepts/beacon-node/", 
-      "permanent": false },
-    { "source": "/(docs/how-prysm/works/bls-signature-aggregation-and-cryptography/?)", 
-      "destination": "/docs/learn/dev-concepts/bls-cryptography/", 
-      "permanent": false },
-    { "source": "/(docs/how-prysm/works/database-backend-boltdb/?)", 
-      "destination": "/docs/learn/dev-concepts/database-backend-boltdb/", 
-       "permanent": false },
-    { "source": "/(docs/how-prysm/works/ethereum-public-api/?)", 
-      "destination": "/docs/apis/ethereum-public-api/", 
-       "permanent": false },
-    { "source": "/(docs/how-prysm/works/keymanager-api/?)", 
-      "destination": "/docs/apis/keymanager-api/", 
-       "permanent": false },
-    { "source": "/(docs/how-prysm/works/optimistic-sync/?)", 
-      "destination": "/docs/learn/dev-concepts/optimistic-sync", 
-       "permanent": false },
-    { "source": "/(docs/how-prysm/works/overview-technical/?)", 
-      "destination": "/docs/learn/dev-concepts/architecture-overview/", 
-      "permanent": false },
-    { "source": "/(docs/how-prysm/works/p2p-networking/?)", 
-      "destination": "/docs/learn/dev-concepts/p2p-networking/", 
-      "permanent": false },
-    { "source": "/(docs/how-prysm/works/prysm-public-api/?)", 
-      "destination": "/docs/apis/prysm-public-api/", 
-      "permanent": false },
-    { "source": "/(docs/how-prysm/works/validator-clients/?)", 
-      "destination": "/docs/learn/dev-concepts/prysm-validator-client/", 
-      "permanent": false },
-    { "source": "/(docs/how-prysm/works/validator-deposit-contract/?)", 
-      "destination": "/docs/learn/dev-concepts/validator-deposit-contract/", 
-      "permanent": false },
-    { "source": "/(docs/how-prysm/works/validator-lifecycle/?)", 
-      "destination": "/docs/learn/concepts/validator-lifecycle/", 
-      "permanent": false },
-    { "source": "/(docs/install/install-with-bazel/?)", 
-      "destination": "/docs/install-prysm/install-with-bazel/", 
-      "permanent": false },
-    { "source": "/(docs/install/install-with-docker/?)", 
-      "destination": "/docs/install-prysm/install-with-docker/", 
-      "permanent": false },
-    { "source": "/(docs/install/install-with-script/?)", 
-      "destination": "/docs/install-prysm/install-with-script/", 
-      "permanent": false },
-    { "source": "/(docs/licenses/prysm/?)", 
-      "destination": "/docs/misc/prysm/", 
-      "permanent": false },
-    { "source": "/(docs/monitoring/checking-status/?)", 
-      "destination": "/docs/monitoring-alerts-metrics/checking-status/", 
-      "permanent": false },
-    { "source": "/(docs/monitoring/is-everything-fine/?)", 
-      "destination": "/docs/monitoring-alerts-metrics/is-everything-fine/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/monitoring/grafana-dashboard/?)", 
-      "destination": "/docs/monitoring-alerts-metrics/grafana-dashboard/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/checkpoint-sync/?)", 
-      "destination": "/docs/configure-prysm/checkpoint-sync/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/client-stats/?)", 
-      "destination": "/docs/monitoring-alerts-metrics/client-stats/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/database-backups/?)", 
-      "destination": "/docs/backup-and-migration/database-backups/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/graffiti-file/?)", 
-      "destination": "/docs/manage-validator/graffiti-file/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/individual-validator-monitoring/?)", 
-      "destination": "/docs/monitoring-alerts-metrics/individual-validator-monitoring", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/p2p-host-ip/?)", 
-      "destination": "/docs/manage-connections/p2p-host-ip/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/parameters/?)", 
-      "destination": "/docs/configure-prysm/parameters/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/prysmctl/?)", 
-      "destination": "/docs/configure-prysm/prysmctl/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/secure-grpc/?)", 
-      "destination": "/docs/manage-connections/secure-grpc/", 
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/slasher/?)",
-      "destination": "/docs/configure-prysm/slasher/",
-      "permanent": false },
-    { "source": "/(docs/prysm-usage/staying-up-to-date/?)", 
-      "destination": "/docs/configure-prysm/staying-up-to-date/", 
-      "permanent": false },
-    { "source": "/(docs/reading/bazel/?)", 
-      "destination": "/docs/learn/tools/bazel/", 
-      "permanent": false },
-    { "source": "/(docs/reading/eth2/?)", 
-      "destination": "/docs/learn/eth2/", 
-      "permanent": false },
-    { "source": "/(docs/reading/golang/?)", 
-      "destination": "/docs/learn/tools/golang/", 
-      "permanent": false },
-    { "source": "/(docs/reading/testnet_postmortems/?)",
-      "destination": "/docs/misc/testnet-postmortems/",
-      "permanent": false },
-    { "source": "/(docs/wallet/deterministic/?)", 
-      "destination": "/docs/manage-wallet/deterministic/", 
-      "permanent": false },
-    { "source": "/(docs/wallet/exiting-a-validator/?)", 
-      "destination": "/docs/manage-validator/exiting-a-validator/", 
-      "permanent": false },
-    { "source": "/(docs/wallet/introduction/?)", 
-      "destination": "/docs/learn/concepts/introduction/", 
-      "permanent": false },
-    { "source": "/(docs/wallet/nondeterministic/?)", 
-      "destination": "/docs/manage-wallet/nondeterministic/", 
-      "permanent": false },
-    { "source": "/(docs/wallet/slashing-protection/?)", 
-      "destination": "/docs/backup-and-migration/slashing-protection/", 
-      "permanent": false },
-    { "source": "/(docs/wallet/web3signer/?)", 
-      "destination": "/docs/manage-wallet/web3signer/", 
-      "permanent": false },
-    { "source": "/(docs/wallet/withdraw-validator/?)", 
-      "destination": "/docs/manage-validator/withdraw-validator/", 
-      "permanent": false }
+    {
+      "source": "/",
+      "destination": "/docs/",
+      "permanent": false
+    },
+    {
+      "source": "/prysm/docs/(.*)",
+      "destination": "/docs/$1",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/getting-started/?)",
+      "destination": "/docs/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/advanced/beacon_node_api/?)",
+      "destination": "/docs/setup/storage/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/advanced/builder/?)",
+      "destination": "/docs/validators/mev-boost/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/advanced/maintaining-uptime/?)",
+      "destination": "/docs/setup/run-with-systemd/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/advanced/migrating-keys/?)",
+      "destination": "/docs/operate/move-to-new-machine/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/advanced/switch-clients/?)",
+      "destination": "/docs/operate/switch-clients/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/audits/phase0/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/concepts/blobs/?)",
+      "destination": "/docs/setup/storage/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/concepts/execution-requests/?)",
+      "destination": "/docs/learn/how-staking-works/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/concepts/nodes-networks/?)",
+      "destination": "/docs/get-started/introduction/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/concepts/slashing/?)",
+      "destination": "/docs/learn/how-staking-works/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/contribute/prysms-golang-principles/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/contribute/required-reading/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/devtools/block-explorers/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/devtools/end-to-end/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/devtools/init-state/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/devtools/net-design/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/execution-node/authentication/?)",
+      "destination": "/docs/setup/connect-execution-client/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/execution-node/configuring-for-prysm/?)",
+      "destination": "/docs/setup/connect-execution-client/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/execution-node/fee-recipient/?)",
+      "destination": "/docs/validators/fee-recipient/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/beacon-node/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/bls-signature-aggregation-and-cryptography/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/database-backend-boltdb/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/ethereum-public-api/?)",
+      "destination": "/docs/reference/apis/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/keymanager-api/?)",
+      "destination": "/docs/reference/apis/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/optimistic-sync/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/overview-technical/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/p2p-networking/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/prysm-public-api/?)",
+      "destination": "/docs/reference/apis/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/validator-clients/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/validator-deposit-contract/?)",
+      "destination": "/docs/validators/deposit/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/how-prysm/works/validator-lifecycle/?)",
+      "destination": "/docs/learn/how-staking-works/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/install/install-with-bazel/?)",
+      "destination": "/docs/install/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/install/install-with-docker/?)",
+      "destination": "/docs/install/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/install/install-with-script/?)",
+      "destination": "/docs/get-started/quickstart/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/licenses/prysm/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/monitoring/checking-status/?)",
+      "destination": "/docs/operate/check-health/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/monitoring/is-everything-fine/?)",
+      "destination": "/docs/operate/metrics/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/monitoring/grafana-dashboard/?)",
+      "destination": "/docs/operate/metrics/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/checkpoint-sync/?)",
+      "destination": "/docs/setup/checkpoint-sync/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/client-stats/?)",
+      "destination": "/docs/operate/metrics/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/database-backups/?)",
+      "destination": "/docs/operate/backup-and-restore/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/graffiti-file/?)",
+      "destination": "/docs/validators/graffiti/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/individual-validator-monitoring/?)",
+      "destination": "/docs/operate/validator-monitoring/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/p2p-host-ip/?)",
+      "destination": "/docs/setup/networking/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/parameters/?)",
+      "destination": "/docs/reference/cli/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/prysmctl/?)",
+      "destination": "/docs/reference/cli/prysmctl/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/secure-grpc/?)",
+      "destination": "/docs/security/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/slasher/?)",
+      "destination": "/docs/validators/avoid-slashing/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/prysm-usage/staying-up-to-date/?)",
+      "destination": "/docs/install/update/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/reading/bazel/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/reading/eth2/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/reading/golang/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/reading/testnet_postmortems/?)",
+      "destination": "/docs/resources/help/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/wallet/deterministic/?)",
+      "destination": "/docs/validators/import-keys/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/wallet/exiting-a-validator/?)",
+      "destination": "/docs/validators/exit/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/wallet/introduction/?)",
+      "destination": "/docs/learn/keys-and-withdrawals/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/wallet/nondeterministic/?)",
+      "destination": "/docs/validators/import-keys/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/wallet/slashing-protection/?)",
+      "destination": "/docs/validators/slashing-protection-history/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/wallet/web3signer/?)",
+      "destination": "/docs/validators/remote-signer/",
+      "permanent": false
+    },
+    {
+      "source": "/(docs/wallet/withdraw-validator/?)",
+      "destination": "/docs/validators/withdrawals/",
+      "permanent": false
+    }
   ]
 }

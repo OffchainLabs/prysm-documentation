@@ -1,0 +1,37 @@
+---
+title: What is Prysm?
+description: Prysm is an Ethereum consensus client. Learn the three programs you run, the hardware you need, and where to start.
+---
+
+import StackDiagram from '@site/src/components/StackDiagram';
+
+Prysm is an Ethereum consensus client, written in Go and maintained by [Offchain Labs](https://www.offchainlabs.com/). It is open source under the GPL-3.0 license and has run on mainnet since the Beacon Chain launched in December 2020.
+
+## What you run
+
+An Ethereum node is two programs working together. If you stake, you add a third.
+
+| Program | What it does | Who provides it |
+| --- | --- | --- |
+| **Execution client** | Runs transactions and keeps the account and contract state. | Another team: Geth, Nethermind, Besu, Erigon, Reth or Ethrex |
+| **Beacon node** | Follows the proof-of-stake chain and tells the execution client which block is the head. | Prysm (`beacon-chain`) |
+| **Validator client** | Holds your validator keys and signs attestations and blocks. Only needed to stake. | Prysm (`validator`) |
+
+<StackDiagram />
+
+You always run the execution client and the beacon node together, usually on the same machine. They share a secret file (`jwt.hex`) so only your beacon node can control your execution client.
+
+The validator client talks only to the beacon node. It never needs to be reachable from the internet. Your validator earns rewards for signing on time. It loses a little when it's offline, and a lot if the same keys ever run in two places at once.
+
+For how staking works in more depth (deposits, activation, rewards and exits), see [How staking works](/learn/how-staking-works/).
+
+## What you need
+
+| | Minimum | Recommended |
+| --- | --- | --- |
+| **CPU** | 4 cores | 4 cores / 8 threads, or 8 cores / 16 threads if you validate |
+| **Memory** | 16 GB | 32 GB, or 64 GB if you validate |
+| **Disk** | 2 TB NVMe SSD | 4 TB NVMe SSD |
+| **Internet** | 25 Mbit/s, no tight data cap | 50 Mbit/s down, 15–25 Mbit/s up |
+
+These figures cover the execution client and beacon node together. The validator client itself adds little.

@@ -1,0 +1,130 @@
+---
+title: "Convert a 0x00 validator to 0x01"
+description: "Give a 0x00 validator a withdrawal address: sign a BLS-to-execution change with your mnemonic in the deposit CLI, then submit it with prysmctl."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+# Convert a `0x00` validator to `0x01`
+
+Validators created without a withdrawal address have `0x00` credentials. They earn rewards like any other validator, but you can't send anything to an Ethereum address: neither rewards nor, after an exit, the balance. To fix this, sign a change with your **mnemonic** in the deposit CLI, then submit it with `prysmctl`. It turns the validator into a regular (`0x01`) validator, with the withdrawal address you choose. You can do this once per validator.
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+## Check your credentials
+
+Ask your beacon node:
+
+<When os="unix">
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX_OR_PUBKEY> | jq '.data.validator.withdrawal_credentials'
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX_OR_PUBKEY> | jq '.data.validator.withdrawal_credentials'
+```
+
+</When>
+
+If they start with `0x00`, the validator has no withdrawal address yet: follow this page. If they start with `0x01` or `0x02`, it already has one, and you can't change it.
+
+## Set the withdrawal address
+
+:::danger[The address is permanent]
+Use an address you control, never an exchange address, and compare every character. Only ever type your mnemonic into the deposit CLI on a machine you trust, ideally offline. Websites that offer to "help" with this step are phishing.
+:::
+
+<Steps>
+
+1. **Download the deposit CLI** for your platform from the [releases page](https://github.com/ethstaker/ethstaker-deposit-cli/releases) and check its SHA-256 sum against the `.sha256` file next to it.
+
+   <When os="unix">
+
+   Extract the archive. It contains the `deposit` executable.
+
+   </When>
+   <When os="win">
+
+   Extract the archive. It contains the `deposit.exe` executable.
+
+   </When>
+
+2. **Collect the inputs:**
+
+   - `--validator_start_index`: the position of the first key in your mnemonic (usually `0`). It's the number in the keystore file name, `keystore-m_12381_3600_<INDEX>_0_0-...`, not the validator's index on the beacon chain.
+   - `--validator_indices`: each validator's index on the beacon chain, as shown by the command above or a block explorer.
+   - `--bls_withdrawal_credentials_list`: each validator's current `0x00` credentials, from the command above.
+
+   The CLI takes one key per validator, starting at `--validator_start_index`, and pairs them in order: key `start` with the first validator and first credentials, key `start + 1` with the second, and so on. So list validators in the order their keys appear in the mnemonic. If the keys aren't consecutive (for example, `0`, `1` and `5`), run the command once for each consecutive run of keys. If a key doesn't match its credentials, the CLI stops with an error and signs nothing.
+
+3. **Sign the change** from the extracted folder:
+
+   {/* Verified against ethstaker-deposit-cli v1.3.0 docs, 2026-09 */}
+   <When os="unix">
+
+   ```bash
+   ./deposit generate-bls-to-execution-change \
+     --chain={net} \
+     --validator_start_index=<FIRST_KEY_INDEX> \
+     --validator_indices=<VALIDATOR_INDEX_1>,<VALIDATOR_INDEX_2> \
+     --bls_withdrawal_credentials_list=<OLD_CREDENTIALS_1>,<OLD_CREDENTIALS_2> \
+     --withdrawal_address=<YOUR_WITHDRAWAL_ADDRESS>
+   ```
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   .\deposit.exe generate-bls-to-execution-change `
+     --chain={net} `
+     --validator_start_index=<FIRST_KEY_INDEX> `
+     "--validator_indices=<VALIDATOR_INDEX_1>,<VALIDATOR_INDEX_2>" `
+     "--bls_withdrawal_credentials_list=<OLD_CREDENTIALS_1>,<OLD_CREDENTIALS_2>" `
+     --withdrawal_address=<YOUR_WITHDRAWAL_ADDRESS>
+   ```
+
+   </When>
+
+   It asks for your mnemonic and writes a file to `bls_to_execution_changes/`. Check that every `to_execution_address` in it is your address.
+
+4. **Submit it with prysmctl** to a synced beacon node (any client's REST API):
+
+   <When os="unix">
+
+   ```bash
+   ./prysm.sh prysmctl validator withdraw \
+     --beacon-node-host=http://127.0.0.1:3500 \
+     --path=<PATH_TO>/bls_to_execution_changes \
+     --accept-terms-of-use \
+     --confirm
+   ```
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   .\prysm.bat prysmctl validator withdraw `
+     --beacon-node-host=http://127.0.0.1:3500 `
+     --path=<PATH_TO>\bls_to_execution_changes `
+     --accept-terms-of-use `
+     --confirm
+   ```
+
+   </When>
+
+   You should see:
+
+   ```text
+   INFO validator: Successfully published messages to update 2 withdrawal addresses.
+   ```
+
+</Steps>
+
+## Check that it works
+
+The change is usually included within minutes. Run the [credentials check](#check-your-credentials) again: the credentials now start with `0x01` and end with your address.

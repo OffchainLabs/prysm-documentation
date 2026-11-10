@@ -1,0 +1,15 @@
+package main
+
+import (
+	"os"
+
+	docdb "github.com/OffchainLabs/prysm/v7/cmd/beacon-chain/db"
+	docjwt "github.com/OffchainLabs/prysm/v7/cmd/beacon-chain/jwt"
+	"github.com/urfave/cli/v2"
+)
+
+func init() {
+	if os.Getenv("PRYSM_DOCS_DUMP") != "" {
+		dumpDocs(appHelpFlagGroups, []*cli.Command{docdb.Commands, docjwt.Commands})
+	}
+}

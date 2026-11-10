@@ -1,0 +1,132 @@
+/* Chips match the Quickstart's setup box (QuickstartBuilder.css). */
+/* Groups share one line and wrap only when they don't fit. */
+.setup-picker {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.5rem;
+	background: var(--site-color-bg-nav);
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	padding: 0.9rem 1.1rem 1rem;
+	margin-bottom: 1.5rem;
+}
+.setup-picker fieldset {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+}
+.setup-picker legend {
+	font-size: 0.75rem;
+	color: var(--site-color-gray-3);
+	margin-bottom: 0.3rem;
+	padding: 0;
+}
+.setup-picker-seg {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+.setup-picker-seg label {
+	position: relative;
+}
+.setup-picker-seg input {
+	position: absolute;
+	opacity: 0;
+	inset: 0;
+	margin: 0;
+	cursor: pointer;
+}
+.setup-picker-seg span {
+	display: inline-block;
+	padding: 0.3rem 0.65rem;
+	border-radius: 999px;
+	border: 1px solid var(--site-color-gray-5);
+	font-size: 0.85rem;
+	color: var(--site-color-gray-2);
+	transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+	cursor: pointer;
+	user-select: none;
+}
+.setup-picker-seg input:hover + span {
+	border-color: var(--site-color-accent);
+}
+.setup-picker-seg input:checked + span {
+	background: var(--site-color-accent);
+	border-color: var(--site-color-accent);
+	color: var(--site-color-black);
+	font-weight: 600;
+}
+.setup-picker-seg input:disabled + span {
+	opacity: 0.4;
+	cursor: not-allowed;
+	text-decoration: line-through;
+}
+.setup-picker-seg input:focus-visible + span {
+	outline: 2px solid var(--site-color-accent-high);
+	outline-offset: 2px;
+}
+/* Validator options, as in the Quickstart's setup box. */
+.setup-picker .setup-picker-wide {
+	flex-basis: 100%;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.5rem;
+	align-items: flex-start;
+}
+.setup-picker .setup-picker-wide legend {
+	width: 100%;
+	float: left;
+	margin-bottom: 0;
+}
+.setup-picker-check {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	font-size: 0.9rem;
+	padding-top: 0.35rem;
+	cursor: pointer;
+}
+.setup-picker-check input {
+	accent-color: var(--site-color-accent);
+	width: 1rem;
+	height: 1rem;
+}
+.setup-picker-text {
+	display: grid;
+	gap: 0.2rem;
+	flex: 1 1 18rem;
+	min-width: 0;
+	font-size: 0.85rem;
+}
+.setup-picker-text input {
+	font: inherit;
+	font-family: var(--site-font-mono);
+	font-size: 0.85rem;
+	padding: 0.4rem 0.6rem;
+	border-radius: 0.5rem;
+	border: 1px solid var(--site-color-gray-5);
+	background: var(--site-color-bg);
+	color: var(--site-color-white);
+	width: 100%;
+	box-sizing: border-box;
+}
+.setup-picker-text input:invalid {
+	border-color: #e5484d;
+}
+.setup-picker-text small {
+	color: var(--site-color-gray-3);
+	font-size: 0.75rem;
+}
+.setup-picker-text small.bad {
+	color: #e5484d;
+}
+.setup-picker .setup-picker-note {
+	display: block;
+	margin: 0;
+	font-size: 0.85rem;
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.5rem;
+	background: color-mix(in srgb, var(--prysm-amber) 16%, transparent);
+	color: var(--site-color-white);
+}

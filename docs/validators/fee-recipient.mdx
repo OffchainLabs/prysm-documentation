@@ -1,0 +1,144 @@
+---
+title: "Set your fee recipient"
+description: "Choose the address that receives transaction fees from the blocks your validators propose, for all validators or per validator with a proposer settings file."
+---
+
+import { Steps, Tabs, TabItem } from '@site/src/components/ui';
+import Flag from '@site/src/components/Flag';
+
+When your validator proposes a block, the transaction tips in it go to an Ethereum address you choose: the **fee recipient**. If you don't set one, they go to the zero address and are permanently lost.
+
+:::danger[Set it before your first proposal]
+Without a fee recipient, every block your validator proposes pays its fees to `0x0000000000000000000000000000000000000000`. Nobody can recover them.
+:::
+
+## Before you begin
+
+- Have an Ethereum address you control, for example, from a hardware wallet. It can be your withdrawal address or another one, and it doesn't need any ETH.
+- [Import your keys](/validators/import-keys/).
+
+## Set one address for all validators
+
+<Steps>
+
+1. **Add <Flag name="suggested-fee-recipient" bin="validator" /> to the validator client:**
+
+   ```bash
+   --suggested-fee-recipient=<YOUR_WALLET_ADDRESS>
+   ```
+
+   Copy the address from your wallet, in its mixed-case (checksummed) form. An all-lowercase address works but logs a warning, because the checksum catches typos.
+
+2. **Add the same flag to the beacon node** as a safety net. This value is effectively used only if the validator client sends no address:
+
+   ```bash
+   --suggested-fee-recipient=<YOUR_WALLET_ADDRESS>
+   ```
+
+</Steps>
+
+## Set an address per validator
+
+A **proposer settings file** gives each validator key its own fee recipient, and optionally its own graffiti and validator registration settings. Keys you don't list use `default_config`. Prysm reads YAML or JSON.
+
+<Tabs syncKey="format">
+<TabItem label="YAML">
+
+```yaml title="proposer-settings.yaml"
+proposer_config:
+  '<VALIDATOR_PUBKEY_1>':
+    fee_recipient: '<FEE_RECIPIENT_1>'
+    graffiti: 'validator one'
+  '<VALIDATOR_PUBKEY_2>':
+    fee_recipient: '<FEE_RECIPIENT_2>'
+    builder:
+      enabled: false
+default_config:
+  fee_recipient: '<DEFAULT_FEE_RECIPIENT>'
+  builder:
+    enabled: true
+```
+
+</TabItem>
+<TabItem label="JSON">
+
+```json title="proposer-settings.json"
+{
+  "proposer_config": {
+    "<VALIDATOR_PUBKEY_1>": {
+      "fee_recipient": "<FEE_RECIPIENT_1>",
+      "graffiti": "validator one"
+    },
+    "<VALIDATOR_PUBKEY_2>": {
+      "fee_recipient": "<FEE_RECIPIENT_2>",
+      "builder": { "enabled": false }
+    }
+  },
+  "default_config": {
+    "fee_recipient": "<DEFAULT_FEE_RECIPIENT>",
+    "builder": { "enabled": true }
+  }
+}
+```
+
+</TabItem>
+</Tabs>
+
+Replace `<VALIDATOR_PUBKEY_…>` with your validators' public keys (`0x` followed by 96 hex characters) and the `<…FEE_RECIPIENT…>` placeholders with Ethereum addresses.
+
+| Field | Meaning |
+| --- | --- |
+| `fee_recipient` | Address that receives the fees. A listed key without one uses the default. |
+| `graffiti` | Text in the blocks this key proposes. |
+| `builder.enabled` | Register this key with builders. Has no effect unless the beacon node is connected to builders. |
+| `builder.gas_limit` | Gas limit sent in the registration. Leave it out unless you have a reason: Prysm then uses its built-in default, which follows network upgrades. |
+
+`builder.enabled` and `builder.gas_limit` are for [MEV-Boost](/validators/mev-boost/) and stop applying at the Gloas fork. Åfter that, builders are configured in a version 2 file, and the gas limit moves out of `builder`. See [Use builders after Gloas (ePBS)](/validators/builders/).
+
+Add <Flag name="proposer-settings-file" bin="validator" /> to the validator client:
+
+```bash
+--proposer-settings-file=<PATH_TO_PROPOSER_SETTINGS_FILE>
+```
+
+```text
+INFO loader: Proposer settings loaded from file proposer-settings-file=<PATH_TO_PROPOSER_SETTINGS_FILE>
+```
+
+Prysm rejects unknown fields, so a typo such as `fee_recipent` stops the validator at startup instead of being ignored. Prysm reads the file only at startup: restart the validator after editing it.
+
+To manage many validator clients from one place, <Flag name="proposer-settings-url" bin="validator" /> loads the same structure as JSON from a URL instead. You can't use both.
+
+## Which address is used
+
+For each key, Prysm uses the first of these that is set:
+
+1. The key's entry in `proposer_config`.
+2. `default_config` in the settings file.
+3. <Flag name="suggested-fee-recipient" bin="validator" /> on the validator client.
+4. <Flag name="suggested-fee-recipient" /> on the beacon node.
+
+## Check that it works
+
+- **Validator log at startup:** the validator logs one of:
+
+  ```text
+  Proposer settings loaded from default
+  Proposer settings loaded from file
+  Proposer settings loaded from URL
+  Proposer settings loaded from the DB
+  ```
+
+  This warning means a key is set to the zero address:
+
+  ```text
+  Fee recipient is burn address
+  ```
+
+- **No setting at all:** the validator warns:
+
+  ```text
+  Validator client started without proposer settings such as fee recipient and will continue to use settings provided in the beacon node
+  ```
+
+- **After a proposal:** open the block on a block explorer. With MEV-Boost, the block's fee recipient is often the builder, and your payment is the last transaction in the block, sent to your address.

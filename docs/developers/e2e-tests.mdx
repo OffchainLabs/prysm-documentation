@@ -1,0 +1,106 @@
+---
+title: End-to-end tests
+description: "Run Prysm's end-to-end tests, which start a private network of Geth, beacon nodes and validators from your build and check it epoch by epoch, and find their logs."
+---
+
+import { Steps } from '@site/src/components/ui';
+
+The end-to-end (E2E) tests in `testing/endtoend/` start a complete private network from the binaries you built: a boot node, a Geth execution chain, two Prysm beacon nodes, and their validators. They run it for several epochs and, at each epoch, run evaluators that check peers connect, validators attest, the chain finalizes, and forks activate. Run the relevant test locally when your change touches how components interact.
+
+## Before you begin
+
+- The [Build with Bazel](/developers/build/) quickstart works on your machine.
+- Time. The first run also builds Geth and fetches Web3Signer; it can take a while.
+- No other beacon node, validator, or Geth on the machine competing for ports or CPU.
+
+## Test targets
+
+All targets are in `testing/endtoend/BUILD.bazel`. They're tagged `manual`, so `bazel test //...` never runs them; name them explicitly.
+
+| Target | Tests in it | Size |
+| --- | --- | --- |
+| `:go_default_test` | `TestEndToEnd_MinimalConfig`, `TestEndToEnd_MinimalConfig_WithStateDiff`, `TestEndToEnd_Slasher_MinimalConfig`, `TestEndToEnd_SlasherSimulator` | `enormous` |
+| `:go_builder_test` | `TestEndToEnd_MinimalConfig_WithBuilder`, `TestEndToEnd_MinimalConfig_WithBuilder_ValidatorRESTApi` | `large` |
+| `:go_minimal_postmerge_test` | `TestEndToEnd_MinimalConfig_PostMerge` | `enormous` |
+| `:go_mainnet_test` | `TestEndToEnd_MainnetConfig_ValidatorAtCurrentRelease`, `TestEndToEnd_MainnetConfig_MultiClient` (with Lighthouse) | `large` |
+| `:go_minimal_scenario_test` | `TestEndToEnd_MultiScenarioRun`, `TestEndToEnd_MinimalConfig_Web3Signer`, `TestEndToEnd_MinimalConfig_Web3Signer_PersistentKeys`, `TestEndToEnd_MinimalConfig_CurrentFork`, `TestEndToEnd_MinimalConfig_ValidatorRESTApi`, `TestEndToEnd_MinimalConfig_ValidatorRESTApi_SSZ`, `TestEndToEnd_ScenarioRun_EEOffline` | `large` |
+| `:go_mainnet_scenario_test` | `TestEndToEnd_MultiScenarioRun_Multiclient` | `large` |
+| `:go_minimal_kurtosis_test` | `TestEndToEnd_Kurtosis_MinimalConfig`, a Kurtosis devnet using locally built images | `large` |
+
+Three test suites group them the way CI runs them:
+
+| Suite | Contains |
+| --- | --- |
+| `//testing/endtoend:presubmit` | `:go_default_test`, run on every pull request. |
+| `//testing/endtoend:postsubmit` | `:go_builder_test`, `:go_minimal_postmerge_test`, `:go_mainnet_test`, run after merge. |
+| `//testing/endtoend:scenario_tests` | `:go_mainnet_scenario_test`, `:go_minimal_scenario_test`, run occasionally. |
+
+Each target sets its preset with `eth_network`, so you don't need `--config=minimal`.
+
+## Run a test
+
+<Steps>
+
+1. Run the main presubmit test with its output streamed:
+
+   ```bash
+   bazel test //testing/endtoend:go_default_test --test_filter='TestEndToEnd_MinimalConfig$' --test_output=streamed
+   ```
+
+   Without `--test_filter`, every test in the target runs. The target is split into two shards, so with a filter, one shard may have nothing to run.
+
+2. Watch the evaluators. The test prints one subtest per evaluator and epoch, with `PASS` or `FAIL`.
+
+3. Read the summary at the end. The target reports `PASSED` when every evaluator passed.
+
+</Steps>
+
+To run a whole suite:
+
+```bash
+bazel test //testing/endtoend:presubmit --test_output=streamed
+```
+
+To change the length of tests that don't fix it themselves, pass `--test_env=E2E_EPOCHS=<N>`. Scenario tests take a random seed; replay a failing run with `--test_env=E2E_SEED=<SEED>`.
+
+### How long a run takes
+
+E2E chains use short slots, but a run still takes real time:
+
+| Preset | Epoch length | Example |
+| --- | --- | --- |
+| Minimal (8 slots of 10 seconds) | 80 seconds | `TestEndToEnd_MinimalConfig` runs 10 epochs: about 13 minutes plus startup. |
+| Mainnet (32 slots of 6 seconds) | 192 seconds | `TestEndToEnd_MainnetConfig_MultiClient` runs 8 epochs: about 26 minutes plus startup. |
+
+The target’s `size` sets Bazel’s timeout: 15 minutes for `large` targets, 60 minutes for `enormous` ones. Mainnet-preset runs take longer than 15 minutes, so raise the timeout for them —for example, `--test_timeout=3600`.
+
+{/* VERIFY: mainnet E2E targets are size = "large" (900 s timeout) but run 8 to 16 epochs of 192 s; check how CI avoids the timeout. */}
+
+### Run the Kurtosis test
+
+`TestEndToEnd_Kurtosis_MinimalConfig` loads locally built beacon node and validator images into Docker and runs the devnet in `testing/endtoend/network-config/minimal.yaml` with [ethereum-package](https://github.com/ethpandaops/ethereum-package). It needs Docker and a running [Kurtosis](https://docs.kurtosis.com/install/) engine:
+
+```bash
+kurtosis engine start
+bazel test //testing/endtoend:go_minimal_kurtosis_test --test_output=streamed
+```
+
+## Find the logs
+
+Each component writes its own log file into `$TEST_UNDECLARED_OUTPUTS_DIR/<DATE>/<TIME>/<TEST_NAME>/`, and the test prints the directory as `Log Path:`. When the test ends, Bazel zips that directory into the test's output, one per shard:
+
+```bash
+ls bazel-testlogs/testing/endtoend/go_default_test/shard_*_of_2/test.outputs/
+unzip -d /tmp/e2e-logs bazel-testlogs/testing/endtoend/go_default_test/shard_1_of_2/test.outputs/outputs.zip
+```
+
+| File | Component |
+| --- | --- |
+| `beacon-<N>.log`, `beacon_node_<N>_stderr.log` | Prysm beacon node `N` |
+| `vals-<N>.log` | Validator client `N` |
+| `bootnode.log` | Boot node |
+| `eth1_miner.log`, `eth1_<N>.log`, `eth1-init_*.log` | Geth miner and nodes, and their genesis setup |
+| `web3signer.stderr.log` | Web3Signer |
+| `builder_<N>.log` | Mock builder |
+
+Set `--test_env=E2E_LOG_COLOR=1` to keep colors in the component logs.

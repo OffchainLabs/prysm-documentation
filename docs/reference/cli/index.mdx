@@ -1,0 +1,167 @@
+---
+title: "Common flags and config file"
+description: How to pass Prysm flags on the command line or in a YAML config file, and the flags most operators set.
+---
+
+import Flag from '@site/src/components/Flag';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+You configure Prysm with command-line flags, optionally loaded from a YAML file. Prysm doesn’t read flags from environment variables. This page covers how to pass flags and the ones most people set; the generated reference list includes every flag and its default.
+
+<SetupPicker groups="os net" />
+
+## Pass flags on the command line
+
+Put flags after the binary name, or after the component name when you use the launcher script:
+
+<When os="unix">
+
+```bash
+./prysm.sh beacon-chain \
+  --{net} \
+  --datadir=$HOME/ethereum/data/{net}/beacon \
+  --execution-endpoint=http://localhost:8551 \
+  --jwt-secret=$HOME/ethereum/data/jwt.hex \
+  --checkpoint-sync-url={checkpoint}
+```
+
+</When>
+<When os="win">
+
+```powershell
+.\prysm.bat beacon-chain `
+  --{net} `
+  --datadir=$HOME\ethereum\data\{net}\beacon `
+  --execution-endpoint=http://localhost:8551 `
+  --jwt-secret=$HOME\ethereum\data\jwt.hex `
+  --checkpoint-sync-url={checkpoint}
+```
+
+</When>
+
+<When>
+
+- Write values as `--name=value`. It's unambiguous, and it's the only form that works for booleans.
+- A boolean flag is on when present (`--{net}`). Turn it off with `--name=false`, not `--name false`.
+- List flags, such as <Flag name="peer" />, can be repeated or take comma-separated values.
+- Run a binary with `--help` to see the flags your installed version supports.
+
+</When>
+
+## Use a config file
+
+<Flag name="config-file" /> loads flags from a YAML file. Keys are flag names without the leading dashes:
+
+<When os="unix">
+
+```yaml title="/var/lib/ethereum/beacon/beacon.yaml"
+{net}: true
+datadir: /var/lib/ethereum/beacon
+execution-endpoint: http://localhost:8551
+jwt-secret: /var/lib/ethereum/jwt.hex
+checkpoint-sync-url: {checkpoint}
+suggested-fee-recipient: '0x0000000000000000000000000000000000000000'
+p2p-max-peers: 70
+```
+
+```bash
+beacon-chain --config-file=/var/lib/ethereum/beacon/beacon.yaml --p2p-max-peers=100
+```
+
+</When>
+<When os="win">
+
+Save it as `$HOME\ethereum\data\{net}\beacon.yaml`. YAML doesn't expand `$HOME`, so write full paths inside the file, in single quotes:
+
+```yaml
+{net}: true
+datadir: 'C:\Users\<USER>\ethereum\data\{net}\beacon'
+execution-endpoint: http://localhost:8551
+jwt-secret: 'C:\Users\<USER>\ethereum\data\jwt.hex'
+checkpoint-sync-url: {checkpoint}
+suggested-fee-recipient: '0x0000000000000000000000000000000000000000'
+p2p-max-peers: 70
+```
+
+```powershell
+.\prysm.bat beacon-chain --config-file=$HOME\ethereum\data\{net}\beacon.yaml --p2p-max-peers=100
+```
+
+</When>
+
+**A command-line flag overrides the same key in the file**, so this node runs with 100 peers. Keep one shared base file and override values per machine.
+
+{/* Verified: cmd/flags.go LoadFlagsFromConfig uses urfave/cli v2 altsrc, which only applies a file value when the flag isn't set on the command line. 2026-09. */}
+
+A few rules for the file:
+
+- Use real YAML types: `true`, not `"true"`; numbers as numbers; durations as strings such as `30s`. A wrong type stops the node with `Mismatched type for flag`.
+- Write list flags as YAML lists, one item per line.
+- Quote hex addresses (`'0x…'`) so YAML keeps them as strings.
+- Unknown keys are ignored without a warning. After editing the file, check the startup logs to confirm a setting took effect.
+
+## Default data directories
+
+<When os="unix">
+
+| Platform | Beacon node `--datadir` | Validator `--wallet-dir` |
+| --- | --- | --- |
+| Linux | `~/.eth2` | `~/.eth2validators/prysm-wallet-v2` |
+| macOS | `~/Library/Eth2` | `~/Library/Eth2Validators/prysm-wallet-v2` |
+
+</When>
+<When os="win">
+
+| Beacon node `--datadir` | Validator `--wallet-dir` |
+| --- | --- |
+| `%LOCALAPPDATA%\Eth2` | `%LOCALAPPDATA%\Eth2Validators\prysm-wallet-v2` |
+
+</When>
+
+The generated reference shows the macOS values. For services, set `--datadir` explicitly.
+
+## Flags most people set
+
+<When>
+
+Use the same network flag, `--{net}`, on both the beacon node and the validator client. Mainnet is the default.
+
+</When>
+
+### Beacon node
+
+| Flag | What it does |
+| --- | --- |
+| <Flag name="mainnet" /> / <Flag name="hoodi" /> / <Flag name="sepolia" /> | Picks the network. Mainnet is the default. See [Networks](/reference/networks/). |
+| <Flag name="datadir" /> | Where the beacon database lives. Defaults depend on the OS (see [Default data directories](#default-data-directories)). |
+| <Flag name="accept-terms-of-use" /> | Accepts the terms without a prompt. Needed for services and Docker. |
+| <Flag name="execution-endpoint" /> | Engine API address of your execution client. Default `http://localhost:8551`. |
+| <Flag name="jwt-secret" /> | Path to the JWT secret shared with the execution client. |
+| <Flag name="checkpoint-sync-url" /> | Syncs from a trusted node's recent state in minutes. See [Sync from a checkpoint](/setup/checkpoint-sync/). |
+| <Flag name="enable-backfill" /> | After a checkpoint sync, downloads the older blocks in the background. Off by default. See [Sync from a checkpoint](/setup/checkpoint-sync/). |
+| <Flag name="beacon-db-pruning" /> | Deletes blocks and states older than about 5 months so the database stops growing. Off by default. See [Disk space](/setup/storage/). |
+| <Flag name="suggested-fee-recipient" /> | Fallback address for priority fees, used when the validator client doesn't set one. See [Set your fee recipient](/validators/fee-recipient/). |
+| <Flag name="http-mev-relay" /> | MEV-Boost address. See [Use MEV-Boost](/validators/mev-boost/). |
+| <Flag name="p2p-host-ip" /> | Your public IP, advertised to peers. See [Ports, peers and router setup](/setup/networking/). |
+| <Flag name="p2p-max-peers" /> | Peer limit. Default `70`. |
+| <Flag name="postpone-shutdown-for-proposals" /> | On stop or restart, waits until no connected validator has a block to propose in the next 2 epochs. Send the signal again to stop at once. See [Update and roll back](/install/update/). |
+| <Flag name="verbosity" /> | Log level. Default `info`. |
+
+### Validator client
+
+| Flag | What it does |
+| --- | --- |
+| <Flag name="mainnet" bin="validator" /> / <Flag name="hoodi" bin="validator" /> / <Flag name="sepolia" bin="validator" /> | Picks the network. Must match the beacon node. |
+| <Flag name="datadir" bin="validator" /> | Where the validator database, including slashing protection history, lives. |
+| <Flag name="accept-terms-of-use" bin="validator" /> | Accepts the terms without a prompt. Needed for services and Docker. |
+| <Flag name="wallet-dir" bin="validator" /> | Wallet location. Defaults depend on the OS (see [Default data directories](#default-data-directories)). |
+| <Flag name="wallet-password-file" bin="validator" /> | File with the wallet password, so the validator client starts unattended. |
+| <Flag name="beacon-rpc-provider" bin="validator" /> | Beacon node to use over gRPC. Default `127.0.0.1:4000`. |
+| <Flag name="suggested-fee-recipient" bin="validator" /> | Address that receives priority fees from your proposals, for all validators. See [Set your fee recipient](/validators/fee-recipient/). |
+| <Flag name="enable-builder" bin="validator" /> | Registers your validators with MEV-Boost builders. See [Use MEV-Boost](/validators/mev-boost/). |
+| <Flag name="graffiti" bin="validator" /> | Text included in blocks you propose. See [Set graffiti](/validators/graffiti/). |
+| <Flag name="verbosity" bin="validator" /> | Log level. Default `info`. |
+
+## Feature flags
+
+Feature flags enable behavior that isn’t the default yet, or disable a new default. Most operators need none; use one only when the release notes or the Prysm team recommend it, and test it on Hoodi first. At startup, the node logs `Enabled feature flag` or `Disabled feature flag` for each one you set, and flags change between [releases](https://github.com/OffchainLabs/prysm/releases), so review them when you update.

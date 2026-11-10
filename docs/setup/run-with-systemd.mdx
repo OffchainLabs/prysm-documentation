@@ -1,0 +1,435 @@
+---
+title: "Run with systemd"
+description: Run the execution client, Prysm beacon node and validator as systemd services on Linux, so they start at boot, restart after a crash and keep their logs under control.
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import { SystemdCheck, SystemdLayout, SystemdLogs, SystemdPrepare, SystemdRemove, SystemdStart, SystemdUnit } from '@site/src/components/SystemdUnits';
+import Flag from '@site/src/components/Flag';
+
+:::note[Linux only]
+systemd isn't available on Windows or macOS. Use [Run with Docker Compose](/setup/run-with-docker-compose/) instead.
+:::
+
+<SetupPicker groups="net el conn role sync opts" />
+
+The examples use this layout:
+
+<SystemdLayout />
+
+## Before you begin
+
+- Prysm’s binaries are installed with the **Binaries** tab of [Install Prysm](/install/#install).
+
+<When el="besu">
+
+- Besu, unpacked into `/opt/besu`: it ships as a folder. It needs Java 25. See [Besu's installation guide](https://besu.hyperledger.org/public-networks/get-started/install/binary-distribution).
+
+</When>
+<When el="erigon">
+
+- The `erigon` binary is in `/usr/local/bin`. See [Erigon's installation guide](https://docs.erigon.tech/get-started/installation).
+
+</When>
+<When el="ethrex">
+
+- The `ethrex` binary is in `/usr/local/bin`. See [Ethrex's installation guide](https://docs.ethrex.xyz/getting-started/index.html).
+
+</When>
+<When el="geth">
+
+- The `geth` binary is in `/usr/local/bin`. See [Geth's installation guide](https://geth.ethereum.org/downloads).
+
+</When>
+<When el="nethermind">
+
+- Nethermind, unpacked into `/opt/nethermind`: it ships as a folder. See [Nethermind's installation guide](https://docs.nethermind.io/get-started/installing-nethermind).
+
+</When>
+<When el="reth">
+
+- The `reth` binary is in `/usr/local/bin`. See [Reth's installation guide](https://reth.rs/installation/overview).
+
+</When>
+<When role="validator" mev="on">
+
+- The `mev-boost` binary is in `/usr/local/bin`. Download it from [MEV-Boost's releases](https://github.com/flashbots/mev-boost/releases).
+
+</When>
+
+## Set up the services
+
+<Steps>
+
+1. <When conn="jwt">
+
+	**Create one unprivileged user per process, the data directories, and the JWT secret.** Only the execution client and beacon node can read the secret, through a shared `ethereum` group:
+
+	</When>
+	<When conn="ipc">
+
+	**Create the unprivileged users and the data directories.** Geth makes its IPC socket readable by its own user only, so the beacon node runs as the `execution` user too:
+
+	</When>
+
+	<SystemdPrepare />
+
+	<When net="hoodi sepolia" sync="genesis">
+
+	`genesis.ssz` is the network's genesis state. Prysm ships mainnet's, but not the testnet ones.
+
+	</When>
+
+2. **Create the execution client service:**
+
+	<SystemdUnit name="execution" />
+
+	<When el="erigon">
+
+	`--externalcl` stops Erigon from running its own built-in consensus client—open port 42069 (TCP and UDP) for its history downloads.
+
+	</When>
+	<When el="reth">
+
+	`--full` keeps Reth from running an archive node. Its default log location is in a home directory, which the unit blocks, hence `--log.file.directory`.
+
+	</When>
+	<When el="nethermind">
+
+	Nethermind writes its logs next to its binary by default, which the unit makes read-only, hence `--Init.LogDirectory`.
+
+	</When>
+	<When el="ethrex">
+
+	Ethrex keeps its data in a subfolder named after the network.
+
+	</When>
+
+3. <When role="validator" mev="on">
+
+	**Create the MEV-Boost service:**
+
+	<SystemdUnit name="mev-boost" />
+
+	MEV-Boost uses the working relays from the [EthStaker relay list]({relays}) for this network. Relays differ in what they filter and how they share profits; the list describes each one, so remove any you don't want to use. It stores nothing, so `DynamicUser=true` lets systemd run it under a throwaway user. It listens on `127.0.0.1:18550`.
+
+	</When>
+
+4. **Create the beacon node service:**
+
+	<SystemdUnit name="beacon" />
+
+	<When sync="checkpoint">
+
+	`{checkpoint}` is one of several [community checkpoint sync endpoints](https://eth-clients.github.io/checkpoint-sync-endpoints/); any one you trust works.
+
+	</When>
+	<When sync="genesis">
+
+	Syncing from genesis replays every block and takes days, not minutes. See [Sync from genesis](/setup/genesis-sync/).
+
+	</When>
+
+	<Flag name="beacon-db-pruning" /> deletes blocks and states older than about 5 months, the oldest data other nodes can still ask for, so the database stops growing. Leave it out if you need the full history.
+
+	<When role="validator">
+
+	<Flag name="postpone-shutdown-for-proposals" /> makes a stop or restart, wait until no connected validator has a block to propose soon, which can take about 13 minutes; that's why `TimeoutStopSec=900`. If the file still shows `<YOUR_WALLET_ADDRESS>`, enter an address you control under **Options** above, or replace it in the file.
+
+	</When>
+
+	<Flag name="accept-terms-of-use" /> is needed because a service can't answer the first-run prompt.
+
+5. <When role="validator">
+
+	**Create validator keys.** Download the [EthStaker deposit CLI](https://github.com/ethstaker/ethstaker-deposit-cli/releases), ideally onto a machine that has never been connected to the internet. Generate a mnemonic and your validator keys:
+
+	```bash
+	./deposit new-mnemonic --chain={net}
+	```
+
+	The CLI asks how many validators to create and for a withdrawal address. Use an address you control: withdrawals and the stake itself go there when you exit. It also asks you to choose a keystore password; you'll need it in the next step to import the keys into Prysm. Write the 24-word mnemonic down on paper and keep it offline. Anyone who has it controls your validator and can withdraw funds. The CLI writes a `validator_keys` folder containing a `deposit_data-*.json` file and one `keystore-m_*.json` per validator. Copy that folder to this machine.
+
+	</When>
+
+6. <When role="validator">
+
+	**Import your keys into Prysm.** Choose a password for the new wallet. The validator client reads it from `/var/lib/ethereum/validator/wallet-password.txt` every time it starts, and only the `validator` user can read that file:
+
+	```bash
+	printf 'New wallet password: ' && read -rs PW && echo
+	printf 'Confirm password: ' && read -rs PW2 && echo
+	if [ "$PW" = "$PW2" ]; then sudo install -m 0600 -o validator -g validator /dev/null /var/lib/ethereum/validator/wallet-password.txt && printf '%s' "$PW" | sudo tee /var/lib/ethereum/validator/wallet-password.txt > /dev/null; else echo "Passwords don't match: run these lines again."; fi
+	unset PW PW2
+	```
+
+	Then import the keys as the `validator` user from a copy it can read. Replace `<PATH_TO_VALIDATOR_KEYS>` with the path to the `validator_keys` folder: the directory containing all the `keystore-m_*.json` files created in the previous step.
+
+	```bash
+	sudo cp -r <PATH_TO_VALIDATOR_KEYS> /var/lib/ethereum/validator/import
+	sudo chown -R validator:validator /var/lib/ethereum/validator/import
+	sudo -u validator /usr/local/bin/validator accounts import \
+	  --{net} \
+	  --keys-dir=/var/lib/ethereum/validator/import \
+	  --wallet-dir=/var/lib/ethereum/validator/wallet \
+	  --wallet-password-file=/var/lib/ethereum/validator/wallet-password.txt \
+	  --accept-terms-of-use
+	sudo rm -r /var/lib/ethereum/validator/import
+	```
+
+	It asks for the password of the keys you're importing:
+
+	```text
+	Enter the password for your imported accounts:
+	```
+
+	This is the keystore password you chose in the deposit CLI when creating your validator keys. Once the keys are imported, the validator client no longer needs it.
+
+	</When>
+
+7. <When role="validator">
+
+	**Create the validator service:**
+
+	<SystemdUnit name="validator" />
+
+	</When>
+
+8. **Start the services:**
+
+	<SystemdStart />
+
+	`Restart=on-failure` in each unit restarts the service after a crash.
+
+	Check that they're running:
+
+	<SystemdCheck />
+
+	Every service should be `active`.
+
+	Each service logs to the journal. To follow one, run its line:
+
+	<SystemdLogs />
+
+	<When role="validator">
+
+	Until both the beacon node and the execution client are synced, the validator client logs this warning every slot. That's expected:
+
+	```text
+	WARN fallback: No responsive beacon node found tried=[127.0.0.1:4000]
+	```
+
+	</When>
+
+	Check the beacon node's sync status:
+
+	```bash
+	curl -s http://127.0.0.1:3500/eth/v1/node/syncing
+	```
+
+	The node is fully running once the response shows all three of these as `false`:
+
+	```json
+	{
+	  "data": {
+	    "head_slot": "…",
+	    "sync_distance": "0",
+	    "is_syncing": false,
+	    "is_optimistic": false,
+	    "el_offline": false
+	  }
+	}
+	```
+
+	- `"el_offline": false`: the beacon node reaches the execution client. This should be the case as soon as both services are up. If it stays `true`, read the execution client's logs:
+
+		```bash
+		sudo journalctl -u execution -n 50 --no-pager
+		```
+
+	- `"is_syncing": false`: the beacon node is synced.
+		<When sync="checkpoint">
+
+		From a checkpoint, this takes a few minutes: the node starts from a recent finalized state instead of replaying the chain.
+
+		</When>
+		<When sync="genesis">
+
+		From genesis, this takes days: the node replays every block since the start of the chain. `sync_distance` shows how many slots it still has to go.
+
+		</When>
+	- `"is_optimistic": false`: the execution client is synced. This takes the longest, from a few hours to a few days depending on your execution client and the network. Until then, the beacon node follows the chain but can't check the blocks’ transactions.
+
+9. <When role="validator">
+
+	**Make your deposit.** Deposit only once the sync check at the end of the previous step shows all three values as `false`.
+
+	<When net="mainnet">
+
+	Upload `deposit_data-*.json` on the [Staking Launchpad](https://launchpad.ethereum.org/) and follow its checks before depositing 32 ETH.
+
+	:::danger[Only use the official launchpad]
+	Scam sites copy the launchpad and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats, or emails.
+
+	- **Launchpad:** [https://launchpad.ethereum.org/](https://launchpad.ethereum.org/)
+	:::
+
+	</When>
+	<When net="hoodi">
+
+	Upload `deposit_data-*.json` on the [EthStaker console](https://hoodi.console.ethstaker.org/deposit) and deposit 32 Hoodi ETH. Never send real ETH to a testnet deposit contract.
+
+	:::danger[Only use the official console]
+	Scam sites copy the console and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats, or emails.
+
+	- **Deposit page:** [https://hoodi.console.ethstaker.org/deposit](https://hoodi.console.ethstaker.org/deposit)
+	:::
+
+	</When>
+
+	The beacon chain then processes the deposit and puts your validator in the activation queue. Activation takes anywhere from hours to weeks depending on the queue. The validator client logs each stage:
+
+	```text
+	Waiting for deposit to be observed by beacon node
+	Validator deposited, entering activation queue after finalization
+	Waiting for activation... Check validator queue status in a block explorer
+	Validator activated
+	```
+
+	Follow them with:
+
+	```bash
+	sudo journalctl -fu validator
+	```
+
+	Keep all your services running; once active, your validator attests and proposes automatically.
+
+	</When>
+
+</Steps>
+
+After you edit a unit, run this before restarting it:
+
+```bash
+sudo systemctl daemon-reload
+```
+
+If you move a data directory, update `ReadWritePaths=` too, or the service fails with `read-only file system`.
+
+**Logs.** To look back through a service's logs, filter by time or by level:
+
+```bash
+sudo journalctl -u beacon --since "1 hour ago"   # the last hour
+sudo journalctl -u beacon -p warning -b          # warnings and errors since boot
+```
+
+The journal rotates by itself. To cap its size, set `SystemMaxUse=2G` in `/etc/systemd/journald.conf` and run:
+
+```bash
+sudo systemctl restart systemd-journald
+```
+
+<When role="validator">
+
+:::danger[One validator client per key]
+Never run the validator service on two machines, or next to another validator client, with the same keys. Both would sign, and the keys would be slashed.
+:::
+
+</When>
+
+Prysm also keeps the most recent debug logs in `<datadir>/logs/`: the current file plus one older one, at most about 500 MB. To turn that off, add <Flag name="disable-ephemeral-log-file" />.
+
+## Check that it works
+
+Restart the machine once, then run the checks from **Start the services** again: everything should come back by itself.
+
+## Troubleshooting
+
+**`status=217/USER`.**
+The `User=` in the unit doesn't exist. Create it as in step 1.
+
+<When conn="jwt">
+
+**`permission denied` reading `jwt.hex`.**
+The service user isn't in the `ethereum` group, or the file isn't `root:ethereum 0640`. Test with:
+
+```bash
+sudo -u beacon cat /var/lib/ethereum/jwt.hex
+```
+
+</When>
+
+**`permission denied` or `read-only file system` in the data directory.**
+The directory belongs to another user, often after running a binary by hand as root. Fix it:
+
+<When conn="jwt">
+
+```bash
+sudo chown -R beacon:beacon /var/lib/ethereum/beacon
+```
+
+</When>
+<When conn="ipc">
+
+```bash
+sudo chown -R execution:execution /var/lib/ethereum/beacon
+```
+
+</When>
+
+Also check that `ReadWritePaths=` in the unit points to the data directory.
+
+**The service restarts in a loop.**
+Read the last error:
+
+```bash
+sudo journalctl -u beacon -n 50 --no-pager
+```
+
+A misspelled or removed flag stops Prysm at startup; compare with the [beacon-chain reference](/reference/cli/beacon-chain/).
+
+## Remove everything
+
+These commands undo this page.
+
+<SystemdRemove part="stop" />
+
+<When role="validator">
+
+:::danger[Your validator stops earning]
+Once the validator service is stopped, your validator misses its duties and loses a little ETH every epoch until it runs again, here or on another machine.
+:::
+
+If you run these keys elsewhere, export their slashing protection history before deleting the data. The other validator client needs it to avoid signing something that contradicts what this one already signed:
+
+```bash
+sudo -u validator /usr/local/bin/validator --disable-ephemeral-log-file \
+  slashing-protection-history export \
+  --datadir=/var/lib/ethereum/validator \
+  --slashing-protection-export-dir=/tmp/slashing-protection
+sudo cat /tmp/slashing-protection/slashing_protection.json > ~/slashing_protection.json
+```
+
+This saves `slashing_protection.json` in your home folder. If the export fails with this error, the validator client never reached the beacon node, so it never signed anything, and there's nothing to export:
+
+```text
+genesis validators root is empty, perhaps you are not connected to your beacon node
+```
+
+</When>
+
+Then delete the rest:
+
+<SystemdRemove part="delete" />
+
+<When el="geth erigon reth ethrex">
+
+The binaries in `/usr/local/bin` emain; delete them yourself if you no longer need them.
+
+</When>
+<When el="nethermind besu">
+
+The binaries in `/usr/local/bin` and the client’s folder in `/opt` remain; delete them yourself if you no longer need them.
+
+</When>

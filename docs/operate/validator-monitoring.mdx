@@ -1,0 +1,107 @@
+---
+title: "Track validator performance"
+description: Watch what the chain records for your validators with the beacon node's validator monitor and a block explorer, and know what good performance looks like.
+---
+
+import { Aside, Steps } from '@site/src/components/ui';
+import Flag from '@site/src/components/Flag';
+
+Your validator client logs what it *sent*. To see what the chain *recorded* (included attestations, proposed blocks, balance changes), use the beacon node's validator monitor, and check a block explorer from time to time for an outside view.
+
+## Before you begin
+
+- A synced beacon node. See [Is my node healthy?](/operate/check-health/)
+- Your validator indices. The validator client logs them at startup, or look up your public keys on a block explorer:
+
+  ```text
+  Validator activated index=...
+  ```
+
+## Turn on the validator monitor
+
+<Steps>
+
+1. **Add <Flag name="monitor-indices" /> to the beacon node**, with a comma-separated list of indices:
+
+   ```text
+   --monitor-indices=1234,5678
+   ```
+
+   It works for any validator, including ones run by another validator client or another machine.
+
+2. **Check that it started.** At startup, and again once the node is synced, the beacon node logs:
+
+   ```text
+   [2026-09-28 10:00:00.00]  INFO monitor: Starting service validatorIndices=[1234 5678]
+   [2026-09-28 10:05:00.00]  INFO monitor: Synced to head epoch, starting reporting performance epoch=385801
+   ```
+
+</Steps>
+
+The monitor keeps its statistics in memory; they reset when the beacon node restarts.
+
+## What it reports
+
+Each time a block includes one of your attestations:
+
+```text
+[2026-09-28 10:06:12.00]  INFO monitor: Attestation included balanceChange=13512 correctHead=true correctSource=true correctTarget=true head=0x68656c6c6f2d inclusionSlot=12345652 newBalance=32012345678 slot=12345651 source=0x68656c6c6f2d target=0x68656c6c6f2d validatorIndex=1234
+```
+
+| Field | Meaning |
+| --- | --- |
+| `slot` → `inclusionSlot` | The attestation for slot 12345651 was included one slot later. Sooner is better. |
+| `correctSource`, `correctTarget`, `correctHead` | Whether each vote was correct. `correctTarget=false` costs rewards. |
+| `newBalance`, `balanceChange` | Balance in Gwei, and the change since the last event. |
+
+Other lines:
+
+- When you propose:
+
+  ```text
+  Proposed beacon block was included
+  ```
+
+- During sync committee duty:
+
+  ```text
+  Sync committee contribution included
+  ```
+
+- If something is badly wrong:
+
+  ```text
+  Attester slashing was included
+  Proposer slashing was included
+  ```
+
+Every 5 epochs, a summary:
+
+```text
+[2026-09-28 10:32:00.00]  INFO monitor: Aggregated performance since launch attestationInclusion=100.00% averageInclusionDistance=1.0 balanceChangePct=0.01% correctlyVotedHeadPct=98.00% correctlyVotedSourcePct=100.00% correctlyVotedTargetPct=100.00% startBalance=32000000000 startEpoch=385801 totalAggregations=0 totalProposedBlocks=0 totalRequested=5 totalSyncContributions=0 validatorIndex=1234
+```
+
+The monitor also exports `monitor_*` metrics with a `validator_index` label, for example `monitor_timely_target`, which you can graph and alert on as in [Dashboards and alerts](/operate/metrics/).
+
+<Aside type="tip">
+If you run many keys with <Flag name="disable-account-metrics" bin="validator" />, the monitor on one beacon node gives you per-validator visibility back.
+</Aside>
+
+## Use a block explorer
+
+An explorer sees your validator from outside, so it catches problems your own node can't report, such as the whole machine being offline.
+
+- [beaconcha.in](https://beaconcha.in) for Mainnet, [hoodi.beaconcha.in](https://hoodi.beaconcha.in) for Hoodi. Search your index or public key.
+- Add your validators to a beaconcha.in dashboard to get email or app notifications for missed attestations, proposals, and balance drops.
+
+## What good looks like
+
+| Measure | Good | Look into it if |
+| --- | --- | --- |
+| Attestations included | 99% or more | Several misses in a row. |
+| Correct target votes | 99% or more | It drops for hours. |
+| Correct head votes | Most, not all | It's much lower than other validators on the explorer. |
+| Inclusion distance | 1 slot on average | Consistently above 1. |
+| Balance | Rises most epochs | It falls for several epochs in a row. |
+
+A missed attestation during a restart or an update is normal and costs about what it would have earned. If the whole network is missing attestations at the same time (low participation on the explorer), the problem isn't your node.

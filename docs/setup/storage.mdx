@@ -1,0 +1,183 @@
+---
+title: "Disk space"
+description: See what uses disk on a Prysm beacon node, choose between a pruned node and longer blob retention, move the data directory to a bigger disk, and recover from a full disk.
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+<SetupPicker groups="os" />
+
+The beacon node needs much less disk than the execution client, but it still grows over time. This page shows where the space goes, the few flags that control it, and how to move the data to a bigger disk. For hardware sizing, see [System requirements](/get-started/system-requirements/).
+
+## What uses disk
+
+Everything lives under the beacon node's <Flag name="datadir" />:
+
+| Folder | What it holds | How long it's kept |
+| --- | --- | --- |
+| `beaconchaindata/` | Blocks and states | Forever, unless you turn on pruning |
+| `blobs/`, `data-columns/` | Blob data that rollups post | 4,096 epochs (about 18 days), then deleted automatically |
+| `logs/` | A debug log for troubleshooting | The most recent logs, at most about 500 MB |
+
+Check the sizes with:
+
+<When os="unix">
+
+```bash
+du -sh <DATADIR>/*
+```
+
+</When>
+<When os="win">
+
+```powershell
+Get-ChildItem <DATADIR> -Directory | ForEach-Object {
+  $gb = (Get-ChildItem $_.FullName -Recurse -File | Measure-Object Length -Sum).Sum / 1GB
+  "{0,8:N1} GB  {1}" -f $gb, $_.Name
+}
+```
+
+</When>
+
+A [checkpoint-synced](/setup/checkpoint-sync/) node only has blocks from its checkpoint onward, so it starts small. Even so, Prysm keeps every block it receives unless you turn on pruning.
+
+**Blob data grows with your validators.** Each node stores a share of every block's blob data. A node with no validators stores the minimum; each 32 ETH of validator balance attached to the node adds a little more. With blocks targeting 14 blobs, the 18-day window holds about 31 GB for a node with a few validators and about 490 GB for a node that stores everything (a supernode). Blocks can carry up to 21 blobs, so in the worst case these grow by half. Bandwidth scales the same way.
+
+## Choose how much to keep
+
+| Setup | Keeps | Disk | Flags |
+| --- | --- | --- | --- |
+| Default staking node | Every block since the checkpoint, blob data for 18 days | Grows slowly, forever | <Flag name="checkpoint-sync-url" /> |
+| Pruned staking node | About 5 months of blocks, blob data for 18 days | Stays roughly flat | Add <Flag name="beacon-db-pruning" /> |
+| Serves blobs to a rollup or L2 | Enough blob data to rebuild every blob | Much more, plus more bandwidth | Add <Flag name="semi-supernode" /> or <Flag name="supernode" /> |
+| Longer blob history | Blob data for as many epochs as you set | Grows with the window | Add <Flag name="blob-retention-epochs" /> (default and minimum 4096) |
+
+For most stakers, a pruned node is the right choice:
+
+<When os="unix">
+
+```bash
+./prysm.sh beacon-chain \
+  --hoodi \
+  --jwt-secret=../jwt.hex \
+  --checkpoint-sync-url=https://hoodi.beaconstate.ethstaker.cc \
+  --beacon-db-pruning
+```
+
+</When>
+<When os="win">
+
+```powershell
+.\prysm.bat beacon-chain `
+  --hoodi `
+  --jwt-secret=..\jwt.hex `
+  --checkpoint-sync-url=https://hoodi.beaconstate.ethstaker.cc `
+  --beacon-db-pruning
+```
+
+</When>
+
+<Flag name="beacon-db-pruning" /> deletes blocks and states older than the window the network expects nodes to serve, about 5 months. It frees space inside the database for reuse, but the file doesn't shrink. To get the space back on an old, large database, resync from scratch with pruning on (see If the disk fills up, below).
+
+Two things to know about <Flag name="supernode" /> and <Flag name="semi-supernode" />: at startup the node logs `Operating in supernode mode` (or `semi-supernode mode`), and the amount it stores never goes back down. Removing the flag, or removing validators, doesn't reduce storage; only a resync with an empty database does.
+
+## Move the data directory
+
+Use this to move to a bigger or faster disk.
+
+<Steps>
+
+1. **Stop the beacon node.**
+
+2. **Copy the whole data directory.**
+
+	<When os="unix">
+
+	`-a` keeps ownership and permissions:
+
+	```bash
+	sudo cp -a <OLD_DATADIR>/. <NEW_DATADIR>
+	```
+
+	</When>
+	<When os="win">
+
+	`/E` copies every subfolder, empty ones included:
+
+	```powershell
+	robocopy <OLD_DATADIR> <NEW_DATADIR> /E
+	```
+
+	</When>
+
+3. **Point the beacon node at the new location** with <Flag name="datadir" />, in its command, config file, or service unit.
+
+	<When os="unix">
+
+	With systemd, also update `ReadWritePaths=` (see [Run with systemd](/setup/run-with-systemd/)).
+
+	</When>
+
+4. **Start the beacon node** and check that the `Checking DB` line shows the new `databasePath`:
+
+	<When os="unix">
+
+	```text
+	INFO node: Checking DB databasePath=/mnt/bigdisk/beacon/beaconchaindata
+	```
+
+	</When>
+	<When os="win">
+
+	```text
+	INFO node: Checking DB databasePath=D:\beacon\beaconchaindata
+	```
+
+	</When>
+
+5. **Delete the old copy** once the node has run correctly for a while.
+
+</Steps>
+
+To keep blob data on a separate disk from the database, use <Flag name="blob-path" /> and <Flag name="data-column-path" />.
+
+## If the disk fills up
+
+When the disk is full, the beacon node can't write and stops following the chain.
+
+1. **Stop the beacon node.**
+2. **Free space.** Usual suspects: the execution client's database, log files written with `--log-file` (Prysm doesn't rotate those), old Docker images, and old backups on the same disk.
+3. **Start the beacon node again** and watch the logs.
+4. **If it fails with database errors, resync from scratch.** Start it once with <Flag name="force-clear-db" /> and a <Flag name="checkpoint-sync-url" />. It deletes the beacon database and blob data, then syncs again in minutes. Remove `--force-clear-db` afterward, or the node wipes itself on every restart.
+
+:::caution
+The validator client also has a `--force-clear-db` flag. On the validator, it deletes the **slashing protection database**. Never use it there to free space.
+:::
+
+Resyncing the beacon node doesn't touch your validator keys or slashing protection. Your validators miss duties only until the node is back.
+
+## Check that it works
+
+<When os="unix">
+
+```bash
+df -h <DATADIR>
+du -sh <DATADIR>/*
+```
+
+</When>
+<When os="win">
+
+```powershell
+Get-PSDrive -PSProvider FileSystem
+Get-ChildItem <DATADIR> -Directory | ForEach-Object {
+  $gb = (Get-ChildItem $_.FullName -Recurse -File | Measure-Object Length -Sum).Sum / 1GB
+  "{0,8:N1} GB  {1}" -f $gb, $_.Name
+}
+```
+
+</When>
+
+On a pruned node, `beaconchaindata` stops growing once it holds about 5 months of blocks, and `blobs` and `data-columns` stay roughly the same size once the node has run for 18 days. Set up a disk space alert so a full disk never surprises you.

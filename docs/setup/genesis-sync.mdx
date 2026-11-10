@@ -1,0 +1,212 @@
+---
+title: Sync from genesis
+description: Start a Prysm beacon node from the first block of the chain instead of a checkpoint, when you need the full history or don't want to take your starting point from another node.
+---
+
+import { Aside, Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+A beacon node can also start from the very first state of the chain, the genesis state, and replay every block since. That takes days on mainnet, compared with minutes [checkpoint sync](/setup/checkpoint-sync/).
+
+<Aside type="tip" title="Use checkpoint sync unless you have a reason not to">
+A checkpoint-synced node follows the same chain and runs validators just as well. Syncing from genesis only costs you time, unless one of the reasons below applies.
+</Aside>
+
+<SetupPicker groups="os net" />
+
+## When to sync from genesis
+
+- **You need the historical states.** Checkpoint sync with <Flag name="enable-backfill" /> brings back old blocks, but not the states before the checkpoint. An archive node that answers queries about any past slot needs them.
+- **You don't want to take your starting point from another node.** The node checks every block from genesis onward itself, instead of trusting a provider for a recent state.
+
+<Aside type="note" title="Genesis sync still needs one known-good checkpoint">
+On proof of stake, a node that's been offline longer than the weak subjectivity period, a few weeks on mainnet, can't tell the real chain from a fake one built with old validator keys. A node syncing from genesis is in that position. Pass <Flag name="weak-subjectivity-checkpoint" /> with a recent `block_root:epoch` you got from a source you trust, and the node stops if the chain it syncs doesn't contain it.
+</Aside>
+
+## Before you begin
+
+- A beacon node with an **empty** data directory. If it already holds a database, the node carries on from there.
+- A connected execution client, with the folder layout from [Connect your execution client](/setup/connect-execution-client/).
+
+## Start the node
+
+<Steps>
+
+1. <When net="hoodi sepolia">
+
+	**Download the genesis state.** Prysm ships the mainnet genesis state, but not the testnet ones. Get `genesis.ssz` from the [eth-clients/\{net\}](https://github.com/eth-clients/{net}/tree/main/metadata) repository, next to the network's other data:
+
+	<When os="unix">
+
+	```bash
+	curl -L https://github.com/eth-clients/{net}/raw/main/metadata/genesis.ssz \
+	  --output $HOME/ethereum/data/{net}/genesis.ssz
+	```
+
+	</When>
+	<When os="win">
+
+	```powershell
+	curl.exe -L https://github.com/eth-clients/{net}/raw/main/metadata/genesis.ssz `
+	  --output $HOME\ethereum\data\{net}\genesis.ssz
+	```
+
+	</When>
+
+	<When net="hoodi">
+
+	The file is about 150 MB.
+
+	</When>
+	<When net="sepolia">
+
+	The file is about 3 MB.
+
+	</When>
+
+	</When>
+
+2. **Start the beacon node.** From the `consensus` folder:
+
+	<When net="mainnet" os="unix" conn="jwt">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --mainnet \
+	  --datadir=$HOME/ethereum/data/mainnet/beacon \
+	  --execution-endpoint=http://localhost:8551 \
+	  --jwt-secret=$HOME/ethereum/data/jwt.hex
+	```
+
+	</When>
+	<When net="mainnet" os="win" conn="jwt">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --mainnet `
+	  --datadir=$HOME\ethereum\data\mainnet\beacon `
+	  --execution-endpoint=http://localhost:8551 `
+	  --jwt-secret=$HOME\ethereum\data\jwt.hex
+	```
+
+	</When>
+	<When net="mainnet" os="unix" conn="ipc">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --mainnet \
+	  --datadir=$HOME/ethereum/data/mainnet/beacon \
+	  --execution-endpoint=$HOME/ethereum/data/mainnet/execution/geth.ipc
+	```
+
+	</When>
+	<When net="mainnet" os="win" conn="ipc">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --mainnet `
+	  --datadir=$HOME\ethereum\data\mainnet\beacon `
+	  --execution-endpoint=\\.\pipe\geth.ipc
+	```
+
+	</When>
+	<When net="hoodi sepolia" os="unix" conn="jwt">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/beacon \
+	  --execution-endpoint=http://localhost:8551 \
+	  --jwt-secret=$HOME/ethereum/data/jwt.hex \
+	  --genesis-state=$HOME/ethereum/data/{net}/genesis.ssz
+	```
+
+	</When>
+	<When net="hoodi sepolia" os="win" conn="jwt">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\beacon `
+	  --execution-endpoint=http://localhost:8551 `
+	  --jwt-secret=$HOME\ethereum\data\jwt.hex `
+	  --genesis-state=$HOME\ethereum\data\{net}\genesis.ssz
+	```
+
+	</When>
+	<When net="hoodi sepolia" os="unix" conn="ipc">
+
+	```bash
+	./prysm.sh beacon-chain \
+	  --{net} \
+	  --datadir=$HOME/ethereum/data/{net}/beacon \
+	  --execution-endpoint=$HOME/ethereum/data/{net}/execution/geth.ipc \
+	  --genesis-state=$HOME/ethereum/data/{net}/genesis.ssz
+	```
+
+	</When>
+	<When net="hoodi sepolia" os="win" conn="ipc">
+
+	```powershell
+	.\prysm.bat beacon-chain `
+	  --{net} `
+	  --datadir=$HOME\ethereum\data\{net}\beacon `
+	  --execution-endpoint=\\.\pipe\geth.ipc `
+	  --genesis-state=$HOME\ethereum\data\{net}\genesis.ssz
+	```
+
+	</When>
+
+	**Running validators?** Also add:
+
+	```bash
+	--postpone-shutdown-for-proposals
+	```
+
+	When you stop or restart the beacon node, it then waits until your validators' upcoming block proposals are done. Refer to the [Don't restart just before a proposal](/install/update/#dont-restart-just-before-a-proposal) page.
+
+3. **Watch the logs.** Once it has peers, the node logs its progress every few seconds:
+
+	```text
+	INFO initial-sync: Processing blocks batchSize=… blocksPerSecond=… estimatedTimeRemaining=… latestProcessedSlot/currentSlot=…/… peers=… startingFrom=0x…
+	```
+
+	`estimatedTimeRemaining` tells you roughly when it will catch up. When it has, Prysm logs:
+
+	```text
+	INFO initial-sync: Synced to head of chain
+	```
+
+</Steps>
+
+## Check that it works
+
+<When os="unix">
+
+```bash
+curl -s http://localhost:3500/eth/v1/node/syncing
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://localhost:3500/eth/v1/node/syncing
+```
+
+</When>
+
+While the node syncs, `head_slot` grows from 0 and `sync_distance` shrinks. When `is_syncing` is `false`, the node is following the chain, and the logs show a `Synced new block` line for every block.
+
+## Troubleshooting
+
+**The node started from a checkpoint instead.** <Flag name="checkpoint-sync-url" /> is still in your command or config file. Remove it, stop the node, and start it once with <Flag name="force-clear-db" />.
+
+**Sync is slow or stalls.** Prysm logs:
+
+```text
+Waiting for enough suitable peers before syncing
+```
+
+The node needs peers to download blocks from. Check that your peer-to-peer ports are open.

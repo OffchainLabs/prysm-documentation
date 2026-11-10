@@ -1,0 +1,258 @@
+---
+title: Switch clients
+description: Move validators to Prysm from Lighthouse, Teku, Nimbus, Lodestar or Grandine, or from Prysm to another client, with the exact key and slashing protection commands for each.
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@site/src/components/ui';
+import Flag from '@site/src/components/Flag';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+All consensus clients read the same keystores ([EIP-2335](https://eips.ethereum.org/EIPS/eip-2335)) and the same slashing protection file ([EIP-3076](https://eips.ethereum.org/EIPS/eip-3076)). Switching clients is the same procedure as [moving to a new machine](/operate/move-to-new-machine/): sync the new beacon node, stop the old validator for good, **wait at least 2 epochs**, then import keys and slashing protection.
+
+<Aside type="danger">
+Never run the old and new validator clients with the same keys at the same time. Stop and disable the old one, and prove it's off, before the new one starts.
+</Aside>
+
+<SetupPicker groups="os net" />
+
+## Before you begin
+
+- Your keystore files and their password, or your mnemonic to regenerate them.
+- Plan the execution client: one execution client serves one beacon node. Either run a second one while the new beacon node syncs, or move your existing one to the new beacon node (same `jwt.hex`) and accept the downtime.
+- If both beacon nodes run on the same machine, they need different P2P ports. Prysm uses TCP 13000, UDP 12000, and UDP 13000; most other clients use 9000. See [Ports, peers and router setup](/setup/networking/).
+
+## Switch to Prysm
+
+<Steps>
+
+1. **Sync the Prysm beacon node** with [checkpoint sync](/setup/checkpoint-sync/), without a validator client. Wait until [Is my node healthy?](/operate/check-health/) shows it synced.
+
+2. **Stop and disable the old validator client**, and make sure nothing restarts it.
+
+3. **Export slashing protection from the old client**, with its validator client stopped:
+
+   {/* Verified 2026-09 against: Lighthouse book (v8.2.x), Teku docs (26.9.x), Nimbus guide (v26.8.x), Lodestar docs (v1.49.x), Grandine book (2.0.x). */}
+
+   <When>
+
+   <Tabs syncKey="cl">
+   <TabItem label="Lighthouse">
+
+   ```bash
+   lighthouse --network {net} account validator slashing-protection export slashing_protection.json
+   ```
+
+   </TabItem>
+   <TabItem label="Teku">
+
+   ```bash
+   teku slashing-protection export \
+     --data-path=<TEKU_DATA_PATH> \
+     --to=slashing_protection.json
+   ```
+
+   </TabItem>
+   <TabItem label="Nimbus">
+
+   ```bash
+   build/nimbus_beacon_node slashingdb export slashing_protection.json \
+     --data-dir=<NIMBUS_DATA_DIR>
+   ```
+
+   </TabItem>
+   <TabItem label="Lodestar">
+
+   ```bash
+   ./lodestar validator slashing-protection export \
+     --network {net} \
+     --file slashing_protection.json
+   ```
+
+   </TabItem>
+   <TabItem label="Grandine">
+
+   ```bash
+   grandine --network {net} interchange export slashing_protection.json
+   ```
+
+   </TabItem>
+   </Tabs>
+
+   </When>
+
+   Use your client's data directory if it isn't the default. Also delete the keys from the old client, or move its keystore folder away, so it has nothing to sign with.
+
+4. **Wait at least 2 epochs** (about 13 minutes). A block explorer must show your validators **missing** attestations since you stopped the old client.
+
+5. **Import slashing protection, then the keys, into Prysm**:
+
+   <When os="unix">
+
+   ```bash
+   ./prysm.sh validator slashing-protection-history import \
+     --datadir=<PRYSM_VALIDATOR_DATADIR> \
+     --slashing-protection-json-file=slashing_protection.json
+
+   ./prysm.sh validator accounts import \
+     --keys-dir=<PATH_TO_KEYSTORES> \
+     --wallet-dir=<WALLET_DIR>
+   ```
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   .\prysm.bat validator slashing-protection-history import `
+     --datadir=<PRYSM_VALIDATOR_DATADIR> `
+     --slashing-protection-json-file=slashing_protection.json
+
+   .\prysm.bat validator accounts import `
+     --keys-dir=<PATH_TO_KEYSTORES> `
+     --wallet-dir=<WALLET_DIR>
+   ```
+
+   </When>
+
+   Use the same `--datadir` the validator will run with. See [Import keys](/validators/import-keys/).
+
+6. **Start the Prysm validator** with your [fee recipient](/validators/fee-recipient/), MEV-Boost settings, and <Flag name="enable-doppelganger" bin="validator" />.
+
+</Steps>
+
+## Switch from Prysm
+
+<Steps>
+
+1. **Sync the new client's beacon node**, without its validator client, and check it's synced. The Beacon API is standard, so this works with any client:
+
+   <When os="unix">
+
+   ```bash
+   curl http://localhost:<ITS_HTTP_PORT>/eth/v1/node/syncing
+   ```
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   curl.exe http://localhost:<ITS_HTTP_PORT>/eth/v1/node/syncing
+   ```
+
+   </When>
+
+2. **Stop and disable the Prysm validator**, then check it's off; see [Move to a new machine](/operate/move-to-new-machine/).
+
+3. **Export slashing protection and keys from Prysm**, then delete the keys from the Prysm wallet:
+
+   <When os="unix">
+
+   ```bash
+   ./prysm.sh validator slashing-protection-history export \
+     --datadir=<PRYSM_VALIDATOR_DATADIR> \
+     --slashing-protection-export-dir=<EXPORT_DIR>
+
+   ./prysm.sh validator accounts backup \
+     --wallet-dir=<WALLET_DIR> \
+     --backup-dir=<EXPORT_DIR>
+
+   ./prysm.sh validator accounts delete \
+     --wallet-dir=<WALLET_DIR>
+   ```
+
+   You get `<EXPORT_DIR>/slashing_protection.json` and `<EXPORT_DIR>/backup.zip`.
+
+   </When>
+   <When os="win">
+
+   ```powershell
+   .\prysm.bat validator slashing-protection-history export `
+     --datadir=<PRYSM_VALIDATOR_DATADIR> `
+     --slashing-protection-export-dir=<EXPORT_DIR>
+
+   .\prysm.bat validator accounts backup `
+     --wallet-dir=<WALLET_DIR> `
+     --backup-dir=<EXPORT_DIR>
+
+   .\prysm.bat validator accounts delete `
+     --wallet-dir=<WALLET_DIR>
+   ```
+
+   You get `<EXPORT_DIR>\slashing_protection.json` and `<EXPORT_DIR>\backup.zip`.
+
+   </When>
+
+   Unzip `backup.zip` to get the keystores; their password is the backup password you chose. If you still have your original keystores, you can use those instead.
+
+4. **Wait at least 2 epochs** and check that a block explorer shows missed attestations.
+
+5. **Import slashing protection and keys into the new client**, with its validator client stopped:
+
+   <When>
+
+   <Tabs syncKey="cl">
+   <TabItem label="Lighthouse">
+
+   ```bash
+   lighthouse --network {net} account validator slashing-protection import slashing_protection.json
+   lighthouse --network {net} account validator import --directory <PATH_TO_KEYSTORES>
+   ```
+
+   </TabItem>
+   <TabItem label="Teku">
+
+   ```bash
+   teku slashing-protection import \
+     --data-path=<TEKU_DATA_PATH> \
+     --from=slashing_protection.json
+   ```
+
+   Teku has no key import command. Start it with `--validator-keys=<PATH_TO_KEYSTORES>:<PATH_TO_PASSWORDS>`, where each keystore `.json` has a matching password `.txt`.
+
+   </TabItem>
+   <TabItem label="Nimbus">
+
+   ```bash
+   build/nimbus_beacon_node slashingdb import slashing_protection.json \
+     --data-dir=<NIMBUS_DATA_DIR>
+   build/nimbus_beacon_node deposits import \
+     --data-dir=<NIMBUS_DATA_DIR> <PATH_TO_KEYSTORES>
+   ```
+
+   </TabItem>
+   <TabItem label="Lodestar">
+
+   ```bash
+   ./lodestar validator slashing-protection import \
+     --network {net} \
+     --file slashing_protection.json
+   ./lodestar validator import \
+     --network {net} \
+     --importKeystores <PATH_TO_KEYSTORES> \
+     --importKeystoresPassword <PASSWORD_FILE>
+   ```
+
+   </TabItem>
+   <TabItem label="Grandine">
+
+   ```bash
+   grandine --network {net} interchange import slashing_protection.json
+   ```
+
+   Grandine loads keys at start: `--keystore-dir <PATH_TO_KEYSTORES> --keystore-password-file <PASSWORD_FILE>`.
+
+   </TabItem>
+   </Tabs>
+
+   </When>
+
+   Always check the command against the client's current documentation: [Lighthouse](https://lighthouse-book.sigmaprime.io/), [Teku](https://docs.teku.consensys.io/), [Nimbus](https://nimbus.guide/migration.html), [Lodestar](https://chainsafe.github.io/lodestar/), [Grandine](https://docs.grandine.io/).
+
+6. **Start the new validator client** with your fee recipient and MEV-Boost settings, and its doppelganger protection on for the first start.
+
+</Steps>
+
+## Check that it works
+
+- The new validator client reports your keys as active and submits attestations within a few epochs (longer with doppelganger protection).
+- A block explorer shows attestations again.
+- Once it has run for a day, remove the old client’s keys, data, and services so it can’t start by accident.

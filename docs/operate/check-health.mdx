@@ -1,0 +1,259 @@
+---
+title: "Is my node healthy?"
+description: Tell from the logs and two curl commands whether your beacon node is finding peers, syncing, following the chain, and whether your validator is attesting.
+---
+
+import { Aside } from '@site/src/components/ui';
+import Flag from '@site/src/components/Flag';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+<SetupPicker groups="os" />
+
+Your beacon node goes through the same states every time it starts: it finds peers, syncs, then follows the chain. Once it follows the chain, your validator can attest. Find the state your logs show below, then run the quick checks.
+
+## 1. Searching for peers
+
+Right after starting, the beacon node looks for peers to sync from:
+
+```text
+[2026-09-28 10:00:05.12]  INFO initial-sync: Waiting for enough suitable peers before syncing required=3 suitable=1
+```
+
+| Field | Meaning |
+| --- | --- |
+| `suitable` | Peers found that are ahead of you. |
+| `required` | Peers needed before sync starts (<Flag name="min-sync-peers" />, default 3). |
+
+This is normal for a minute or two. If it lasts longer, your P2P ports are probably blocked; see [Ports, peers and router setup](/setup/networking/).
+
+Once a minute, the beacon node also logs its peer count:
+
+```text
+[2026-11-02 09:05:00.96]  INFO p2p: Connected peers inboundQUIC=15 inboundTCP=1 outboundQUIC=20 outboundTCP=35 target=70 total=71
+```
+
+| Field | Healthy value |
+| --- | --- |
+| `total` | Close to `target` (<Flag name="p2p-max-peers" />, default 70) after the first hour. It can go slightly above `target`. |
+| `inboundQUIC`, `inboundTCP` | Peers that connected to you. Their sum should be above zero. `0` in both for a long time means nobody can reach you: forward or open your P2P ports (TCP and UDP) and [tell Prysm your public IP](/setup/networking/#tell-prysm-your-public-ip). |
+| `outboundQUIC`, `outboundTCP` | Peers your node connected to. |
+
+## 2. Syncing
+
+With [checkpoint sync](/setup/checkpoint-sync/), this phase takes a minute or two. When the node catches up, it logs:
+
+```text
+[2026-11-02 09:14:37.16]  INFO initial-sync: Synced to head of chain currentSlot=15565571 syncedSlot=15565570
+```
+
+While your execution client is still syncing, the beacon node logs lines like this:
+
+```text
+[2026-11-02 09:14:49.52]  INFO blockchain: Called new payload with optimistic block parentRoot=0x4c1f9a72e05d38b6a9f0c2e71d84b53a6e09f2c7b1d5a8e43f6c0b97d2e15a84 payloadBlockHash=0x8e3b52a1f07c root=0xa7d20e6c93f14b85d2e7a0c61f39b4d8e5a27c0f6b13d9e84c2f5a70b6e1d39c slot=15565572
+```
+
+That's expected: the beacon node is *optimistic* until the execution client catches up, and your validator can't perform duties yet.
+
+## 3. Synced and following the chain
+
+A synced beacon node logs one line per block, about every 12 seconds:
+
+```text
+[2026-09-28 10:05:12.08]  INFO blockchain: Synced new block block=0x5b7dd003... epoch=385801 finalizedEpoch=385799 finalizedRoot=0xcdeff59f... sinceSlotStartTime=1.9s slot=12345650
+```
+
+| Field | Healthy value |
+| --- | --- |
+| `slot` | Keeps increasing, by one most of the time. |
+| `finalizedEpoch` | About two epochs behind `epoch`. |
+| `sinceSlotStartTime` | Usually under 4 seconds. Consistently higher means late blocks: few peers, a slow machine or a wrong clock. |
+
+## 4. Validator connected and active
+
+At startup, the validator client connects to the beacon node and reports each key's status:
+
+```text
+[2026-09-28 10:05:00.00]  INFO client: Beacon chain started genesisTime=2025-03-17 12:10:00 +0000 UTC
+[2026-09-28 10:05:01.00]  INFO client: Validator activated index=123456 pubkey=0xa1b2c3d4e5f6 status=ACTIVE validatorIndex=123456
+```
+
+If you see something else instead of `Validator activated`:
+
+| Log line | Meaning |
+| --- | --- |
+| `Waiting for beacon node to sync to latest chain head` | Connected; the beacon node is still syncing. The validator waits on its own. |
+| `Validator service health check failed, waiting for healthy beacon node...` | The validator can't reach the beacon node. Check <Flag name="beacon-rpc-provider" bin="validator" /> and that the beacon node runs. |
+| `Waiting for deposit to be observed by beacon node` | No deposit seen for this key on this network yet. |
+| `Waiting for activation... Check validator queue status in a block explorer` | The key is in the activation queue. |
+
+## 5. Validator attesting and proposing
+
+Every epoch, each active validator attests once:
+
+```text
+[2026-09-28 10:05:24.00]  INFO client: Submitted new attestations blockRoot=0x5e3a3cb822d6 committeeIndices=[13] pubkeys=[0xa1b2c3d4e5f6] sinceSlotStartTime=4.01s slot=12345651 sourceEpoch=385800 sourceRoot=0xa02cc7706494 targetEpoch=385801 targetRoot=0x72d7a888b2f0
+```
+
+One epoch later, the validator reports how those votes went:
+
+```text
+[2026-09-28 10:11:48.00]  INFO client: Previous epoch aggregated voting summary attestationInclusionPct=100% averageInactivityScore=0 correctlyVotedHeadPct=100% correctlyVotedSourcePct=100% correctlyVotedTargetPct=100% epoch=385801
+```
+
+| Field | Healthy value |
+| --- | --- |
+| `sinceSlotStartTime` (attestations) | Around 4 seconds. |
+| `attestationInclusionPct` | 100%, or close. |
+| `correctlyVotedTargetPct` | 100%, or close. Misses here cost rewards. |
+| `correctlyVotedHeadPct` | High. An occasional miss is normal. |
+
+When one of your validators proposes (rarely), you see:
+
+```text
+[2026-09-28 11:20:00.00]  INFO client: Submitted new block attestationCount=8 blockRoot=0x4c1f0e9a2b3d depositCount=0 fork=fulu graffiti=my-node slot=12346020
+```
+
+Just before each epoch, the validator client logs its duties for that epoch. A line with `proposerPubkey` tells you in advance that a proposal is coming, and `timeUntilDuty` tells you when:
+
+```text
+[2026-09-28 11:19:01.35]  INFO client: Duties schedule proposerPubkey=0xa3f1c07e92b4 timeUntilDuty=59s
+```
+
+## Quick checks
+
+These use the Beacon API on port `3500` (<Flag name="http-port" />) of the machine running the beacon node. `jq` is optional.
+
+<When os="win">
+
+Windows includes `curl.exe`. Install `jq` with:
+
+```powershell
+winget install jqlang.jq
+```
+
+</When>
+
+**Sync status:**
+
+<When os="unix">
+
+```bash
+curl -s http://localhost:3500/eth/v1/node/syncing | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://localhost:3500/eth/v1/node/syncing | jq
+```
+
+</When>
+
+```json
+{
+  "data": {
+    "head_slot": "12345650",
+    "sync_distance": "0",
+    "is_syncing": false,
+    "is_optimistic": false,
+    "el_offline": false
+  }
+}
+```
+
+All three booleans must be `false`. `is_optimistic: true` means the execution client is still syncing. `el_offline: true` means the beacon node can't reach the execution client.
+
+**Peer count:**
+
+<When os="unix">
+
+```bash
+curl -s http://localhost:3500/eth/v1/node/peer_count | jq '.data.connected'
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://localhost:3500/eth/v1/node/peer_count | jq '.data.connected'
+```
+
+</When>
+
+**One-line health check**, for scripts and monitoring:
+
+<When os="unix">
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3500/eth/v1/node/health
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s -o NUL -w '%{http_code}\n' http://localhost:3500/eth/v1/node/health
+```
+
+</When>
+
+`200` means synced; `206` means syncing or optimistic; `503` means not synced and not syncing (for example, no peers).
+
+**Validator status**, from your own beacon node:
+
+<When os="unix">
+
+```bash
+curl -s http://localhost:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX> | jq '.data.status'
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://localhost:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX> | jq '.data.status'
+```
+
+</When>
+
+Replace `<VALIDATOR_INDEX>` with your validator index or `0x` public key. You want `"active_ongoing"`.
+
+**Execution client (optional).** If you enabled its JSON-RPC API (usually port `8545`), `eth_syncing` returns `false` when it's synced:
+
+<When os="unix">
+
+```bash
+curl -s -X POST -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' \
+  http://localhost:8545
+```
+
+</When>
+<When os="win">
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8545 `
+  -ContentType 'application/json' `
+  -Body '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}'
+```
+
+</When>
+
+Otherwise, check its own logs.
+
+## Warnings that matter
+
+Many `WARN` lines are harmless: a peer sent something bad, a block arrived late. Act when one of these repeats:
+
+| Log line | What to do |
+| --- | --- |
+| `Could not connect to execution client endpoint` | Start the execution client; check <Flag name="execution-endpoint" />. |
+| `HTTP authentication to your execution client is not working...` | The JWT secrets differ. Point both clients at the same `jwt.hex`. |
+| `Could not request attestation to sign at slot` | The beacon node is syncing or optimistic. Wait, then check the quick checks above. |
+| `Fee recipient is burn address` | Set your [fee recipient](/validators/fee-recipient/), or you lose execution rewards. |
+| `Duplicate instances exists in the network for validator keys` | Doppelganger protection found your key active elsewhere. **Stop and find the other instance**; see [Turn on doppelganger protection](/validators/doppelganger-protection/). |
+
+<Aside type="tip">
+Each process also writes a debug-level log to `<datadir>/logs/` (`beacon-chain.log` or `validator.log`), whatever <Flag name="verbosity" /> says. Prysm starts a new file every 250 MB and keeps one older file, so the folder holds the most recent logs, not a fixed time span. Attach these files when you ask for help.
+</Aside>

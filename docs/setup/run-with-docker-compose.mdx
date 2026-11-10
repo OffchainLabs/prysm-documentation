@@ -1,0 +1,327 @@
+---
+title: "Run with Docker Compose"
+description: Run the execution client, Prysm beacon node and validator with Docker Compose, so they start automatically and restart after a crash.
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import { ComposeDirs, ComposeFile } from '@site/src/components/ComposeFile';
+import Flag from '@site/src/components/Flag';
+import PrysmVersion from '@site/src/components/PrysmVersion';
+
+<SetupPicker groups="os net el conn role sync opts" />
+
+## Before you begin
+
+<When os="unix">
+
+- **Linux:** Docker Engine with the Compose plugin. See Docker's guides to [install Docker Engine](https://docs.docker.com/engine/install/) and [install the Compose plugin](https://docs.docker.com/compose/install/linux/). Docker Engine starts at boot, and the node starts with it.
+- **macOS:** [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/). Docker Desktop starts when you sign in, not at boot, and the node only runs while the Mac is awake. In Docker Desktop’s settings, turn on **Start Docker Desktop when you sign in to your computer**, and under **Resources**, set the memory to the amount listed in [System requirements](/get-started/system-requirements/).
+
+Run the commands on this page in a terminal. This must print v2 or later:
+
+</When>
+<When os="win">
+
+- [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) with the WSL 2 backend.
+- A Linux distribution in WSL, such as Ubuntu. See Microsoft's guide to [install WSL](https://learn.microsoft.com/en-us/windows/wsl/install). In Docker Desktop's settings, turn on [WSL integration](https://docs.docker.com/desktop/features/wsl/) for that distribution.
+
+Run every command on this page in that distribution's terminal (for example, open **Ubuntu** from the Start menu), not in PowerShell. The node's folder then lives on WSL's Linux file system; an execution client's database under `C:\` would be far too slow.
+
+Docker Desktop starts when you sign in to Windows, not at boot. In its settings, turn on **Start Docker Desktop when you sign in to your computer**; after a restart, the node stays down until someone signs in. WSL 2 also gets only part of the machine’s memory by default; set `memory` in [`.wslconfig`](https://learn.microsoft.com/en-us/windows/wsl/wsl-config) to what [System requirements](/get-started/system-requirements/) lists.
+
+This must print v2 or later:
+
+</When>
+
+```bash
+docker compose version
+```
+
+## Set up the services
+
+<Steps>
+
+1. **Create a folder for the node** and go into it. The compose file goes here, and the services keep everything they store in their `data` folder, one folder per network, as in the [Quickstart](/get-started/quickstart/). Docker creates them on first start:
+
+	<ComposeDirs />
+
+	<When net="hoodi sepolia" sync="genesis">
+
+	`genesis.ssz` is the network's genesis state. Prysm ships mainnet's, but not the testnet ones.
+
+	</When>
+
+2. **Save the compose file** as `~/ethereum-docker/docker-compose.yml`:
+
+	{/* Checked against the Compose Specification and images gcr.io/offchainlabs/prysm/*:v7.2.0, ethereum/client-go:v1.17.6, nethermind/nethermind:2.0.0, hyperledger/besu:26.9.0, erigontech/erigon:v3.7.0, ghcr.io/paradigmxyz/reth:v2.7.0, ghcr.io/lambdaclass/ethrex:27.0.0 and flashbots/mev-boost:1.12.0, 2026-09. */}
+
+	<ComposeFile />
+
+	<When conn="jwt">
+
+	On every start, `jwt-init` creates the JWT secret in `data/jwt` if it isn't there yet, then exits. The services that use the secret wait for it. The Engine API (8551) stays inside the Docker network.
+
+	</When>
+	<When conn="ipc">
+
+	The Engine API goes through the IPC socket in the `ipc` volume, which Docker manages and only the two containers mount.
+
+	</When>
+
+	Only the peer-to-peer ports are published to the internet; ports are published to the internet; the beacon API is published only to `127.0.0.1`.
+
+	<When role="validator">
+
+	The validator client reaches the beacon node over gRPC (4000) inside the Docker network. `stop_grace_period: 15m` gives <Flag name="postpone-shutdown-for-proposals" /> time to wait for a proposal; Docker's default of 10 seconds would kill the node mid-write.
+
+	Both Prysm services send fees to the address you entered under **Options** above. If the file still shows `<YOUR_WALLET_ADDRESS>`, enter an address you control there, or replace it in the file.
+
+	</When>
+	<When sync="checkpoint">
+
+	`{checkpoint}` is one of several [community checkpoint sync endpoints](https://eth-clients.github.io/checkpoint-sync-endpoints/); any one you trust works.
+
+	</When>
+	<When sync="genesis">
+
+	Syncing from genesis replays every block and takes days, not minutes. See [Sync from genesis](/setup/genesis-sync/).
+
+	</When>
+
+	<Flag name="beacon-db-pruning" /> deletes blocks and states older than about 5 months, the oldest data other nodes can still ask for, so the database stops growing. Leave it out if you need the full history.
+
+	<When role="validator" mev="on">
+
+	MEV-Boost uses the working relays from the [EthStaker relay list]({relays}) for this network. Relays differ in what they filter and how they share profits; the list describes each one, so remove any you don't want to use. MEV-Boost listens on port 18550 inside the Docker network only; `-addr=0.0.0.0:18550` lets the `beacon` container reach it.
+
+	</When>
+	<When el="erigon">
+
+	Erigon's image runs as UID `1000`, so its data folder must belong to that ID. Before the first start, hand it over with a one-off container:
+
+	```bash
+	docker compose run --rm --no-deps --user root --entrypoint chown erigon -R 1000:1000 /data
+	```
+
+	`--externalcl` stops Erigon from running its own built-in consensus client. Port 42069 is for its history downloads.
+
+	</When>
+	<When el="reth">
+
+	`--full` keeps Reth from running an archive node, which needs far more disk than a staking node.
+
+	</When>
+	<When el="ethrex">
+
+	Ethrex keeps its data in a subfolder named after the network.
+
+	</When>
+
+	Prysm is pinned to <PrysmVersion />, the current release. To update later, change the version in the `image:` lines and run `docker compose up -d` again: it downloads the new images and recreates only the containers that changed.
+
+3. <When role="validator">
+
+	**Create validator keys.** Download the [EthStaker deposit CLI](https://github.com/ethstaker/ethstaker-deposit-cli/releases), ideally onto a machine that has never been connected to the internet. Generate a mnemonic and your validator keys:
+
+	```bash
+	./deposit new-mnemonic --chain={net}
+	```
+
+	The CLI asks how many validators to create and for a withdrawal address. Use an address you control: withdrawals and the stake itself go there when you exit. It also asks you to choose a keystore password; you'll need it in the next step to import the keys into Prysm. Write the 24-word mnemonic down on paper and keep it offline. Anyone who has it controls your validator and can withdraw funds. The CLI writes a `validator_keys` folder containing a `deposit_data-*.json` file and one `keystore-m_*.json` per validator. Copy that folder to this machine.
+
+	</When>
+
+4. <When role="validator">
+
+	**Import your keys into Prysm.** Choose a password for the new wallet. The validator client reads it from `data/{net}/validator/wallet-password.txt` every time it starts:
+
+	```bash
+	printf 'New wallet password: ' && read -rs PW && echo
+	printf 'Confirm password: ' && read -rs PW2 && echo
+	if [ "$PW" = "$PW2" ]; then printf '%s' "$PW" > data/{net}/validator/wallet-password.txt && chmod 0600 data/{net}/validator/wallet-password.txt; else echo "Passwords don't match: run these lines again."; fi
+	unset PW PW2
+	```
+
+	Then import the keys with a one-off container; `--no-deps` keeps the node itself stopped for now. Replace `<PATH_TO_VALIDATOR_KEYS>` with the path to the `validator_keys` folder: the directory containing all the `keystore-m_*.json` files created in the previous step.
+
+	```bash
+	docker compose run --rm --no-deps -v <PATH_TO_VALIDATOR_KEYS>:/keys:ro \
+	  validator accounts import \
+	  --{net} \
+	  --keys-dir=/keys \
+	  --wallet-dir=/data/wallet \
+	  --wallet-password-file=/data/wallet-password.txt \
+	  --accept-terms-of-use
+	```
+
+	<When os="win">
+
+	If the `validator_keys` folder is on the Windows side, use its WSL path, such as `/mnt/c/Users/<YOUR_WINDOWS_USER>/validator_keys`.
+
+	</When>
+
+	It asks for the password of the keys you're importing:
+
+	```text
+	Enter the password for your imported accounts:
+	```
+
+	This is the keystore password you chose in the deposit CLI when creating your validator keys. Once the keys are imported, the validator client no longer needs it.
+
+	</When>
+
+5. **Start the services:**
+
+	```bash
+	docker compose up -d
+	```
+
+	`restart: unless-stopped` restarts a container after a crash or reboot, unless you stopped it yourself.
+
+	List the services:
+
+	```bash
+	docker compose ps
+	```
+
+	All services should be `running`.
+
+	<When role="validator">
+
+	Until both the beacon node and the execution client are synced, the validator client logs this warning every slot. That's expected:
+
+	```text
+	WARN fallback: No responsive beacon node found tried=[beacon:4000]
+	```
+
+	Follow its logs with `docker compose logs -f validator`.
+
+	</When>
+
+	Check the beacon node's sync status:
+
+	```bash
+	curl -s http://127.0.0.1:3500/eth/v1/node/syncing
+	```
+
+	The node is fully running once the response shows all three of these as `false`:
+
+	```json
+	{
+	  "data": {
+	    "head_slot": "…",
+	    "sync_distance": "0",
+	    "is_syncing": false,
+	    "is_optimistic": false,
+	    "el_offline": false
+	  }
+	}
+	```
+
+	- `"el_offline": false`: the beacon node reaches the execution client. This should be the case as soon as both services are up. If it stays `true`, read the execution client's logs, for example with `docker compose logs --tail 50 geth` for Geth.
+	- `"is_syncing": false`: the beacon node is synced.
+		<When sync="checkpoint">
+
+		From a checkpoint, this takes a few minutes: the node starts from a recent finalized state instead of replaying the chain.
+
+		</When>
+		<When sync="genesis">
+
+		From genesis, this takes days: the node replays every block since the start of the chain. `sync_distance` shows how many slots it still has to go.
+
+		</When>
+	- `"is_optimistic": false`: the execution client is synced. This takes the longest, from a few hours to a few days depending on your execution client and the network. Until then, the beacon node follows the chain but can't check the blocks’ transactions.
+
+
+
+6. <When role="validator">
+
+	**Make your deposit.** Deposit only once the sync check at the end of the previous step shows all three values as `false`.
+
+	<When net="mainnet">
+
+	Upload `deposit_data-*.json` on the [Staking Launchpad](https://launchpad.ethereum.org/) and follow its checks before depositing 32 ETH.
+
+	:::danger[Only use the official launchpad]
+	Scam sites copy the launchpad and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats, or emails.
+
+	- **Launchpad:** [https://launchpad.ethereum.org/](https://launchpad.ethereum.org/)
+	:::
+
+	</When>
+	<When net="hoodi">
+
+	Upload `deposit_data-*.json` on the [EthStaker console](https://hoodi.console.ethstaker.org/deposit) and deposit 32 Hoodi ETH. Never send real ETH to a testnet deposit contract.
+
+	:::danger[Only use the official console]
+	Scam sites copy the console and send your deposit to their own contract. Type the address yourself or use a bookmark; never follow links from ads, search results, chats, or emails.
+
+	- **Deposit page:** [https://hoodi.console.ethstaker.org/deposit](https://hoodi.console.ethstaker.org/deposit)
+	:::
+
+	</When>
+
+	The beacon chain then processes the deposit and puts your validator in the activation queue. Activation takes anywhere from hours to weeks depending on the queue. The validator client logs each stage:
+
+	```text
+	Waiting for deposit to be observed by beacon node
+	Validator deposited, entering activation queue after finalization
+	Waiting for activation... Check validator queue status in a block explorer
+	Validator activated
+	```
+
+	Follow them with:
+
+	```bash
+	docker compose logs -f validator
+	```
+
+	Keep all your services running; once active, your validator attests and proposes automatically.
+
+	</When>
+
+</Steps>
+
+**Logs.**
+
+```bash
+docker compose logs -f beacon    # follow the beacon node
+docker compose logs --since 1h   # every service, the last hour
+```
+
+**Everyday commands.**
+
+```bash
+docker compose stop             # stop everything
+docker compose up -d            # start it again
+docker compose restart beacon   # restart one service
+docker compose down             # remove the containers
+```
+
+`docker compose down` keeps your data in `~/ethereum-docker/data`.
+
+<When role="validator">
+
+:::danger[One validator client per key]
+Never run the validator service on two machines, or next to another validator client, with the same keys. Both would sign, and the keys would be slashed.
+:::
+
+</When>
+
+Prysm also keeps the most recent debug logs in `<datadir>/logs/`: the current file plus one older one, at most about 500 MB. To turn that off, add <Flag name="disable-ephemeral-log-file" />.
+
+## Check that it works
+
+Restart the machine once, then run the checks from **Start the services** again: everything should come back by itself. On macOS and Windows, sign in first so Docker Desktop starts.
+
+## Troubleshooting
+
+**A container restarts in a loop.**
+Read the last error:
+
+```bash
+docker compose logs --tail 50 beacon
+```
+
+A misspelled or removed flag stops Prysm at startup; compare with the [beacon-chain reference](/reference/cli/beacon-chain/).

@@ -1,0 +1,67 @@
+---
+title: "Move your slashing protection history"
+description: "Export your validator's slashing protection history from one machine or client and import it into another."
+---
+
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+<SetupPicker groups="os" />
+
+The validator client records every block and attestation it signs, and refuses to sign anything that conflicts. Take that history with you when you move keys to another machine or client. Every client reads the standard [EIP-3076](https://eips.ethereum.org/EIPS/eip-3076) format.
+
+Stop the validator client first; its database is locked while it runs.
+
+**Export** on the old machine:
+
+<When os="unix">
+
+```bash
+./prysm.sh validator slashing-protection-history export \
+  --datadir=<VALIDATOR_DATADIR> \
+  --slashing-protection-export-dir=<EXPORT_DIR>
+```
+
+</When>
+<When os="win">
+
+```powershell
+.\prysm.bat validator slashing-protection-history export `
+  --datadir=<VALIDATOR_DATADIR> `
+  --slashing-protection-export-dir=<EXPORT_DIR>
+```
+
+</When>
+
+```text
+INFO historycmd: Successfully wrote <EXPORT_DIR>/slashing_protection.json. You can import this file using Prysm's validator slashing-protection-history import command in another machine
+```
+
+**Import** on the new machine, before its validator starts:
+
+<When os="unix">
+
+```bash
+./prysm.sh validator slashing-protection-history import \
+  --slashing-protection-json-file=<PATH_TO>/slashing_protection.json \
+  --datadir=<VALIDATOR_DATADIR>
+```
+
+</When>
+<When os="win">
+
+```powershell
+.\prysm.bat validator slashing-protection-history import `
+  --slashing-protection-json-file=<PATH_TO>\slashing_protection.json `
+  --datadir=<VALIDATOR_DATADIR>
+```
+
+</When>
+
+```text
+INFO historycmd: Slashing protection JSON successfully imported into <VALIDATOR_DATADIR>
+```
+
+`<VALIDATOR_DATADIR>` is the validator's <Flag name="datadir" bin="validator" />, the folder with `validator.db` (the validator logs it at startup as `Checking DB databasePath=...`). If the export says `No slashing protection data was found in your database`, you pointed it at the wrong folder; older setups keep the database in `<WALLET_DIR>/direct/`.
+
+The file holds no secrets. The history only protects you if the old validator never signs again. If you lost it, keep the old client off for several epochs, then start the new one with [doppelganger protection](/validators/doppelganger-protection/) on.

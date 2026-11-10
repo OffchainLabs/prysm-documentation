@@ -1,0 +1,88 @@
+---
+title: "Beacon node metrics"
+description: The Prysm beacon node exposes Prometheus metrics. Choose where they are served, turn them off, and import the beacon node Grafana dashboard.
+---
+
+import Flag from '@site/src/components/Flag';
+
+The Prysm beacon node exposes [Prometheus](https://prometheus.io/) metrics out of the box at `http://127.0.0.1:8080/metrics`. Point any Prometheus server at this endpoint to scrape them.
+
+## Flags
+
+| Flag | Default | Use it to |
+| --- | --- | --- |
+| <Flag name="monitoring-host" /> | `127.0.0.1` | Choose the address the metrics are served on. Use `0.0.0.0` only if Prometheus runs on another machine, and firewall the port. |
+| <Flag name="monitoring-port" /> | `8080` | Choose the port the metrics are served on. |
+| <Flag name="disable-monitoring" /> | off | Stop serving metrics. |
+
+Check that the beacon node responds:
+
+```bash
+curl -s http://127.0.0.1:8080/metrics | grep '^beacon_finalized_epoch'
+```
+
+## Grafana dashboard
+
+[Download the beacon node dashboard](pathname:///docs/assets/grafana-dashboards/beacon_node.json) and import it into [Grafana](https://grafana.com/) 13 or later, with your Prometheus as the data source. It only uses metrics the beacon node exposes.
+
+Name the Prometheus scrape job `beacon`: the system and replay panels filter on `job="beacon"`.
+
+### Summary
+
+Current epoch and slot, how far the node is behind the chain head, backfill progress, and validator counts and balances across the whole network.
+
+![Summary tab](/images/beacon-node-dashboard/summary.png)
+
+### System
+
+CPU, heap and stack memory, garbage collection time, and goroutines of the beacon node process.
+
+![System tab](/images/beacon-node-dashboard/system.png)
+
+### Networking
+
+Peers by direction, transport, and client; mesh peers per gossip topic against their targets; and gossip messages ignored or rejected.
+
+![Networking tab](/images/beacon-node-dashboard/networking.png)
+
+### Block
+
+Time to process each new block, split into gossip arrival, verification, execution payload, data availability and beacon processing, plus gas used and consolidation requests.
+
+![Block tab](/images/beacon-node-dashboard/block.png)
+
+### Beacon API
+
+Rate of validator API requests to the beacon node, by endpoint and by response class (2xx, 4xx, 5xx).
+
+![Beacon API tab](/images/beacon-node-dashboard/beacon-api.png)
+
+### Attestations
+
+Attestations waiting in the pool, attestations that expired before being used, and attestations pending on gossip.
+
+![Attestations tab](/images/beacon-node-dashboard/attestations.png)
+
+### Data availability
+
+Verification, KZG proof and storage times for data column sidecars, blob count per block, and `getBlobsV2` latency.
+
+![Data availability tab](/images/beacon-node-dashboard/data-availability.png)
+
+### State
+
+Beacon state count, state cache hit rates, head state defragmentation, and internal state memory structures (multi-value slices, field tries).
+
+![State tab](/images/beacon-node-dashboard/state.png)
+
+### Backfill
+
+Progress of downloading historical blocks and data column sidecars after a checkpoint sync.
+
+![Backfill tab](/images/beacon-node-dashboard/backfill.png)
+
+### Replay
+
+Heap memory and block processing time compared with the same series shifted back by the dashboard's **Offset** variable, for example, to compare before and after an upgrade.
+
+![Replay tab](/images/beacon-node-dashboard/replay.png)

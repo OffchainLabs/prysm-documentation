@@ -1,0 +1,79 @@
+.topo {
+	margin: 1.5rem 0;
+	padding: 1rem;
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	background: var(--site-color-bg-nav);
+	overflow-x: auto;
+}
+.topo svg {
+	width: 100%;
+	min-width: 34rem;
+	height: auto;
+	display: block;
+}
+.topo text {
+	font-family: var(--site-font);
+	text-anchor: middle;
+	fill: var(--site-color-gray-2);
+	font-size: 14px;
+}
+.topo .t-group rect {
+	fill: none;
+	stroke: var(--site-color-gray-4);
+	stroke-dasharray: 4 5;
+}
+.topo .t-group-label {
+	text-anchor: start;
+	font-size: 12.5px;
+	fill: var(--site-color-gray-3);
+}
+.topo .t-box rect {
+	fill: var(--site-color-bg);
+	stroke: var(--site-color-gray-4);
+	stroke-width: 1.5;
+}
+.topo .t-prysm rect {
+	stroke: var(--site-color-accent);
+	fill: color-mix(in srgb, var(--site-color-accent) 10%, var(--site-color-bg));
+}
+.topo .t-optional rect {
+	stroke-dasharray: 6 4;
+}
+.topo .t-store rect {
+	stroke-dasharray: 2 3;
+}
+.topo .t-title {
+	font-family: var(--prysm-display);
+	font-weight: 650;
+	font-size: 17px;
+	fill: var(--site-color-white);
+}
+.topo .t-sub {
+	font-size: 12.5px;
+	fill: var(--site-color-gray-3);
+}
+.topo .t-link line {
+	stroke: var(--site-color-gray-3);
+	stroke-width: 1.5;
+}
+.topo .t-link line.t-dashed {
+	stroke-dasharray: 6 5;
+}
+.topo .t-arrowhead {
+	fill: var(--site-color-gray-3);
+}
+.topo .t-label {
+	font-size: 13px;
+	fill: var(--site-color-white);
+}
+.topo .t-muted {
+	fill: var(--site-color-gray-3);
+	font-size: 12px;
+}
+.topo .t-start {
+	text-anchor: start;
+}
+.topo .t-end {
+	text-anchor: end;
+}

@@ -1,0 +1,18 @@
+package main
+
+import (
+	"os"
+
+	docacc "github.com/OffchainLabs/prysm/v7/cmd/validator/accounts"
+	docdb "github.com/OffchainLabs/prysm/v7/cmd/validator/db"
+	docsp "github.com/OffchainLabs/prysm/v7/cmd/validator/slashing-protection"
+	docwallet "github.com/OffchainLabs/prysm/v7/cmd/validator/wallet"
+	docweb "github.com/OffchainLabs/prysm/v7/cmd/validator/web"
+	"github.com/urfave/cli/v2"
+)
+
+func init() {
+	if os.Getenv("PRYSM_DOCS_DUMP") != "" {
+		dumpDocs(appHelpFlagGroups, []*cli.Command{docwallet.Commands, docacc.Commands, docsp.Commands, docdb.Commands, docweb.Commands})
+	}
+}

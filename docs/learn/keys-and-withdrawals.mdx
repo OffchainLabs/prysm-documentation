@@ -1,0 +1,61 @@
+---
+title: "Keys and withdrawal credentials"
+description: What the mnemonic, signing keys and withdrawal address each control, what 0x00, 0x01 and 0x02 withdrawal credentials mean, and where to keep each secret.
+---
+
+import Flag from '@site/src/components/Flag';
+
+A validator has two kinds of authority. The **signing key** does the daily work of voting and proposing, so it has to be on your node. It can also exit the validator. The **withdrawal credentials** decide where the ETH goes, and who else can exit or move it, so they should never be near your node. If someone takes over your server, they get the signing key but not the withdrawal credentials. They can exit your validator or get it slashed, but whatever balance is left still goes to your withdrawal address.
+
+## The pieces
+
+| Item | What it is | Where to keep it |
+| --- | --- | --- |
+| **Mnemonic** (seed phrase) | 24 words from which all your validator keys are derived. The same mnemonic always produces the same keys, in any tool | Offline, on paper or metal. Never on the node |
+| **Signing key** | The key that signs votes and blocks. Its public key identifies your validator on the chain | In a keystore loaded by the validator client, or in a remote signer |
+| **Keystore** | The signing key encrypted with a password, as a `keystore-m_….json` file | Imported into the validator client |
+| **Withdrawal credentials** | Part of the validator's on-chain record: who controls the stake and where withdrawals go | On chain |
+| **Withdrawal address** | An ordinary Ethereum account named in `0x01` or `0x02` credentials | A wallet you control well, ideally a hardware wallet or multisig |
+
+You create the mnemonic and keystores in [Create validator keys](/validators/create-keys/).
+
+## Withdrawal credentials: 0x00, 0x01 and 0x02
+
+The first byte of the withdrawal credentials sets their type:
+
+| Prefix | Controlled by | Automatic payouts | Max effective balance |
+| --- | --- | --- | --- |
+| `0x00` | A key derived from your mnemonic | None, not even after an exit | 32 ETH |
+| `0x01` | The withdrawal address | Everything above 32 ETH, and the full balance after an exit | 32 ETH |
+| `0x02` (compounding) | The withdrawal address | Everything above 2,048 ETH, and the full balance after an exit | 2,048 ETH |
+
+- **`0x00`** is the original format. Convert it to `0x01` once, with a message signed from your mnemonic (a BLS-to-execution change). The change is permanent, so pick the address carefully. See [Convert a `0x00` validator to `0x01`](/validators/add-withdrawal-address/).
+- **`0x01`** is the common choice. Rewards above 32 ETH are paid out every few days and don't compound.
+- **`0x02`** lets the balance grow up to 2,048 ETH so rewards compound, and lets you merge several validators into one. You can deposit directly with `0x02`, or convert a `0x01` validator with a request from its withdrawal address. There is no direct path from `0x00` to 0x02: go through `0x01` first.
+
+See [Convert a `0x01` validator to `0x02`](/validators/upgrade-to-compounding/) and [Merge several validators into one](/validators/consolidate/).
+
+## What each secret can do in the wrong hands
+
+| An attacker who gets… | Can | Can't |
+| --- | --- | --- |
+| **A keystore and its password**, or access to your validator client | Get you slashed by running your keys alongside you. Exit your validator | Withdraw your ETH if your credentials are `0x01` or `0x02` |
+| **The mnemonic** | Everything above, for every validator derived from it. With `0x00` credentials, set their own withdrawal address: **theft** | Change `0x01` or `0x02` credentials that are already set |
+| **The withdrawal address's private key** | Exit your validators and withdraw to that address. Consolidate your balance into a validator they control: **theft** | Sign votes or blocks |
+
+Two conclusions:
+
+1. **Set `0x01` or `0x02` credentials pointing to an address you control well.** Until you do, your mnemonic is the only thing between an attacker and your stake.
+2. **Protect the withdrawal address like the stake itself.** It can exit, withdraw, and consolidate your validator.
+
+See the [Security checklist](/security/) for the practical steps.
+
+## Wallets in Prysm
+
+Prysm's validator client keeps signing keys in a **wallet**: a directory set with <Flag name="wallet-dir" bin="validator" />, unlocked with the password in <Flag name="wallet-password-file" bin="validator" />. Most people use an **imported** wallet: keys created with the deposit CLI or Wagyu, then [imported](/validators/import-keys/). A wallet can also point to a remote signer such as Web3Signer instead of holding keys (see [Use a remote signer](/validators/remote-signer/)).
+
+Next to the wallet, the validator client keeps a **slashing protection** database that records what each key has signed. When you move keys, move this history with them: see [Move to a new machine](/operate/move-to-new-machine/).
+
+:::danger[One set of keys, one validator client]
+Loading the same signing key into two running validator clients, even briefly and even on the same machine, is the most common way people get slashed. Stop and disable the old client before you start the new one.
+:::

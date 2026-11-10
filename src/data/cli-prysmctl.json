@@ -1,0 +1,691 @@
+{
+  "groups": null,
+  "commands": [
+    {
+      "name": "checkpoint-sync",
+      "aliases": [
+        "cpt-sync"
+      ],
+      "usage": "commands for managing checkpoint sync",
+      "subcommands": [
+        {
+          "name": "download",
+          "aliases": [
+            "dl"
+          ],
+          "usage": "Download the latest finalized state and the most recent block it integrates. To be used for checkpoint sync.",
+          "flags": [
+            {
+              "name": "beacon-node-host",
+              "usage": "host:port for beacon node connection",
+              "default": "\"localhost:3500\"",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "http-timeout",
+              "usage": "timeout for http requests made to beacon-node-url (uses duration format, ex: 2m31s). default: 4m",
+              "default": "4m0s",
+              "type": "Duration",
+              "takesValue": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "db",
+      "usage": "commands to work with the prysm beacon db",
+      "subcommands": [
+        {
+          "name": "query",
+          "usage": "database query tool",
+          "flags": [
+            {
+              "name": "bucket",
+              "usage": "boltdb bucket to search",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "path",
+              "usage": "path to directory containing beaconchain.db",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "prefix",
+              "usage": "prefix of db record key to match against (eg 0xa1 would match 0xa10, 0xa1f etc)",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "print-keys",
+              "usage": "only display keys, not values",
+              "default": "false",
+              "type": "Bool",
+              "takesValue": false
+            }
+          ]
+        },
+        {
+          "name": "buckets",
+          "usage": "list db buckets",
+          "flags": [
+            {
+              "name": "path",
+              "usage": "path to directory containing beaconchain.db",
+              "type": "String",
+              "takesValue": true
+            }
+          ]
+        },
+        {
+          "name": "slasher-span-display",
+          "usage": "visualise values in db span bucket",
+          "flags": [
+            {
+              "name": "db-path-directory",
+              "usage": "path to directory containing slasher.db",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "validator-index",
+              "usage": "filter by validator index",
+              "default": "0",
+              "type": "Uint64",
+              "takesValue": true
+            },
+            {
+              "name": "epoch",
+              "usage": "filter by epoch",
+              "default": "0",
+              "type": "Uint64",
+              "takesValue": true
+            },
+            {
+              "name": "chunk-kind",
+              "usage": "chunk kind to query (maxspan|minspan)",
+              "default": "minspan",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "chunk-size",
+              "usage": "chunk size to query",
+              "default": "16",
+              "type": "Uint64",
+              "takesValue": true
+            },
+            {
+              "name": "validator-chunk-size",
+              "usage": "validator chunk size to query",
+              "default": "256",
+              "type": "Uint64",
+              "takesValue": true
+            },
+            {
+              "name": "history-length",
+              "usage": "history length to query",
+              "default": "4096",
+              "type": "Uint64",
+              "takesValue": true
+            },
+            {
+              "name": "display-all-validators-in-chunk",
+              "usage": "display all validators in chunk",
+              "default": "false",
+              "type": "Bool",
+              "takesValue": false
+            },
+            {
+              "name": "display-all-epochs-in-chunk",
+              "usage": "display all epochs in chunk",
+              "default": "false",
+              "type": "Bool",
+              "takesValue": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "p2p",
+      "usage": "commands for interacting with beacon nodes via p2p",
+      "subcommands": [
+        {
+          "name": "send",
+          "usage": "commands for sending p2p rpc requests to beacon nodes",
+          "subcommands": [
+            {
+              "name": "beacon-blocks-by-range",
+              "usage": "Request a range of blocks from a beacon node via a p2p connection",
+              "flags": [
+                {
+                  "name": "chain-config-file",
+                  "usage": "Path to a YAML file with chain config values.",
+                  "type": "String",
+                  "takesValue": true
+                },
+                {
+                  "name": "network",
+                  "usage": "network to run on (mainnet, sepolia, holesky)",
+                  "default": "\"mainnet\"",
+                  "type": "String",
+                  "takesValue": true
+                },
+                {
+                  "name": "peer-multiaddrs",
+                  "usage": "comma-separated, peer multiaddr(s) to connect to for p2p requests",
+                  "type": "String",
+                  "takesValue": true
+                },
+                {
+                  "name": "client-port-tcp",
+                  "aliases": [
+                    "client-port"
+                  ],
+                  "usage": "TCP port to use for the client as a libp2p host",
+                  "default": "13001",
+                  "type": "Uint",
+                  "takesValue": true
+                },
+                {
+                  "name": "client-port-quic",
+                  "usage": "QUIC port to use for the client as a libp2p host",
+                  "default": "13001",
+                  "type": "Uint",
+                  "takesValue": true
+                },
+                {
+                  "name": "prysm-api-endpoints",
+                  "usage": "comma-separated, gRPC API endpoint(s) for Prysm beacon node(s)",
+                  "default": "\"localhost:4000\"",
+                  "type": "String",
+                  "takesValue": true
+                },
+                {
+                  "name": "start-slot",
+                  "usage": "start slot for blocks by range request. If unset, will use start_slot(current_epoch-1)",
+                  "default": "0",
+                  "type": "Uint64",
+                  "takesValue": true
+                },
+                {
+                  "name": "count",
+                  "usage": "number of blocks to request, (default 32)",
+                  "default": "32",
+                  "type": "Uint64",
+                  "takesValue": true
+                },
+                {
+                  "name": "step",
+                  "usage": "number of steps of blocks in the range request, (default 1)",
+                  "default": "1",
+                  "type": "Uint64",
+                  "takesValue": true
+                }
+              ]
+            },
+            {
+              "name": "blobs-by-range",
+              "usage": "Request a range of blobs from a beacon node via a p2p connection",
+              "flags": [
+                {
+                  "name": "chain-config-file",
+                  "usage": "Path to a YAML file with chain config values.",
+                  "type": "String",
+                  "takesValue": true
+                },
+                {
+                  "name": "peer-multiaddrs",
+                  "usage": "comma-separated, peer multiaddr(s) to connect to for p2p requests",
+                  "type": "String",
+                  "takesValue": true
+                },
+                {
+                  "name": "client-port-tcp",
+                  "aliases": [
+                    "client-port"
+                  ],
+                  "usage": "TCP port to use for the client as a libp2p host",
+                  "default": "13001",
+                  "type": "Uint",
+                  "takesValue": true
+                },
+                {
+                  "name": "client-port-quic",
+                  "usage": "QUIC port to use for the client as a libp2p host",
+                  "default": "13001",
+                  "type": "Uint",
+                  "takesValue": true
+                },
+                {
+                  "name": "prysm-api-endpoints",
+                  "usage": "comma-separated, gRPC API endpoint(s) for Prysm beacon node(s)",
+                  "default": "\"localhost:4000\"",
+                  "type": "String",
+                  "takesValue": true
+                },
+                {
+                  "name": "start-slot",
+                  "usage": "start slot for blobs by range request. If unset, will use start_slot(current_epoch-1)",
+                  "default": "0",
+                  "type": "Uint64",
+                  "takesValue": true
+                },
+                {
+                  "name": "count",
+                  "usage": "number of blobs to request, (default 32)",
+                  "default": "32",
+                  "type": "Uint64",
+                  "takesValue": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "testnet",
+      "usage": "commands for dealing with Ethereum beacon chain testnets",
+      "subcommands": [
+        {
+          "name": "generate-genesis",
+          "usage": "Generate a beacon chain genesis state",
+          "flags": [
+            {
+              "name": "chain-config-file",
+              "usage": "The path to a YAML file with chain config values",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "deposit-json-file",
+              "usage": "Path to deposit_data.json file generated by the staking-deposit-cli tool for optionally specifying validators in genesis state",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "num-validators",
+              "usage": "Number of validators to deterministically generate in the genesis state",
+              "default": "0",
+              "type": "Uint64",
+              "takesValue": true
+            },
+            {
+              "name": "genesis-time",
+              "usage": "Unix timestamp seconds used as the genesis time in the genesis state. If unset, defaults to now()",
+              "default": "0",
+              "type": "Uint64",
+              "takesValue": true
+            },
+            {
+              "name": "genesis-time-delay",
+              "usage": "Delay genesis time by N seconds",
+              "default": "0",
+              "type": "Uint64",
+              "takesValue": true
+            },
+            {
+              "name": "override-eth1data",
+              "usage": "Overrides Eth1Data with values from execution client. If unset, defaults to false",
+              "default": "false",
+              "type": "Bool",
+              "takesValue": false
+            },
+            {
+              "name": "geth-genesis-json-in",
+              "usage": "Path to a \"genesis.json\" file, containing a json representation of Geth's core.Genesis",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "geth-genesis-json-out",
+              "usage": "Path to write generated \"genesis.json\" file, containing a json representation of Geth's core.Genesis",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "execution-endpoint",
+              "usage": "Endpoint to preferred execution client. If unset, defaults to Geth",
+              "default": "\"http://localhost:8545\"",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "fork",
+              "usage": "Name of the BeaconState schema to use in output encoding [phase0,altair,bellatrix,capella,deneb,electra,fulu]",
+              "default": "phase0",
+              "type": "Generic",
+              "takesValue": true
+            },
+            {
+              "name": "output-ssz",
+              "usage": "Output filename of the SSZ marshaling of the generated genesis state",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "output-yaml",
+              "usage": "Output filename of the YAML marshaling of the generated genesis state",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "output-json",
+              "usage": "Output filename of the JSON marshaling of the generated genesis state",
+              "type": "String",
+              "takesValue": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "weak-subjectivity",
+      "aliases": [
+        "ws"
+      ],
+      "usage": "commands dealing with weak subjectivity",
+      "subcommands": [
+        {
+          "name": "checkpoint",
+          "aliases": [
+            "cpt"
+          ],
+          "usage": "Compute the latest weak subjectivity checkpoint (block_root:epoch) using trusted server data.",
+          "flags": [
+            {
+              "name": "beacon-node-host",
+              "usage": "host:port for beacon node to query",
+              "default": "\"http://localhost:3500\"",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "http-timeout",
+              "usage": "timeout for http requests made to beacon-node-url (uses duration format, ex: 2m31s). default: 2m",
+              "default": "2m0s",
+              "type": "Duration",
+              "takesValue": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "validator",
+      "aliases": [
+        "v",
+        "sign"
+      ],
+      "usage": "commands that affect the state of validators such as exiting or withdrawing",
+      "subcommands": [
+        {
+          "name": "withdraw",
+          "aliases": [
+            "w"
+          ],
+          "usage": "Assign Ethereum withdrawal addresses to validator keys. WARNING: once set values are included they can no longer be updated.",
+          "flags": [
+            {
+              "name": "beacon-node-host",
+              "usage": "host:port for beacon node to query",
+              "default": "\"127.0.0.1:3500\"",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "path",
+              "aliases": [
+                "p"
+              ],
+              "usage": "path to the signed withdrawal messages JSON",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "confirm",
+              "aliases": [
+                "c"
+              ],
+              "usage": "WARNING: User confirms and accepts responsibility of all input data provided and actions for setting their withdrawal address for their validator key. This action is not reversible and withdrawal addresses can not be changed once set.",
+              "default": "false",
+              "type": "Bool",
+              "takesValue": false
+            },
+            {
+              "name": "verify-only",
+              "aliases": [
+                "vo"
+              ],
+              "usage": "overrides withdrawal command to only verify whether requests are in the pool and does not submit withdrawal requests",
+              "default": "false",
+              "type": "Bool",
+              "takesValue": false
+            },
+            {
+              "name": "config-file",
+              "usage": "Filepath to a yaml file with flag values.",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "Bool",
+              "takesValue": false
+            }
+          ]
+        },
+        {
+          "name": "proposer-settings",
+          "aliases": [
+            "ps"
+          ],
+          "usage": "Display or recreate currently used proposer settings.",
+          "flags": [
+            {
+              "name": "config-file",
+              "usage": "Filepath to a yaml file with flag values.",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "default-fee-recipient",
+              "aliases": [
+                "dfr"
+              ],
+              "usage": "default fee recipient used for proposer-settings, only used with --output-proposer-settings-path",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "token",
+              "aliases": [
+                "t"
+              ],
+              "usage": "keymanager API bearer token, note: currently required but may be removed in the future, this is the same token as the web ui token.",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "validator-host",
+              "aliases": [
+                "vch"
+              ],
+              "usage": "host:port for validator client.",
+              "default": "\"http://127.0.0.1:7500\"",
+              "type": "String",
+              "takesValue": true
+            },
+            {
+              "name": "output-proposer-settings-path",
+              "aliases": [
+                "settings-path"
+              ],
+              "usage": "path to outputting a proposer settings file ( i.e. ./path/to/proposer-settings.json), file does not include builder settings and will need to be added for advanced users using those features",
+              "type": "String",
+              "takesValue": true
+            }
+          ]
+        },
+        {
+          "name": "exit",
+          "aliases": [
+            "e",
+            "voluntary-exit"
+          ],
+          "usage": "Performs a voluntary exit on selected accounts",
+          "flags": [
+            {
+              "name": "wallet-dir",
+              "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
+              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "wallet-password-file",
+              "usage": "Path to a plain-text, .txt file containing your wallet password.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "account-password-file",
+              "usage": "Path to a plain-text, .txt file containing a password for a validator account.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "public-keys",
+              "usage": "Comma separated list of public key hex strings to specify on which validator accounts to perform a voluntary exit.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "beacon-rpc-provider",
+              "aliases": [
+                "beacon-grpc"
+              ],
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tBeacon node RPC provider endpoint.",
+              "default": "\"127.0.0.1:4000\"",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "validators-external-signer-url",
+              "aliases": [
+                "remote-signer-url"
+              ],
+              "usage": "URL for consensys' web3signer software to use with the Prysm validator client.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "validators-external-signer-public-keys",
+              "aliases": [
+                "remote-signer-keys"
+              ],
+              "usage": "Comma separated list of public keys OR an external url endpoint for the validator to retrieve public keys from for usage with web3signer.",
+              "type": "altsrc.StringSlice",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-max-msg-size",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tInteger to define max receive message call size (in bytes).\n\t\tIf serving a public gRPC server, set this to a more reasonable size to avoid\n\t\tresource exhaustion from large messages. \n\t\tValidators with as many as 10000 keys can be run with a max message size of less than \n\t\t50Mb. The default here is set to a very high value for local users.",
+              "default": "2147483647",
+              "type": "altsrc.Int",
+              "takesValue": true
+            },
+            {
+              "name": "tls-cert",
+              "usage": "Certificate for secure gRPC. Pass this and the tls-key flag in order to use gRPC securely.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-headers",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tComma separated list of key value pairs to pass as gRPC headers for all gRPC calls.\n\t\tExample: --grpc-headers=key=value",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-retries",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tNumber of attempts to retry gRPC requests.",
+              "default": "5",
+              "type": "altsrc.Uint",
+              "takesValue": true
+            },
+            {
+              "name": "grpc-retry-delay",
+              "usage": "WARNING: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API..\n\t\tAmount of time between gRPC retry requests.",
+              "default": "1s",
+              "type": "altsrc.Duration",
+              "takesValue": true
+            },
+            {
+              "name": "exit-all",
+              "usage": "Exits all validators. This will still require the staker to confirm a userprompt for the action.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "force-exit",
+              "usage": "Exits without displaying the confirmation prompt.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "exit-json-output-dir",
+              "usage": "Output directory to write voluntary exits as individual unencrypted JSON files. If this flag is provided, voluntary exits will be written to the provided directory and will not be broadcasted.",
+              "type": "altsrc.String",
+              "takesValue": true
+            },
+            {
+              "name": "mainnet",
+              "usage": "Runs on Ethereum main network. This is the default and can be omitted.",
+              "default": "true",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "sepolia",
+              "usage": "Runs Prysm configured for the Sepolia test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "holesky",
+              "usage": "Runs Prysm configured for the Holesky test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "hoodi",
+              "usage": "Runs Prysm configured for the Hoodi test network.",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            },
+            {
+              "name": "accept-terms-of-use",
+              "usage": "Accepts Terms and Conditions (for non-interactive environments).",
+              "default": "false",
+              "type": "altsrc.Bool",
+              "takesValue": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

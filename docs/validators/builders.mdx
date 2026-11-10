@@ -1,0 +1,209 @@
+---
+title: "Use builders after Gloas (ePBS)"
+description: "From the Gloas fork on, Prysm gets bids from builders itself: list them in version 2 proposer settings, choose how much trusted payment to count, and check which bid won."
+---
+
+import { Steps, Tabs, TabItem } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+import Flag from '@site/src/components/Flag';
+
+The Gloas fork brings proposer-builder separation into the protocol (ePBS). Your beacon node then gets bids from builders itself: no MEV-Boost needed. It compares them with the block your own execution client builds, and proposes the best one. You list the builders, usually relays, in your validator client's proposer settings.
+
+:::note[When this applies]
+Gloas has been live on Sepolia since October 6, 2026. On Hoodi and mainnet, it isn't scheduled yet, and these settings take effect once the fork happens there. You can add them now: before the fork, Prysm keeps using MEV-Boost as described in [Use MEV-Boost](/validators/mev-boost/).
+:::
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+## What changes
+
+| | Before Gloas (MEV-Boost) | From Gloas on |
+| --- | --- | --- |
+| Who asks for bids | MEV-Boost | Your beacon node |
+| Where bids come from | Relays, through MEV-Boost | Builders gossiping bids on the peer-to-peer network, always. Plus the builders and relays you list. |
+| How you're paid | Inside the block, only if the builder delivers it | A **trustless payment** (`value`), owed even if the builder never delivers, plus a **trusted payment** (`execution_payment`) inside the block. Either can be zero. |
+| Where settings live | Validator client, beacon node and MEV-Boost | Validator client, per key |
+| If no bid beats your block | Your own block | Your own block |
+
+From the fork on, <Flag name="http-mev-relay" /> on the beacon node and <Flag name="enable-builder" bin="validator" /> on the validator client have no effect.
+
+## Before you begin
+
+- A [fee recipient](/validators/fee-recipient/).
+- The URLs of the relays you want to use, copied exactly from each relay's own list. They look like `https://0x<RELAY_PUBKEY>@<RELAY_HOST>`.
+
+## List your builders
+
+<Steps>
+
+1. **Write a version 2 proposer settings file.** `"version": 2` and the `builder` section with a `builders` list are what's new:
+
+	<Tabs syncKey="format">
+	<TabItem label="YAML">
+
+	```yaml title="proposer-settings.yaml"
+	version: 2
+	default_config:
+	  fee_recipient: '<FEE_RECIPIENT>'
+	  builder:
+	    min_bid: '10000000'
+	    builder_boost_factor: '100'
+	    max_execution_payment: '0'
+	    builders:
+	      - url: '<RELAY_URL_1>'
+	      - url: '<RELAY_URL_2>'
+	        max_execution_payment: '250000000'
+	```
+
+	</TabItem>
+	<TabItem label="JSON">
+
+	```json title="proposer-settings.json"
+	{
+	  "version": 2,
+	  "default_config": {
+	    "fee_recipient": "<FEE_RECIPIENT>",
+	    "builder": {
+	      "min_bid": "10000000",
+	      "builder_boost_factor": "100",
+	      "max_execution_payment": "0",
+	      "builders": [
+	        { "url": "<RELAY_URL_1>" },
+	        { "url": "<RELAY_URL_2>", "max_execution_payment": "250000000" }
+	      ]
+	    }
+	  }
+	}
+	```
+
+	</TabItem>
+	</Tabs>
+
+	Write amounts in Gwei, as quoted strings: `10000000` is 0.01 ETH, and `250000000` is 0.25 ETH.
+
+	A bid can pay you in two parts: a trustless payment backed by the builder’s stake, and a trusted payment you get only if the builder delivers the block. `max_execution_payment` caps how much of the trusted part counts when Prysm compares bids. In this file:
+
+	- **Relay 1** uses the whole-key cap; `0`: only the trustless payment counts.
+	- **Relay 2** sets its own cap: up to 0.25 ETH of trusted payment counts in addition to the trustless payment.
+	- **Bids from the peer-to-peer network** use the whole-key cap, `0`, like relay 1.
+
+	For example, relay 1 offers 0.04 ETH trustless plus 0.06 ETH trusted: it counts as 0.04 ETH. Relay 2 offers 0.03 ETH trustless plus 0.5 ETH trusted: it counts as 0.03 + 0.25 = 0.28 ETH. Both are above `min_bid` (0.01 ETH), so Prysm compares them with your own block, at `builder_boost_factor` `100`, and proposes the one worth the most. If your own block is worth 0.05 ETH, relay 2's bid wins.
+
+2. **Load it** in the validator client:
+
+	```bash
+	--proposer-settings-file=<PATH_TO_PROPOSER_SETTINGS_FILE>
+	```
+
+	Restart the validator client after each edit. Leave out <Flag name="enable-builder" bin="validator" />: before the fork; the `builders` list already registers your keys with MEV-Boost.
+
+</Steps>
+
+{/* Verified against prysm v7.3.1 config/proposer/settings.go and config/proposer/loader/loader.go, 2026-11. */}
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `min_bid` | `0` | Smallest bid you accept, in Gwei: the trustless payment plus the trusted payment your cap lets through. Smaller bids lose to your own block. |
+| `builder_boost_factor` | `100` | Percentage applied to bids before comparing them with your own block. At `100` they compete evenly and your block wins a tie. Lower values favor your block; `0` always uses it. |
+| `max_execution_payment` | `0` | How much trusted payment, in Gwei, counts toward a bid. See [How much trusted payment to count](#how-much-trusted-payment-to-count). |
+| `url` | none | Where to send bid requests: a relay, a builder, or a sidecar such as Commit-Boost. Required on every entry. |
+| `auth_data` | the URL's hostname | Tells a sidecar which relay a request is for. See [Route a relay through Commit-Boost](#route-a-relay-through-commit-boost). |
+| `builder_pubkeys` | any | The builder public keys you accept bids from behind this `url`, as `0x` hex. |
+
+`min_bid`, `builder_boost_factor`, and `max_execution_payment` can be set for the whole key, under `builder`, or for one entry, which overrides it. Bids gossiped on the peer-to-peer network don't come from an entry, so they use the whole-key values. A file holds up to 64 entries per key.
+
+**Different settings per key.** Add a `builder` section under the key in `proposer_config`. Each setting you leave out comes from `default_config`. A key's `builders` list replaces the default list rather than adding to it, and `"builders": []` means no listed builder at all for that key.
+
+**Build only your own blocks.** Set `builder_boost_factor` to `0` for the whole key when no builders are listed. Peer-to-peer bids still arrive, but never win.
+
+**Use the same settings for all validators, without a file.** Use <Flag name="builder-urls" bin="validator" />, <Flag name="builder-min-bid" bin="validator" />, <Flag name="builder-boost-factor" bin="validator" /> and <Flag name="builder-max-execution-payment" bin="validator" />. They apply to this run only, and a settings file's `default_config` replaces them whole.
+
+## How much trusted payment to count
+
+Your beacon node values each bid at `value + min(execution_payment, max_execution_payment)`.
+
+- **With `0`, the default,** it counts only the trustless payment, backed by the builder's stake. If the builder doesn't deliver, you're still paid. But builders rarely lock up enough stake to back large bids,  so you may miss rare high-value slots that make up much of what proposers earn.
+- **With a high cap,** you count trusted payments as MEV-Boost does today, and you trust the builder or relay to deliver the block.
+
+There's no single right value. Operators proposing often average out both risks; a solo staker proposing a few times a year feels each one more. If you list a relay both directly and through a sidecar, give both entries the same cap: the relay keeps one per key and slot.
+
+At startup, the validator client warns about every listed builder without a cap:
+
+```text
+WARN proposer: Builders have no max_execution_payment (default 0): execution payment is ignored, so these builders' bids may lose to the local payload. builders=…
+```
+
+## Route a relay through Commit-Boost
+
+You can keep a sidecar such as [Commit-Boost](https://commit-boost.github.io/commit-boost-client/get_started/epbs) for what it adds, like bid streaming. Your beacon node sends it bid requests, and `auth_data` tells it which relay each one is for. Leave `auth_data` out of a direct entry: Prysm derives it from the URL's hostname. An entry that points at the sidecar needs it set to the **relay's** hostname, encoded as `0x` hex.
+
+The hostname is the address in lowercase, without `https://`, the key before `@`, the port, or the path: for `https://0xabc…@relay.example.org`, it's `relay.example.org`. Encode it:
+
+<When os="unix">
+
+```bash
+printf '0x%s\n' "$(printf '%s' '<RELAY_HOSTNAME>' | od -An -tx1 | tr -d ' \n')"
+```
+
+</When>
+<When os="win">
+
+```powershell
+'0x' + -join ([Text.Encoding]::ASCII.GetBytes('<RELAY_HOSTNAME>') | ForEach-Object { $_.ToString('x2') })
+```
+
+</When>
+
+For `relay-hoodi.ultrasound.money`, this gives `0x72656c61792d686f6f64692e756c747261736f756e642e6d6f6e6579`. List the relay twice, directly and through the sidecar, so bids still arrive if the sidecar stops:
+
+```json
+"builders": [
+  { "url": "<RELAY_URL>" },
+  { "url": "http://127.0.0.1:18550", "auth_data": "<RELAY_HOSTNAME_IN_HEX>" }
+]
+```
+
+With <Flag name="builder-urls" bin="validator" />, append it to the URL instead: `http://127.0.0.1:18550#<RELAY_HOSTNAME_IN_HEX>`.
+
+## Gas limit
+
+Each network's config can schedule its gas limit from Gloas on, such as 200M gas on Sepolia, and your validators follow it. To use another value, set `gas_limit` in `default_config` or under a key, or use <Flag name="suggested-gas-limit" bin="validator" />. It's no longer under `builder`.
+
+## Beacon node settings
+
+The beacon node needs no builder flag: the validator client sends it the builders with each block request. Two things you can tune:
+
+- <Flag name="builder-bid-timeout" /> sets how long it waits for bids, 600 ms by default. Raising it delays your block.
+- A circuit breaker blacklists a builder that wins but never delivers its block, and the endpoints that served it. <Flag name="builder-allowed-failures" />, <Flag name="builder-blacklist-period" /> and the other flags in the builder section of the [beacon-chain reference](/reference/cli/beacon-chain/) tune it.
+
+## Check that it works
+
+For each proposal, the beacon node logs which bid it used:
+
+```text
+INFO rpc/validator: Chose payload bid builder=… slot=… source=builder-api valueGwei=…
+```
+
+`source` is `builder-api` for a builder you listed, `p2p` for a bid from the peer-to-peer network, or `self-build` for your own block.
+
+## Troubleshooting
+
+**The validator client logs:**
+
+```text
+WARN proposer: Removed 1 invalid or duplicate builder entries from proposer settings reasons=…
+```
+
+An entry has no valid `url`, or appears twice with the same `url` and `auth_data`. `reasons` says which.
+
+**The validator client doesn't start.** Prysm reads the file strictly: an unknown or misspelled field, an invalid `fee_recipient`, or `auth_data` or `builder_pubkeys` that aren't `0x` hex stop it. In v7.2.0, `auth_data` was base64, so a file written for it doesn't work on later releases.
+
+**The validator client logs:**
+
+```text
+WARN proposer: Proposer settings contain deprecated v1 builder fields (enabled, builder-level gas limits); they stop applying at the gloas fork and are replaced with defaults (fee recipients and graffiti carry over). Configure gloas builders via v2 settings or the keymanager API.
+```
+
+Your file still has a `builder.enabled` or `builder.gas_limit` from the MEV-Boost setup. Rewrite it as above before the fork.
+
+**A key ignores your file's builder settings.** A file with a `proposer_config` section replaces the per-key settings saved through the Keymanager API at each restart. Manage per-key builder settings in one place: the file or the [Keymanager API](/validators/keymanager/).

@@ -1,30 +1,54 @@
 {
-  "name": "prysm-documentation",
+  "name": "prysm-docs",
+  "private": true,
+  "version": "0.0.0",
   "scripts": {
     "docusaurus": "docusaurus",
-    "examples": "docusaurus examples",
     "start": "docusaurus start",
+    "dev": "docusaurus start",
     "build": "docusaurus build",
-    "publish-gh-pages": "docusaurus publish",
-    "write-translations": "docusaurus write-translations",
-    "version": "docusaurus version",
-    "rename-version": "docusaurus rename-version",
-    "swizzle": "docusaurus swizzle",
-    "generate-cli-reference": "node scripts/generate-cli-reference.mjs",
-    "check-cli-reference": "node scripts/generate-cli-reference.mjs --check"
-  },
-  "devDependencies": {
-    "@docusaurus/core": "^3.10.2",
-    "@docusaurus/preset-classic": "^3.10.2",
-    "@signalwire/docusaurus-plugin-llms-txt": "^1.2.2",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "serve": "node tools/preview.mjs",
+    "clear": "docusaurus clear",
+    "typecheck": "tsc",
+    "gen:cli": "tools/gen-cli-reference.sh"
   },
   "dependencies": {
-    "@docusaurus/theme-search-algolia": "^3.10.2",
-    "@vercel/edge": "^1.3.1",
-    "classnames": "^2.3.1",
-    "clsx": "1.1.1",
-    "docusaurus-lunr-search": "3.6.0"
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/faster": "3.10.2",
+    "@docusaurus/plugin-client-redirects": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@easyops-cn/docusaurus-search-local": "^0.55.3",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@mdx-js/react": "^3.0.0",
+    "@signalwire/docusaurus-plugin-llms-txt": "^1.2.2",
+    "@vercel/edge": "^1.3.3",
+    "clsx": "^2.0.0",
+    "prism-react-renderer": "^2.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/tsconfig": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "@types/react": "^19.0.0",
+    "typescript": "~6.0.2"
+  },
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 3 chrome version",
+      "last 3 firefox version",
+      "last 5 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0"
   }
 }

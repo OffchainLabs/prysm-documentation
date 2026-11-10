@@ -1,0 +1,106 @@
+---
+title: "Convert a 0x01 validator to 0x02"
+description: "Upgrade a 0x01 validator to 0x02 compounding credentials with a request sent from its withdrawal address, using the Staking Launchpad."
+---
+
+import { Steps } from '@site/src/components/ui';
+import { SetupPicker, When } from '@site/src/components/SetupPicker';
+
+# Convert a `0x01` validator to `0x02`
+
+A `0x01` validator earns rewards on up to 32 ETH: anything above is paid out to its withdrawal address every few days. A compounding (`0x02`) validator keeps its rewards staked, up to 2048 ETH, so they earn rewards too. To upgrade, send a request **from your withdrawal address**. Prysm and your keys are not involved, and the validator keeps running as before. The upgrade is permanent: you can't switch back to `0x01`.
+
+<SetupPicker groups="os net" nets="mainnet hoodi" />
+
+## Before you begin
+
+- The validator has `0x01` credentials. If they start with `0x00`, first [convert it to `0x01`](/validators/add-withdrawal-address/).
+- The validator is active and not exiting. The system ignores requests for a pending, exiting, or exited validator.
+- You control the withdrawal address in a wallet that can connect to a website (for example, a hardware wallet through a browser extension), with a little ETH for gas and the request fee.
+
+## Check your credentials
+
+Ask your beacon node:
+
+<When os="unix">
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX_OR_PUBKEY> | jq '.data.validator.withdrawal_credentials'
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/validators/<VALIDATOR_INDEX_OR_PUBKEY> | jq '.data.validator.withdrawal_credentials'
+```
+
+</When>
+
+If they start with `0x01`, follow this page. The last 40 hex characters are the withdrawal address: that's the wallet you must send the request from. If they start with `0x02`, the validator already compounds.
+
+## Upgrade the validator
+
+:::caution[What changes after the upgrade]
+- Rewards above 32 ETH are no longer paid out automatically. Only balances above 2048 ETH are.
+- Any balance above 32 ETH at the time of the upgrade goes through the deposit queue again before it counts for rewards. When the queue is long, that takes days.
+:::
+
+<When net="mainnet">
+
+<Steps>
+
+1. **Open Validator actions** on the Staking Launchpad: `https://launchpad.ethereum.org/en/validator-actions`
+
+   Type the address yourself. Websites that offer to "help" with this step are phishing.
+
+2. **Connect the wallet** that controls the withdrawal address. The Launchpad lists the validators whose withdrawal address it is.
+
+3. **Pick the validator and the upgrade action**, then check the validator index and public key.
+   {/* VERIFY: exact label of the upgrade action on the Launchpad Validator actions page */}
+
+4. **Sign and send the transaction** in your wallet. It pays gas plus a small request fee. If the request is invalid (wrong sender, validator not active), the network ignores it, and it doesn’t refund the fee.
+
+</Steps>
+
+</When>
+<When net="hoodi">
+
+<Steps>
+
+1. **Open the Upgrade page** of the EthStaker console: `https://hoodi.console.ethstaker.org/upgrade`
+
+   Type the address yourself. Websites that offer to "help" with this step are phishing.
+
+2. **Connect the wallet** that controls the withdrawal address. The console lists its `0x01` validators.
+
+3. **Select the validators to upgrade**, check their index and public key, then click **Upgrade**.
+
+4. **Sign and send the transaction** in your wallet. It pays gas plus a small request fee. If the request is invalid (wrong sender, validator not active), the network ignores it, and it doesn’t refund the fee.
+
+</Steps>
+
+</When>
+
+{/* Mainnet verified against ethereum/staking-launchpad (dev branch, src/pages/Actions and src/utils/envVars.ts), 2026-09; Hoodi against ethstaker/staker-console (src/pages/Upgrade), 2026-10; upgrade rules against prysm beacon-chain/core/requests/consolidations.go */}
+
+## Check that it works
+
+The upgrade applies when the request's block is processed, usually within minutes. When many requests are waiting, it can take longer. Run the [credentials check](#check-your-credentials) again: the credentials now start with `0x02` and still end with your address.
+
+If the validator had more than 32 ETH, the excess shows up as a pending deposit until it's processed:
+
+<When os="unix">
+
+```bash
+curl -s http://127.0.0.1:3500/eth/v1/beacon/states/head/pending_deposits | jq
+```
+
+</When>
+<When os="win">
+
+```powershell
+curl.exe -s http://127.0.0.1:3500/eth/v1/beacon/states/head/pending_deposits | jq
+```
+
+</When>
