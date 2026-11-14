@@ -1,0 +1,83 @@
+.two-layer {
+	margin: 1.5rem 0;
+	padding: 1rem;
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	background: var(--site-color-bg-nav);
+	overflow-x: auto;
+}
+.two-layer svg {
+	width: 100%;
+	min-width: 36rem;
+	height: auto;
+	display: block;
+}
+.two-layer text {
+	font-family: var(--site-font-mono);
+	font-size: 13px;
+	text-anchor: middle;
+	fill: var(--site-color-gray-2);
+}
+.two-layer .tl-tree {
+	fill: color-mix(in srgb, var(--site-color-accent) 7%, transparent);
+	stroke: var(--site-color-gray-4);
+	stroke-width: 1.5;
+	stroke-linejoin: round;
+}
+.two-layer .tl-tree-name {
+	font-family: var(--prysm-display);
+	font-weight: 650;
+	font-size: 15px;
+	fill: var(--site-color-white);
+}
+.two-layer .tl-note {
+	text-anchor: start;
+	font-size: 12px;
+	fill: var(--site-color-gray-3);
+}
+.two-layer .tl-dots {
+	fill: var(--site-color-gray-3);
+}
+.two-layer .tl-node rect {
+	fill: var(--site-color-bg);
+	stroke: var(--site-color-gray-4);
+	stroke-width: 1.5;
+}
+.two-layer .tl-on rect {
+	stroke: var(--site-color-accent);
+	stroke-width: 2;
+	fill: color-mix(in srgb, var(--site-color-accent) 18%, var(--site-color-bg));
+}
+.two-layer .tl-on text {
+	font-weight: 600;
+	fill: var(--site-color-white);
+}
+.two-layer .tl-box rect {
+	stroke: var(--site-color-accent);
+	fill: color-mix(in srgb, var(--site-color-accent) 12%, var(--site-color-bg));
+}
+.two-layer .tl-pk rect {
+	stroke-width: 2.5;
+}
+.two-layer .tl-title {
+	font-family: var(--prysm-display);
+	font-weight: 650;
+	font-size: 15px;
+	fill: var(--site-color-white);
+}
+.two-layer .tl-sub {
+	font-size: 12px;
+}
+.two-layer .tl-sign {
+	stroke: var(--site-color-accent);
+	stroke-width: 2;
+}
+.two-layer .tl-sign-label {
+	text-anchor: start;
+	font-size: 12px;
+	font-style: italic;
+	fill: var(--site-color-text-accent);
+}
+.two-layer .tl-arrowhead {
+	fill: var(--site-color-accent);
+}

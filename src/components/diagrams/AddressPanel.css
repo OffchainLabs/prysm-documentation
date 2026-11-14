@@ -1,0 +1,78 @@
+/* Builds on LamportPanel.css and HashChainPanel.css. */
+.address-panel .ad-kinds {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+.address-panel .ad-kinds button {
+	padding: 0.3rem 0.6rem;
+	font-size: 0.8rem;
+}
+.address-panel .ad-kinds button[aria-pressed='true'] {
+	background: var(--site-color-accent);
+	border-color: var(--site-color-accent);
+	color: var(--site-color-black);
+}
+.address-panel .ad-num input {
+	font: 0.88rem var(--site-font-mono);
+	color: var(--site-color-white);
+	background: var(--site-color-bg);
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 0.4rem;
+	padding: 0.4rem 0.55rem;
+	width: 9.5rem;
+}
+.address-panel .ad-bytes {
+	display: flex;
+	width: max-content;
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 0.4rem;
+	overflow: hidden;
+	font-family: var(--site-font-mono);
+}
+.address-panel .ad-seg {
+	display: grid;
+	gap: 0.15rem;
+	padding: 0.45rem 0.7rem;
+	min-width: 7rem;
+}
+.address-panel .ad-seg code {
+	font-size: 0.9rem;
+	background: none;
+	border: 0;
+	padding: 0;
+	color: var(--site-color-white);
+	letter-spacing: 0.03em;
+}
+.address-panel .ad-seg span {
+	font-size: 0.66rem;
+	color: var(--site-color-gray-3);
+}
+.address-panel .ad-seg b {
+	font-size: 0.74rem;
+	font-weight: 600;
+	color: var(--site-color-gray-2);
+	max-width: 13rem;
+}
+.address-panel .ad-lo {
+	background: color-mix(in srgb, var(--site-color-accent) 18%, transparent);
+}
+.address-panel .ad-hi {
+	background: color-mix(in srgb, #2fb584 18%, transparent);
+}
+.address-panel .ad-type {
+	background: color-mix(in srgb, #d99a2b 20%, transparent);
+}
+.address-panel .ad-zero {
+	background: var(--site-color-gray-6);
+}
+.address-panel .vf-sig {
+	display: block;
+	max-height: 6.5rem;
+	overflow-y: auto;
+	font-size: 0.72rem;
+}
+.address-panel .cp-box b {
+	font-size: 0.82rem;
+	overflow-wrap: anywhere;
+}

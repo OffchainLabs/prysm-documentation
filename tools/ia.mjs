@@ -100,6 +100,7 @@ export const IA = [
 		label: 'Learn',
 		items: [
 			['learn/how-staking-works', 'How staking works', 'reference'],
+			['learn/signatures', 'From BLS to leanXMSS signatures', 'reference'],
 			['learn/keys-and-withdrawals', 'Keys and withdrawal credentials', 'reference'],
 			['resources/mainnet-postmortems', 'Mainnet postmortems', 'reference'],
 			['resources/testnet-postmortems', 'Testnet postmortems', 'reference'],

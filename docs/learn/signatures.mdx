@@ -1,0 +1,884 @@
+---
+title: "From BLS to leanXMSS signatures"
+description: How leanXMSS, the post-quantum signature scheme proposed for Ethereum validators, works, starting from why Ethereum needs signatures and how any signature scheme fits together.
+---
+
+import SignatureFlow from '@site/src/components/diagrams/SignatureFlow';
+import LamportPanel from '@site/src/components/diagrams/LamportPanel';
+import HashChainPanel from '@site/src/components/diagrams/HashChainPanel';
+import ChainEndsDiagram from '@site/src/components/diagrams/ChainEndsDiagram';
+import PropertyTable from '@site/src/components/diagrams/PropertyTable';
+import MerkleTreePanel from '@site/src/components/diagrams/MerkleTreePanel';
+import TwoLayerDiagram from '@site/src/components/diagrams/TwoLayerDiagram';
+import LeafIndexPanel from '@site/src/components/diagrams/LeafIndexPanel';
+import CodewordPanel from '@site/src/components/diagrams/CodewordPanel';
+import AggregationFlow from '@site/src/components/diagrams/AggregationFlow';
+import AddressPanel from '@site/src/components/diagrams/AddressPanel';
+import SeedPanel from '@site/src/components/diagrams/SeedPanel';
+import VerifyPanel from '@site/src/components/diagrams/VerifyPanel';
+
+*Written by Manu.*
+
+:::caution[A moving target]
+leanXMSS and the consensus changes around it are still being designed, and they change quickly. This page follows the [leanXMSS specification draft](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/doc/lean_xmss/main.tex) for the signature scheme, and the [PQ Gasper draft spec](https://github.com/ethereum/consensus-specs/tree/4dabe73aec6cd75cfb7eaf03a8ccf89fbb22ffe9/specs/_features/pq) for what validators sign, both as of November 2026. Later versions may differ.
+:::
+
+This page is for anyone curious about how Ethereum validators could sign in a post-quantum world: stakers, node operators, client developers, and anyone else following the topic. You don't need any background in cryptography. Read it like a short book, from top to bottom: each section builds on the ones before it. It starts with what every signature scheme does, then builds up leanXMSS, the post-quantum scheme proposed to replace BLS for validators.
+
+XMSS stands for *eXtended Merkle Signature Scheme*, and leanXMSS is the version designed by the Lean Ethereum research effort.
+
+Here is what a leanXMSS signature looks like:
+
+```text
+signature = leaf index (4 bytes)
+          ‖ ρ⁰ (16 bytes) ‖ 58 revealed values (928 bytes) ‖ path in bottom tree b (256 bytes)
+          ‖ ρ¹ (16 bytes) ‖ 58 revealed values (928 bytes) ‖ path in the top tree (256 bytes)
+          = 2,404 bytes
+```
+
+If neither the name nor this signature means anything to you yet, that's expected. By the end of this page, you'll have built the scheme piece by piece: you'll know what each word of its name means, what each part of the signature is, why it has to be there, and what would go wrong without it.
+
+## Why Ethereum needs signatures
+
+A digital signature lets you prove that a message comes from you and hasn't been changed, in a way anyone can check and nobody can fake. Every block and every vote your validator sends carries one.
+
+Your validator's messages don't go straight to the rest of the network. They're passed along from peer to peer, through computers run by strangers. Any of them could change a message on the way, or write a new one and claim it came from you.
+
+That matters because a validator's vote carries weight: it's backed by its stake, and the chain decides which blocks are final by counting those votes. If anyone could vote in your name, they could steer the chain with your ETH.
+
+So every message needs a proof attached that:
+
+- **Only you could have made it.** Nobody else can produce a valid proof for your validator.
+- **It covers exactly this message.** Change one bit and the proof no longer checks out.
+- **Anyone can check it,** on their own, without asking you or trusting whoever passed the message along.
+
+A digital signature is that proof.
+
+There's a flip side: once you've signed something, you can't deny it. That's what makes slashing possible. Two signed votes that contradict each other are proof, which anyone can check, that your validator broke the rules.
+
+## The four pieces
+
+| Piece | What it is | Who has it |
+| --- | --- | --- |
+| **Private key** | A large random number. Whoever holds it can sign in your name. | You only. Also called the secret key. |
+| **Public key** | A value computed from the private key. It identifies you. | Everyone. A validator's public key is stored on chain. |
+| **Message** | What you sign: a block, a vote, an exit request... | Everyone. Signing doesn't hide it. |
+| **Signature** | A value computed from the private key and the message. | Everyone. It travels with the message. |
+
+Computing the public key from the private key is easy. Going the other way must be practically impossible: that's what makes it safe to publish the public key.
+
+## The three operations
+
+<SignatureFlow />
+
+1. **Key generation.** Pick a private key at random and compute the public key from it. You do this once, then publish the public key.
+2. **Signing.** Combine your private key with the message to produce the signature. Only the holder of the private key can do this.
+3. **Verifying.** Take the public key, the message and the signature, and check that they match. The answer is valid or invalid. Anyone can do this, and it needs nothing secret.
+
+A valid answer tells the verifier two things. The signature was made with the private key behind this public key, and the message is exactly the one that was signed. If either the message or the signature is altered, the answer is invalid.
+
+:::note[Signing isn't encryption]
+A signature doesn't hide anything. The message stays readable by everyone. The signature only proves who approved it.
+:::
+
+## How many signatures a validator makes
+
+A validator keeps the same public key for its whole life, which can last decades.
+
+{/* Message list from the PQ Gasper draft spec (ethereum/consensus-specs, pq branch, specs/_features/pq/beacon-chain.md, commit 4dabe73, 2026-11-10). */}
+
+| Message | When | How often |
+| --- | --- | --- |
+| Preregistration | Optionally, before the first deposit, to bind the key to its withdrawal credentials | Once at most |
+| Attestation | Every epoch, a vote for the head of the chain | 225 per day, about 82,000 per year |
+| Block | When chosen to propose | Rarely. With about a million validators, once every four to five months on average |
+| Proposer preferences | Before each block it proposes | Same as blocks |
+| Aggregate | When chosen to combine its committee's attestations | Occasionally |
+| Payload timeliness vote | When chosen for the payload timeliness committee | Occasionally |
+| Voluntary exit | When leaving | Once |
+
+Builders, which are a separate kind of participant, also sign payload bids and payloads.
+
+Attestations dominate: a validator signs about 82,000 messages a year, nearly all of them votes. Over a few decades, that's a few million.
+
+## Mandatory properties
+
+A signature scheme for Ethereum validators must have these properties.
+
+| Property | Why |
+| --- | --- |
+| #1 - Keys that are practical to create and store | Creating a key shouldn't take days, and the private key has to fit on an ordinary machine. |
+| #2 - Small public keys | Every public key is stored in the beacon state, which every node keeps. |
+| #3 - Small signatures | Every vote travels through the network on its own. Any extra byte is multiplied by about a million validators voting every epoch. |
+| #4 - One public key for a whole life | The public key is registered on chain once, so it has to cover every message the validator will ever sign: a few million over a few decades. |
+| #5 - Fast, predictable verification | Each check has to be quick, and take the same time whatever the message, so nobody can craft messages that are slow to check. |
+| #6 - Aggregation | Many signatures on the same vote have to be combined into one proof that's checked in one go. |
+| #7 - Secure against quantum computers | Nobody can forge a signature, even with a large quantum computer, and even after seeing as many of your signatures as they like. |
+
+## Building leanXMSS step by step
+
+The rest of this page builds leanXMSS one step at a time. Each step starts from a given signature scheme, and alters it to add more of the [mandatory properties](#mandatory-properties). The first step is the BLS scheme.
+
+### BLS signatures
+
+[BLS](https://en.wikipedia.org/wiki/BLS_digital_signature) is the scheme Ethereum validators use today. It's built on an elliptic curve: a set of points with a special way of "adding" two points to get a third one. Adding a point to itself many times is called multiplying it by a number.
+
+1. **Key generation.** The private key is a random number. The public key is a fixed starting point on the curve, multiplied by the private key. Multiplying is fast, but given the result, finding the number it was multiplied by is considered to take a classical computer billions of years.
+2. **Signing.** Turn the message into a point on the curve with a hash function, then multiply that point by the private key. The result is the signature.
+3. **Verifying.** A special function on the curve, called a pairing, lets anyone check that the signature and the public key were made with the same private key, without knowing that key.
+
+Here is how BLS does on each mandatory property:
+
+- **#1 - Keys that are practical to create and store.** Creating a key means picking a random number and doing one multiplication, which is instant. The private key is 32 bytes.
+- **#2 - Small public keys.** A public key is a single point on the curve: 48 bytes.
+- **#3 - Small signatures.** A signature is also a single point: 96 bytes, whatever the message.
+- **#4 - One public key for a whole life.** A BLS key can sign any number of messages. One key pair serves a validator for as long as it runs.
+- **#5 - Fast, predictable verification.** Checking a signature always takes the same work: turn the message into a point, then compute two pairings. That's about a millisecond on an ordinary machine, and no message is slower to check than another.
+- **#6 - Aggregation.** Signatures add up. Add many signatures on the same message together, and add their public keys together, and the sum of the signatures checks out against the sum of the public keys. A single check covers thousands of validators. That's why Ethereum chose BLS.
+- **#7 - Secure against quantum computers.** This is where BLS fails. Going back from the public key to the private key is hard for a classical computer, but a large enough quantum computer could do it quickly, with [Shor's algorithm](https://en.wikipedia.org/wiki/Shor%27s_algorithm). Every validator's public key is on chain, so an attacker with such a machine could compute every validator's private key and sign in the name of all of them.
+
+BLS has almost every mandatory property. It misses only one, but not a small one: it isn't secure against quantum computers. The rest of this page builds a scheme that ticks every box.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={1} />
+:::
+
+### Lamport signatures
+
+:::caution[The issue]
+BLS can be broken by a quantum computer, as explained above. We need a signature scheme that Shor's algorithm can't break. A scheme built only from a hash function is one: Shor's algorithm doesn't apply to hash functions.
+:::
+
+A hash function turns any input into a short, fixed-size output that looks random. Ethereum's hash function, Keccak-256, outputs 32 bytes. Computing a hash is fast, but going back from a hash to an input that produces it is considered to take billions of years: the only known method is guessing, about 2²⁵⁶ tries. A quantum computer guesses faster, with [Grover's algorithm](https://en.wikipedia.org/wiki/Grover%27s_algorithm), but that only brings it down to about 2¹²⁸ tries, which still takes billions of years. So you can publish the hash of a secret without revealing the secret, and later, when you reveal it, anyone can hash it and see that it matches.
+
+That proves you know a secret, but a signature also has to say which message you approve. The Lamport signature, invented in 1979, does this with nothing but hashes. Here it is on a tiny message of 4 bits.
+
+**The message.** Four bits, for example `1011`. Number them from left to right: bit 0 is `1`, bit 1 is `0`, bit 2 is `1` and bit 3 is `1`.
+
+**The private key.** For each of the four bits, pick two random secrets. The first one stands for "this bit is 0", the second one for "this bit is 1". That's 8 secrets: 2 per message bit, one for the 0 value of the bit and one for the 1 value. Name them by bit and value: `a0` and `a1` for bit 0, `b0` and `b1` for bit 1, and so on. When signing, you'll reveal only the one that matches the bit's actual value.
+
+```text
+               bit 0   bit 1   bit 2   bit 3
+if bit is 0:    a0      b0      c0      d0
+if bit is 1:    a1      b1      c1      d1
+```
+
+Each secret is a random 32-byte number, the same size as a hash. For example:
+
+```text
+a0 = 0xd50ae76437a2caf062c8ca597b7edff500e7229ce2a75d6b1acb908fe3769e43
+```
+
+The private key is all the secrets put end to end.
+
+```text
+private key = a0 ‖ a1 ‖ b0 ‖ b1 ‖ c0 ‖ c1 ‖ d0 ‖ d1
+```
+
+**The public key.** Hash each of the 8 secrets, and publish the 8 hashes in the same layout. `H(a0)` stands for the hash of `a0`. Anyone can see them, but nobody can work back to the secrets.
+
+```text
+               bit 0    bit 1    bit 2    bit 3
+if bit is 0:   H(a0)    H(b0)    H(c0)    H(d0)
+if bit is 1:   H(a1)    H(b1)    H(c1)    H(d1)
+```
+
+Each hash is 32 bytes. For example, with Keccak-256:
+
+```text
+H(a0) = 0x7a10b2e126327a3e175505e4b43f39fe19c539381c2ec5a47167ce17d7739dce
+```
+
+The public key is all the hashes put end to end.
+
+```text
+public key = H(a0) ‖ H(a1) ‖ H(b0) ‖ H(b1) ‖ H(c0) ‖ H(c1) ‖ H(d0) ‖ H(d1)
+```
+
+**The signature.** For each bit of the message, reveal the secret from the matching row. The other four secrets stay hidden.
+
+```text
+message:     1    0    1    1
+signature:   a1   b0   c1   d1
+```
+
+Each revealed secret is 32 bytes. For example, the first one:
+
+```text
+a1 = 0x1eb32b7430e9a35f797989fd6eb5c1f15b52124c03014bb9a4efc86bc7ca3c1a
+```
+
+The signature is all the revealed secrets put end to end.
+
+```text
+signature = a1 ‖ b0 ‖ c1 ‖ d1
+```
+
+**Verifying.** For each bit, hash the revealed secret and compare it with the public key entry in the same place. `H(a1)` must match the "bit is 1" entry of bit 0, `H(b0)` the "bit is 0" entry of bit 1, and so on. If all four match, the signature is valid.
+
+**Why nobody can forge it.** To sign `0011` instead, a forger needs `a0`. The signer never revealed it, and the public key only holds its hash, which can't be reversed. Changing any bit of the message needs a secret that was never shown.
+
+Here is how Lamport does on each mandatory property. A real message can be any length, so in practice you sign its 32-byte hash: 256 bits, so 512 secrets.
+
+- **#1 - Keys that are practical to create and store.** One private key is 512 secrets: 16 KB. That's easy to create and to store. Lamport meets this one.
+- **#2 - Small public keys.** The public key is 512 hashes: 16 KB, against 48 bytes for BLS.
+- **#3 - Small signatures.** A signature reveals 256 secrets: 8 KB, against 96 bytes for BLS. Each revealed secret carries a single bit of the message, which is why it's so big.
+- **#4 - One public key for a whole life.** A key can sign only once. Using the previous example, if the same key that signed `1011` also signs `0010`, it reveals `a0` and `d0` too. A forger then holds both secrets for bits 0 and 3, and can sign two messages that were never signed: `0011` and `1010`. Each new signature gives away more secrets. So a validator would need a new key for every message it ever signs: millions of them, tens of gigabytes.
+
+  Try it: with the key below, sign `1011`, then sign `0010` with the same key. Then check whether a forger can now sign `0011`.
+
+  <LamportPanel />
+
+- **#5 - Fast, predictable verification.** Checking a signature means hashing 256 secrets, which takes a fraction of a millisecond, and the work is the same for every message. Lamport meets this one.
+- **#6 - Aggregation.** There's no way to add Lamport signatures together the way BLS does. Each one has to be sent and checked on its own.
+- **#7 - Secure against quantum computers.** Lamport is built from a hash function and nothing else. A quantum computer only speeds up guessing, which isn't enough to reverse a hash.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={2} />
+:::
+
+To get #7, we gave up four properties BLS already had: #2, #3, #4 and #6. The next steps win them back, one at a time, without losing #7.
+
+### Hash chains
+
+:::caution[The issue]
+Each secret revealed in a Lamport signature stands for only one bit of the message. So a signature needs 256 of them: 8 KB.
+:::
+
+In Lamport, each revealed secret answers a question with two possible answers: is this bit 0 or 1? A hash chain lets a single revealed value answer a question with four possible answers: 0, 1, 2 or 3. Four answers carry 2 bits at once, so a signature needs half as many values.
+
+**Building a chain.** Pick a random 32-byte secret and call it `x0`. Hash it to get `x1`. Hash `x1` to get `x2`, and `x2` to get `x3`. Each step forward is easy. Going back, from `x3` to `x2` for example, would mean reversing a hash, which nobody can do.
+
+<HashChainPanel mode="static" />
+
+- **The private key** is the start of the chain, `x0`. With one chain, that's the whole private key. To sign a real message you need many chains, as shown below, and the private key is then all their starts put end to end.
+- **The public key** is the end of the chain, `x3`. With many chains, it's all their ends put end to end.
+- **To sign a number** from 0 to 3, reveal the position with that number. To sign 1, reveal `x1`.
+- **To verify**, hash the revealed value until you reach position 3, and check that the result is the public key. A signature on 1 is hashed twice: `x1` to `x2`, then `x2` to `x3`.
+
+Pick a number to sign, and watch what the signature reveals and what the verifier does with it:
+
+<HashChainPanel />
+
+**Signing a whole message.** Take the message's 32-byte hash, and split its 256 bits into pairs. Each pair is a number from 0 to 3: `00` is 0, `01` is 1, `10` is 2 and `11` is 3. That gives 128 numbers, and each one gets its own chain. The private key is the 128 chain starts, the public key the 128 chain ends, and a signature reveals one position on each chain: 128 values, 4 KB, half of Lamport's 8 KB.
+
+**Why 4 positions?** Longer chains carry more bits per value, so you need fewer chains, and signatures get smaller. But each extra position is one more hash for the signer to compute and for the verifier to walk. For a 32-byte message hash:
+
+| Positions per chain | Bits per value | Chains | Signature size | Hashes to build all chains | Hashes to verify (average) |
+| --- | --- | --- | --- | --- | --- |
+| 2 | 1 | 256 | 8 KB | 256 | 128 |
+| 4 | 2 | 128 | 4 KB | 384 | 192 |
+| 16 | 4 | 64 | 2 KB | 960 | 480 |
+| 256 | 8 | 32 | 1 KB | 8,160 | 4,080 |
+
+Going from 2 to 4 positions halves the signature for 50% more verifier work. Going on to 16 would halve it again, but the verifier would do 2.5 times as much.
+
+**The catch.** Hashing only goes forward, and anyone can hash. If a signature reveals `x1` on some chain, anyone can hash it to get `x2` and `x3`. So a forger can take a real signature and raise any of its numbers, which gives a valid signature on a message the signer never approved. Raising is free; only lowering is impossible.
+
+Try it with 4 chains, so 8 bits of message. Sign a message, then pick one a forger wants. Whenever every number the forger wants is at least the signed one, the forgery works:
+
+<HashChainPanel mode="message" />
+
+#### The checksum
+
+A forger can only move numbers up, never down. So the classic fix is to also sign a number that goes down whenever any message number goes up. Then every forgery needs at least one chain to go down, which nobody can do. That number is called the checksum.
+
+**Computing the checksum.** For each number of the message, count how far it is from the top position, 3. Then add up these distances. For the message `1 0 2 1`:
+
+```text
+checksum = (3 - 1) + (3 - 0) + (3 - 2) + (3 - 1)
+         =    2    +    3    +    1    +    2      = 8
+```
+
+Raising any number of the message shrinks its distance to the top, so the checksum goes down.
+
+**Signing the checksum.** Write the checksum in base 4 too, and sign its digits with extra chains, exactly like the message's numbers. 8 in base 4 is `2 0`, because 8 = 2 × 4 + 0. With a 4-number message, the checksum is at most 4 × 3 = 12, so 2 extra chains are always enough. A signature now reveals one position on each of the 4 message chains and the 2 checksum chains.
+
+**Why the forgery fails now.** Say the forger wants `2 1 3 1` instead. Its checksum is (3 - 2) + (3 - 1) + (3 - 3) + (3 - 1) = 5, which is `1 1` in base 4. The first checksum chain would have to go from 2 down to 1, which means reversing a hash. This always happens: whatever the forger raises, the checksum gets smaller, and a smaller number written with the same number of digits always has at least one lower digit.
+
+Try the same forgery as before, now with the checksum:
+
+<HashChainPanel mode="checksum" />
+
+**For a real message.** The message's hash gives 128 numbers, so the checksum is at most 128 × 3 = 384. Written in base 4, 384 is `1 2 0 0 0`, which has 5 digits. So the checksum needs 5 extra chains, for 133 chains in all, and a signature is 133 × 32 bytes, about 4 KB.
+
+Here is how hash chains with a checksum do on each mandatory property, for a real message with 133 chains:
+
+- **#1 - Keys that are practical to create and store.** The private key is 133 chain starts: about 4 KB. That's easy to create and to store.
+- **#2 - Small public keys.** The public key is 133 chain ends: about 4 KB, against 48 bytes for BLS.
+- **#3 - Small signatures.** A signature reveals 133 values: about 4 KB. That's half of Lamport's 8 KB, but still far from 96 bytes for BLS.
+- **#4 - One public key for a whole life.** A key still signs only once. With two signatures, a forger can start from the lower of the two revealed positions on every chain, checksum chains included, and hash forward from there. The checksum no longer stops them.
+- **#5 - Fast, predictable verification.** On each chain, the verifier hashes the revealed value up to the end: `3 - d` hashes for a number `d`. So the work depends on the message. Here is how much:
+
+  - On the 128 message chains, the verifier does `3 - d` hashes per chain. Added up, that's exactly the checksum, `C`.
+  - On the 5 checksum chains, it does `3 - c` hashes for each base-4 digit `c` of the checksum. Added up, that's 15 minus the sum of the checksum's digits.
+
+  ```text
+  total = C + 15 - (sum of C's base-4 digits)
+  ```
+
+  The fastest message has all its numbers at 3: `C` is 0, and the total is 0 + 15 - 0 = 15 hashes. The slowest has all its numbers at 0: `C` is 384, which is `1 2 0 0 0` in base 4, and the total is 384 + 15 - 3 = 396 hashes. Every other message lands in between, and someone could search for messages that are slow to check. Lamport had this property, and hash chains lose it.
+
+- **#6 - Aggregation.** As with Lamport, signatures can't be combined. Each one has to be sent and checked on its own.
+- **#7 - Secure against quantum computers.** Still built from a hash function and nothing else.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={3} />
+:::
+
+So hash chains leave us worse off than Lamport: on top of everything Lamport was missing, we lost #5. The next step gets it back.
+
+### A fixed sum
+
+:::caution[The issue]
+With a checksum, the verifier's work depends on the message, anywhere from 15 to 396 hashes. #5 asks for the same work whatever the message.
+:::
+
+The checksum works because it balances the message: when a message number goes up, a checksum number has to go down. A fixed sum gets the same balance without any extra chain.
+
+**The rule.** The signer only signs messages whose numbers add up to one fixed total, called the target.
+
+:::info[From now on, we sign the hash of the message]
+In the small examples so far, the message was just 8 bits, signed as they were. A real message is any text, so the signer first hashes it, then reads the first 8 bits of the hash as 4 numbers. The signer chooses the message, but not the numbers: they come out of the hash.
+:::
+
+**Signing with only the rule.** Take 4 chains and a target of 6. The signer hashes the message and reads 4 numbers from the hash. If they add up to 6, it signs them. If they don't, it can't: the rule forbids it, and the signer can't change the message.
+
+**Why a target of 6?** Each number goes from 0 to 3, so it's 1.5 on average, and 4 numbers add up to 6 on average. 6 is also the most common total: of the 256 sets of 4 numbers a hash can give, 44 add up to 6, more than for any other target. The further the target is from 6, the fewer sets reach it, down to a single one for 0 (`0000`) and for 12 (`3333`).
+
+Type a message to see whether it can be signed. The grid shows all 256 sets of 4 numbers, and highlights those that add up to the target. Then change the target, and watch how many sets are left: even at 6, only about 1 message in 6 can be signed.
+
+<HashChainPanel mode="fixedodds" />
+
+With only 8 bits, many messages share the same numbers, so a forger could simply look for another message that gives the same 8 bits, and reuse the signature. A real signature uses all 256 bits of the hash, where finding such a message is hopeless.
+
+A scheme that can sign only a few messages is useless: a validator has to sign its vote, whatever it is.
+
+**Meeting the rule.** The signer can't change the message, but it can change what gets hashed. It adds a counter, called the randomizer ρ (rho), and tries ρ = 0, 1, 2 and so on, until the numbers of `hash(message ‖ ρ)` add up to the target. This is called grinding. The winning ρ goes into the signature, so the verifier can compute the same hash.
+
+```text
+numbers   = hash(message ‖ ρ), split into base-4 digits
+try ρ     = 0, 1, 2, … until the numbers add up to the target
+signature = ρ ‖ one revealed position per chain
+```
+
+**Verifying.** The verifier recomputes the numbers from the message and ρ, and checks that they add up to the target. Then, on each chain, it hashes the revealed value 3 - d times and compares the result with the public end of the chain.
+
+**Why a forger is stuck.** A forgery must pass the same check, so its numbers must add up to the target too. From a real signature, a forger can raise a number by hashing forward. But raising one number pushes the sum above the target, so another number would have to go down. Lowering means walking a chain backward, which nobody can do.
+
+**Why verification is predictable.** On each chain, the verifier hashes 3 - d times. Over all chains, that's 3 × the number of chains, minus the sum of the numbers. The sum is always the target, so the work is the same for every signature. With 128 chains and a target of 192, every signature takes 384 - 192 = 192 hashes.
+
+Try it with 4 chains and a target of 6. Type a message and sign it: the panel lists every ρ the signer tries. Then play the forger. You can even pick any 4 numbers you like, which a real forger can't do, since they come out of a hash:
+
+<HashChainPanel mode="fixedsum" />
+
+**Start the search somewhere secret.** The panel starts at ρ = 0 to keep things simple. A real signer shouldn't. If the search always starts at 0, anyone can work out in advance which ρ the signer will use for any message. An attacker can use that before anything is signed: they look for two messages, a harmless one and a harmful one, whose hashes give the same numbers with the ρ the signer will pick. Then they get the signer to sign the harmless one, and the signature also works for the harmful one.
+
+Finding two inputs with the same hash, both of your choosing, is called a collision. It's much easier than finding an input that matches a given hash: about 2¹²⁸ tries instead of 2²⁵⁶ for a 32-byte hash. That's still far out of reach. But leanXMSS uses shorter, 16-byte hashes to keep signatures small, and there a collision takes only about 2⁶⁴ to 2⁷⁴ tries, within reach of a well-funded attacker.
+
+The fix is to start the search at a value only the signer can compute, derived from its private key and the message. Nobody can predict ρ before the signature exists. Once it exists, the numbers are fixed, and a forger has to find another message that gives exactly those numbers: matching a given hash, not just any two. And because the start comes from the message, signing the same message twice gives the same ρ, and the same signature.
+
+```text
+start = hash(private key ‖ message)
+try ρ = start, start + 1, start + 2, … until the numbers add up to the target
+```
+
+The exact formula leanXMSS uses for the start is shown [further down](#one-seed-for-every-secret).
+
+**Picking the target.** A higher target leaves less work for the verifier, but fewer hashes add up to it, so the signer grinds longer. For 128 chains:
+
+| Target | Verifier hashes, for every signature | Signer tries, on average |
+| --- | --- | --- |
+| 192, the average sum | 192 | about 32 |
+| 220 | 164 | about 370 |
+| 240 | 144 | about 45,000 |
+| 250 | 134 | about 1,350,000 |
+
+Moving work from the verifiers to the signer is a good trade: each signature is made once, but checked by thousands of nodes.
+
+Here is how a fixed sum does on each mandatory property, with 128 chains:
+
+- **#1 - Keys that are practical to create and store.** The private key is 128 chain starts: 4 KB.
+- **#2 - Small public keys.** The public key is 128 chain ends: 4 KB, against 48 bytes for BLS.
+- **#3 - Small signatures.** A signature is ρ and 128 revealed values: about 4 KB, slightly smaller than with the checksum, but still far from 96 bytes for BLS.
+- **#4 - One public key for a whole life.** A key still signs only once. With two signatures, a forger can start from the lower of the two revealed positions on every chain. These add up to less than the target, so the forger can raise them back to the target in many ways, and grinds their own message until it lands on one.
+- **#5 - Fast, predictable verification.** Every signature takes the same number of hashes, set by the target. We have it back.
+- **#6 - Aggregation.** Signatures still can't be combined.
+- **#7 - Secure against quantum computers.** Still built from a hash function and nothing else.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={4} />
+:::
+
+We're back to the same properties as Lamport: #1, #5 and #7. Nothing new is ticked, but everything got smaller:
+
+| | Lamport | Hash chains with a fixed sum |
+| --- | --- | --- |
+| Private key | 512 secrets, 16 KB | 128 chain starts, 4 KB |
+| Public key | 512 hashes, 16 KB | 128 chain ends, 4 KB |
+| Signature | 256 secrets, 8 KB | 128 values and ρ, about 4 KB |
+
+Both keys are 4 times smaller, and signatures twice as small. That's progress, but still far from BLS's 48-byte public keys and 96-byte signatures.
+
+### One hash for the public key
+
+:::caution[The issue]
+The public key is 128 chain ends: 4 KB, against 48 bytes for BLS. Every node has to store one per validator.
+:::
+
+The verifier doesn't actually need the chain ends in advance. It rebuilds them from the signature anyway: on each chain, it hashes the revealed value up to the end. So instead of publishing all 128 ends, the signer can publish a single hash of them. The verifier hashes the ends it rebuilt, and compares the result with that one hash.
+
+<ChainEndsDiagram />
+
+- **The private key** doesn't change: the 128 chain starts.
+- **The public key** is now one hash of all the chain ends: 32 bytes.
+- **The signature** doesn't change: ρ, then one revealed value per chain.
+- **To verify**, recompute the numbers from the message and ρ, and check that they add up to the target. Hash each revealed value up to the end of its chain. Then hash all the ends together, and compare the result with the public key.
+
+**Why it's still safe.** If a forger changes any revealed value, the end of that chain changes, and so does the hash of all the ends. To get the right public key anyway, they would need different ends that hash to the same value: matching a given hash, which nobody can do.
+
+Sign a message, and follow the verifier as it rebuilds the ends and compares. Then let a forger change a single bit of the signature:
+
+<HashChainPanel mode="leaf" />
+
+The 128 chains, together with this one hash, form a **one-time key**: a key that signs a single message.
+
+Here is how a one-time key does on each mandatory property:
+
+- **#1 - Keys that are practical to create and store.** The private key is still 128 chain starts: 4 KB.
+- **#2 - Small public keys.** The public key is a single hash: 32 bytes, even smaller than BLS's 48 bytes.
+- **#3 - Small signatures.** A signature is still ρ and 128 revealed values: about 4 KB, against 96 bytes for BLS.
+- **#4 - One public key for a whole life.** A one-time key still signs only once, as its name says.
+- **#5 - Fast, predictable verification.** The verifier does one more hash, over all the ends, for every signature. The work is still the same whatever the message.
+- **#6 - Aggregation.** Signatures still can't be combined.
+- **#7 - Secure against quantum computers.** Still built from a hash function and nothing else.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={5} />
+:::
+
+### A tree of one-time keys
+
+:::caution[The issue]
+A one-time key signs a single message. A validator signs a few million messages in its life, so it would need a few million one-time keys, and would have to publish a new public key for every message.
+:::
+
+The signer creates many one-time keys up front, and builds a single public key that stands for all of them. To do that, it uses a [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree):
+
+- **The leaves** are the public keys of the one-time keys. Each one is the hash of the last positions of the key's chains, as in the previous step: `hash(end0 ‖ end1 ‖ … ‖ end127)`, 32 bytes.
+- **Each node above** is the hash of its two children: `parent = hash(left ‖ right)`. Each level has half as many nodes as the one below.
+- **The root** is the single node at the top. It's the validator's public key: 32 bytes, however many leaves there are.
+
+**Signing.** The signer picks a leaf it has never used, and signs with that one-time key, as in the previous step. The signature also carries:
+
+- **The leaf index**: the position of the leaf in the row, counting from 0.
+- **The path**, also called the Merkle proof: the sibling of each node on the way from the leaf up to the root, one per level.
+
+```text
+signature = leaf index ‖ ρ ‖ one revealed value per chain ‖ path
+```
+
+For example, in a tree of 8 leaves, the signature of leaf 5 carries 3 siblings, one per level:
+
+```text
+path = leaf4 ‖ hash(leaf6 ‖ leaf7) ‖ hash(hash(leaf0 ‖ leaf1) ‖ hash(leaf2 ‖ leaf3))
+```
+
+**Verifying.** The verifier rebuilds the leaf from the one-time signature, as in the previous step. Then it climbs: it hashes the leaf with the first sibling of the path, hashes the result with the next sibling, and so on, up to the top. The signature is valid if the climb ends at the root.
+
+At each level, the verifier has to know whether its node is the left or the right child, since `hash(a ‖ b)` and `hash(b ‖ a)` are different. The bits of the leaf index tell it: read from the right, one bit per level, 0 means left and 1 means right.
+
+**Why it's still safe.** A forger who signs with a one-time key of their own gets a different leaf. To climb from it to the real root, at some level their two children would have to hash to the same parent as the real ones: matching a given hash, which nobody can do.
+
+Pick a leaf and follow the climb. Then let a forger swap in a one-time key of their own:
+
+<MerkleTreePanel />
+
+**How many leaves.** A tree with h levels has 2<sup>h</sup> leaves. A leanXMSS key covers 2³² leaves, about 4.3 billion one-time keys, so a single tree would have 32 levels, and a path of 32 hashes: 1 KB. In PQ Gasper, each leaf is tied to a slot and a type of message, [as shown further down](#a-top-tree-and-bottom-trees). With that layout, a key lasts about 178 years.
+
+**Never use a leaf twice.** Nothing in the math stops the signer from signing two different messages with the same leaf, and doing so helps forgers, as with [Lamport signatures](#lamport-signatures). So the signer keeps a record of the leaves it has already used, and updates it before any signature leaves the machine. A scheme that needs such a record is called *stateful*.
+
+In PQ Gasper, the signer doesn't pick the leaf: each message has a fixed leaf, computed from its type and its slot, or its target epoch for an attestation ([PQ Gasper spec](https://github.com/ethereum/consensus-specs/blob/4dabe73aec6cd75cfb7eaf03a8ccf89fbb22ffe9/specs/_features/pq/beacon-chain.md#L136-L144)). Reusing a leaf would then mean signing two different messages of the same type for the same slot, which an honest validator never does: for blocks and attestations, it's even slashable.
+
+Here is how a tree of one-time keys does on each mandatory property:
+
+- **#1 - Keys that are practical to create and store.** To publish the root, the signer first has to compute every leaf: 2³² one-time keys of 128 chains, each chain hashed 3 times. That's about 1.7 trillion hashes, which takes days. And all the chain starts take 2³² × 4 KB: 16 TB.
+- **#2 - Small public keys.** The public key is the root: 32 bytes.
+- **#3 - Small signatures.** A signature is the leaf index, ρ, 128 revealed values and 32 path hashes: about 5 KB, against 96 bytes for BLS.
+- **#4 - One public key for a whole life.** One root covers 2³² one-time keys, enough for any validator.
+- **#5 - Fast, predictable verification.** The verifier does the same work as before, plus 32 hashes to climb the tree. That's the same for every signature.
+- **#6 - Aggregation.** Signatures still can't be combined.
+- **#7 - Secure against quantum computers.** Still built from a hash function and nothing else.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={6} />
+:::
+
+We finally have #4, but we lost #1: creating the key takes days, and storing it takes 16 TB.
+
+### A top tree and bottom trees
+
+:::caution[The issue]
+To publish the root, the signer first has to compute all 2³² leaves: about 1.7 trillion hashes, which takes days. And it has to store the chain starts of all 2³² one-time keys: 16 TB.
+:::
+
+A one-time key can sign any 32-byte value, not only the hash of a message. In particular, it can sign the root of another tree. That lets the signer split the work into two layers:
+
+- **The top tree** holds 2¹⁶ = 65,536 one-time keys, the top keys. Its root is the public key. It's built when the key is created.
+- **The bottom trees**: there are 65,536 different bottom trees, one per leaf of the top tree. Each holds 65,536 one-time keys, the bottom keys. Only bottom keys sign messages. Each bottom tree is built only when it's needed.
+- **Top key b signs the root of bottom tree b**, written R<sub>b</sub>.
+
+<TwoLayerDiagram />
+
+That's 2¹⁶ × 2¹⁶ = 2³² bottom keys, as many as the leaves of the single tree in the previous step.
+
+::::info[Top leaves aren't bottom roots]
+It's tempting to picture the bottom roots as the leaves of the top tree. They aren't.
+
+Every leaf, top or bottom, is built the same way: the hash of the last positions of one one-time key's chains.
+
+```text
+# from the chain ends of top key b
+top leaf b = hash(end0 ‖ end1 ‖ … ‖ end127)
+
+# from the leaves of bottom tree b
+R_b = root of bottom tree b
+```
+
+Top leaf b and R<sub>b</sub> are unrelated values, and neither is computed from the other.
+
+**What ties them together is a one-time signature: top key b signs R<sub>b</sub>, the same way a bottom key signs a message.**
+
+That's why the top tree can be built before any bottom tree exists.
+::::
+
+**The leaf index picks two keys.** As before, the 32-bit leaf index tells which bottom key signs the message. Its first 16 bits give the bottom tree b, and its last 16 bits give the key k inside that tree. Top key b is the one that signs R<sub>b</sub>.
+
+```text
+b = leaf index ÷ 65,536
+k = leaf index mod 65,536
+```
+
+**Which leaf for which message.** In PQ Gasper, the signer doesn't pick any unused leaf: every message has a fixed leaf, computed from its type and its slot.
+
+- The first 32,768 leaves are for messages a key signs at most once. A preregistration uses leaf 0, and a voluntary exit leaf 1.
+- The next 2²⁹ leaves hold one attestation per target epoch. A validator never attests twice for the same target epoch, since that's a slashable double vote.
+- All the leaves after that are split into 8 leaves per slot, one per type of message: block, aggregate, payload timeliness vote and so on.
+
+```text
+preregistration: leaf index = 0
+voluntary exit:  leaf index = 1
+attestation:     leaf index = 32,768 + target epoch
+other messages:  leaf index = 32,768 + 2^29 + 8 × slot + offset of the message type
+```
+
+Pick a message and a slot, and see where its leaf lands:
+
+<LeafIndexPanel />
+
+**When each tree is built.**
+
+- When the key is created, only the top tree is built. Each of its 65,536 leaves takes 385 hashes: 128 chains hashed 3 times, plus the leaf hash. With the tree on top, that's about 25 million hashes: a few seconds.
+- The first time a key of bottom tree b has to sign, the signer builds tree b: another 25 million hashes. Top key b signs its root R<sub>b</sub>, and the signer stores that signature. The signer can also build the next bottom tree in advance, so no signature has to wait.
+- For each message signed in tree b, a bottom key signs the message, and the stored signature of R<sub>b</sub> is copied into the signature as is.
+
+**Doesn't top key b sign 65,536 times?** No. It signs one value, R<sub>b</sub>, once. That single signature is then copied into all the signatures of tree b. A one-time key must never sign two different values, but showing the same signature again reveals nothing new.
+
+**The signature** now has two halves. The bottom half is new for every message. The top half is the same for every message signed in tree b. R<sub>b</sub> itself isn't included: the verifier rebuilds it from the bottom half.
+
+```text
+signature = leaf index
+          ‖ ρ⁰ ‖ 128 revealed values ‖ path in bottom tree b (16 hashes)    # bottom key k signs the message
+          ‖ ρ¹ ‖ 128 revealed values ‖ path in the top tree (16 hashes)     # top key b signs R_b
+```
+
+ρ⁰ and ρ¹ are two different values: each half grinds its own. ρ⁰ makes the numbers of `hash(message ‖ ρ⁰)` add up to the target, and ρ¹ those of `hash(R_b ‖ ρ¹)`.
+
+**Verifying.**
+
+1. From the bottom half, rebuild the leaf of bottom key k from the message, as in the [previous steps](#one-hash-for-the-public-key). Then climb its path: the top of the climb is R<sub>b</sub>.
+2. From the top half, rebuild the leaf of top key b, with R<sub>b</sub> as the message. Then climb its path, and compare the top of the climb with the public key.
+
+Here is how two layers of trees do on each mandatory property:
+
+- **#1 - Keys that are practical to create and store.** Creating a key takes about 25 million hashes: a few seconds. The secrets of a bottom tree only have to exist while that tree is in use: they can be drawn when the tree is built, and erased once all its keys are used. So the signer stores the top keys and one or two bottom trees at a time, 4 KB per one-time key: about half a gigabyte.
+- **#2 - Small public keys.** The public key is the root of the top tree: 32 bytes.
+- **#3 - Small signatures.** A signature now holds two one-time signatures and two paths: about 9 KB, against 96 bytes for BLS.
+- **#4 - One public key for a whole life.** One root still covers 2³² bottom keys.
+- **#5 - Fast, predictable verification.** The verifier does twice the work of the previous step: two one-time signatures and two climbs of 16 levels. That's the same for every signature.
+- **#6 - Aggregation.** Signatures still can't be combined.
+- **#7 - Secure against quantum computers.** Still built from a hash function and nothing else.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={7} />
+:::
+
+### Shorter hashes and fewer chains
+
+:::caution[The issue]
+A signature holds two one-time signatures and two paths: about 9 KB. Every vote travels through the network on its own, so this is far too big.
+:::
+
+Almost everything in a signature is a hash: the revealed values and the path nodes. Two changes make them smaller and fewer.
+
+**Keep only 16 bytes of each hash.** Every hash in the scheme keeps only the first 16 bytes of Keccak-256, instead of all 32. That halves every revealed value and every path node.
+
+It's still safe. Going back from a 16-byte hash to an input takes about 2¹²⁸ tries. A quantum computer running Grover's algorithm brings that down to about 2⁶⁴ steps, which have to run one after another. That's the level of security of the smallest post-quantum signatures standardized so far. A collision only takes about 2⁶⁴ tries, but the scheme never relies on collisions being hard: that's why [the search for ρ starts somewhere secret](#a-fixed-sum).
+
+**Sign a 16-byte hash of the message.** The hash of the message is now 16 bytes too: 128 bits, so 64 base-4 numbers, and 64 chains.
+
+**Force a few numbers to 0.** A number that must be 0 carries no information, so it doesn't need a chain. leanXMSS changes the rule to:
+
+- The first 58 numbers add up to 106.
+- The last 6 numbers are all 0.
+
+Only 58 chains are left.
+
+**Why force numbers instead of using a shorter hash?** 58 base-4 numbers hold 116 bits. So the signer could also sign a 116-bit hash, with no forced numbers. But then a forger would only have to match 116 bits of the signed hash: about 2¹¹⁶ tries. With forced numbers, the hash is still 128 bits long, and a forger has to match all of it, the 6 forced numbers included: about 2¹²⁸ tries. The forced numbers cost the signer some grinding, and buy 12 bits of security for free.
+
+**Why 0?** Any fixed value would work as well: each forced number has a 1 in 4 chance of matching it, whatever the value, and none of them needs a chain. 0 is the natural choice. The 64 numbers are the hash read as a number in base 4, smallest digit first, so the last 6 are its 6 highest digits. Requiring them to be 0 means the hash, read as a number, is smaller than 4⁵⁸ = 2¹¹⁶, just like a number written `000123` is really `123`. The signature then signs a 58-digit number, whose digits are exactly the 58 chains.
+
+Each forced zero makes the rule harder to meet, so the signer grinds longer: about 1 million values of ρ on average. That's a fraction of a second, and only the signer pays for it. The verifier always walks 58 × 3 - 106 = 68 steps along the chains.
+
+Type a message and sign it, with the real leanXMSS rule. The panel runs in your browser, so it takes a few seconds to try a million values of ρ:
+
+<CodewordPanel />
+
+Other choices keep about the same grinding work:
+
+| Chains | Forced zeros | Target | Verifier steps | Revealed values | Signer tries (average) |
+| --- | --- | --- | --- | --- | --- |
+| 64 | 0 | 136 | 56 | 1,024 bytes | about 650,000 |
+| 60 | 4 | 117 | 63 | 960 bytes | about 750,000 |
+| 58 | 6 | 106 | 68 | 928 bytes | about 1,050,000 |
+
+Each row is as secure as the others, since a forger still has to match the signed 16-byte hash. leanXMSS picks 58 chains: the smallest signature, for a few more verifier steps.
+
+**The final size.** Each half of the signature is now ρ (16 bytes), 58 revealed values (928 bytes) and a path of 16 nodes (256 bytes): 1,200 bytes.
+
+```text
+signature = leaf index (4 bytes)
+          ‖ ρ⁰ (16 bytes) ‖ 58 revealed values (928 bytes) ‖ path in bottom tree b (256 bytes)
+          ‖ ρ¹ (16 bytes) ‖ 58 revealed values (928 bytes) ‖ path in the top tree (256 bytes)
+          = 2,404 bytes
+```
+
+This is the layout given in the [leanXMSS spec](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/doc/lean_xmss/main.tex#L176-L180).
+
+| | Previous step | Now |
+| --- | --- | --- |
+| Hash size | 32 bytes | 16 bytes |
+| Chains per one-time key | 128 | 58 |
+| One-time signature | about 4 KB | 944 bytes |
+| Path | 16 × 32 = 512 bytes | 16 × 16 = 256 bytes |
+| Signature | about 9 KB | 2,404 bytes |
+
+Here is how shorter hashes and fewer chains do on each mandatory property:
+
+- **#1 - Keys that are practical to create and store.** Even better than before. A leaf now takes 175 hashes: 58 chains hashed 3 times, plus the leaf hash. Building the top tree takes about 11.5 million hashes. Each one-time key holds 58 chain starts of 16 bytes: 928 bytes. In leanXMSS, the signer doesn't even store them: the private key is a [single 32-byte seed](#one-seed-for-every-secret), and every chain start is computed from it when needed ([leanXMSS spec](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/doc/lean_xmss/main.tex#L129)).
+- **#2 - Small public keys.** The root of the top tree is now 16 bytes. The leanXMSS public key also includes a 16-byte random value, the [public parameter](#labels-on-every-hash): 32 bytes in all ([leanXMSS spec](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/doc/lean_xmss/main.tex#L180)).
+- **#3 - Small signatures.** 2,404 bytes, about 4 times smaller than the previous step. That's still 25 times a BLS signature, but small enough to send every vote on its own.
+- **#4 - One public key for a whole life.** One root still covers 2³² bottom keys.
+- **#5 - Fast, predictable verification.** The verifier walks 68 chain steps per half, and climbs 16 levels per half, for every signature.
+- **#6 - Aggregation.** Signatures still can't be combined.
+- **#7 - Secure against quantum computers.** Matching a given 16-byte hash still takes about 2⁶⁴ steps with a quantum computer.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={8} />
+:::
+
+### Labels on every hash
+
+:::caution[The issue]
+A key computes a huge number of hashes, about 2⁴⁰ across all its chains and trees. To forge, an attacker has to find an input whose hash matches a value the verifier will check against, such as a chain value that hasn't been revealed yet. If any of those 2⁴⁰ values would do, each guess would get 2⁴⁰ chances to hit one, and 2¹²⁸ tries would drop to about 2⁸⁸. Across a million validators, about 2²⁰ keys, it would drop to about 2⁶⁸.
+:::
+
+The fix is to make every hash call different from every other one, by putting two 16-byte labels in front of its input. A hash with labels like this is called a *tweakable hash*, written Th:
+
+```text
+Th(P, A, M) = first 16 bytes of Keccak-256(P ‖ A ‖ M)
+```
+
+- **A, the address**, says which hash call this is inside the key: what it computes (a chain step, a leaf, a tree node, a digest), on which layer, for which one-time key, and at which position. No two hash calls of a key share an address, so a guess aimed at one address can only hit the hash with that address. Attacking all the hashes of a key at once is then no easier than attacking one.
+- **P, the public parameter**, is 16 random bytes picked for each key. It does the same job across keys: attacking a million validators at once is no easier than attacking one.
+
+The verifier needs P to redo every hash, so P is published next to the root. The public key becomes `root ‖ P`: 32 bytes.
+
+Every hash on this page is really a Th call, with its own address:
+
+| Hash call | In leanXMSS |
+| --- | --- |
+| Chain step from position μ, on chain i | `Th(P, A_chain(layer, key, μ), x ‖ i)` |
+| Leaf | `Th(P, A_leaf(layer, key), end0 ‖ … ‖ end57)` |
+| Digest | `Th(P, A_msg(layer, key), message ‖ ρ)` |
+| Tree node | `Th(P, A_node(layer, level, j), left ‖ right)` |
+
+The chain step also hashes in the chain number i, written on 16 bytes, since its address doesn't contain it. And the digest's address contains the key, which on the bottom layer is the leaf index itself. So a signature only works at the leaf index it was made for: moved to another leaf, its digest changes.
+
+The widgets earlier on this page leave these labels out, to stay readable. The widgets from here on use them exactly as the spec does.
+
+**How an address is written.** An address is 16 bytes ([leanXMSS spec](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/doc/lean_xmss/main.tex#L236)):
+
+- 4 bytes for the key, or for the node's position in its level;
+- 3 bytes for the tree level, or the pair of chains, plus 2²³ on the top layer, so that the two layers never share an address;
+- 1 byte for the type of hash call, plus 32 × μ for a chain step from position μ;
+- 8 bytes that are always 0.
+
+Numbers are written smallest byte first. Pick a hash call and see its address:
+
+<AddressPanel />
+
+Here is how labels on every hash do on each mandatory property:
+
+- **#1 - Keys that are practical to create and store.** Unchanged.
+- **#2 - Small public keys.** The public key is now the root and P: 32 bytes.
+- **#3 - Small signatures.** Unchanged: 2,404 bytes. The labels go into the hashes, not into the signature.
+- **#4 - One public key for a whole life.** Unchanged: 2³² leaves.
+- **#5 - Fast, predictable verification.** The verifier hashes the same values as before, with labels in front: still the same work for every signature.
+- **#6 - Aggregation.** Signatures still can't be combined.
+- **#7 - Secure against quantum computers.** Stronger: an attacker can no longer aim at all the hashes of a key, or of all keys, at once.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={9} />
+:::
+
+### One seed for every secret
+
+:::caution[The issue]
+The signer has to know the chain starts of every one-time key: 2³² bottom keys and 2¹⁶ top keys, with 58 starts of 16 bytes each. That's about 4 TB. Even keeping only the top keys and the current bottom tree, it's about 120 MB, which changes with every new bottom tree and is hard to back up.
+:::
+
+The chain starts don't have to be truly random. They only have to look random to anyone who doesn't hold the key. So the signer keeps a single random 32-byte **seed**, S₀, and computes each secret when it needs it, by hashing the seed with the address of that secret. A function that turns one secret into as many random-looking values as needed is called a *pseudorandom function*. The same seed and address always give the same output, and without the seed, the outputs can't be predicted.
+
+- **Tag the seed:** `S = Keccak-256("leanXMSS" ‖ S₀)`. If the same 32 bytes were ever used by another system, that system would hash them differently, so a leak on that side would reveal nothing here. Adding a fixed label like this is called *domain separation*.
+- **The public parameter:** `P = Th(16 zero bytes, A_param, S)`. P comes from the seed too, so there's nothing extra to store.
+- **The chain starts:** `Keccak-256(P ‖ A_prf(layer, key, j) ‖ S)` gives 32 bytes, which start two chains: the first 16 bytes start chain 2j, and the last 16 bytes chain 2j + 1. A one-time key needs 29 such calls for its 58 chains.
+- **The start of the ρ search:** `R₀ = Th(P, A_rnd(layer, key), S ‖ message)`, and the signer tries ρ = R₀, R₀ + 1, R₀ + 2 and so on. This is the [secret start](#a-fixed-sum) from earlier, made precise: it depends on the seed, the one-time key and the message. Signing the same message again at the same leaf gives the same signature.
+
+Creating a key comes down to picking a random S₀, then building the top tree. The private key is S₀: 32 bytes. The public key is the root of the top tree and P: 32 bytes ([leanXMSS spec](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/doc/lean_xmss/main.tex#L129)).
+
+Pick a one-time key and a chain, and follow the derivation. The test seed is the one of the spec's [known-answer test](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/crates/signatures/tests/signatures/lean_xmss.rs#L22-L41), and its P matches the test's public key:
+
+<SeedPanel />
+
+The seed doesn't record which leaves were already used. leanXMSS on its own leaves that to the signer, and PQ Gasper doesn't need it, since [each message has a fixed leaf](#a-tree-of-one-time-keys).
+
+Here is how one seed for every secret does on each mandatory property:
+
+- **#1 - Keys that are practical to create and store.** The private key is 32 bytes, as small as a BLS private key, and easy to back up. Creating a key takes about 14 million Keccak permutations: a few seconds.
+- **#2 - Small public keys.** Unchanged: 32 bytes.
+- **#3 - Small signatures.** Unchanged: 2,404 bytes.
+- **#4 - One public key for a whole life.** Unchanged: 2³² leaves.
+- **#5 - Fast, predictable verification.** Unchanged: the verifier never sees the seed.
+- **#6 - Aggregation.** Signatures still can't be combined.
+- **#7 - Secure against quantum computers.** The seed is only ever hashed.
+
+:::warning[Mandatory properties]
+<PropertyTable upTo={10} />
+:::
+
+### One proof for many signatures
+
+:::caution[The issue]
+leanXMSS signatures can't be added together like BLS signatures. With about a million validators, about 31,000 of them attest in every slot. Putting all their signatures in a block would take 31,000 × 2,404 bytes, about 75 MB, and checking them would take 31,000 × 186 Keccak permutations, about 5.8 million.
+:::
+
+Aggregation doesn't need the signatures themselves to combine. It only needs a way to convince every node, quickly, that all the signatures exist and are valid. That's what a **proof** does: whoever holds the signatures computes a short proof that they all pass verification, and anyone can check that proof without seeing them.
+
+PQ Gasper uses a [STARK](https://ethereum.org/en/zero-knowledge-proofs/#zk-starks), a kind of proof built only from hash functions, so it's also secure against quantum computers. The proof covers a list of statements. Each statement is a list of public keys, a leaf index and a message, and the proof shows that every one of those public keys signed that message at that leaf index:
+
+```text
+statement = (public keys, leaf index, message)
+```
+
+That's one more reason attestations use the leaf of their target epoch: all the validators of a committee sign the same message at the same leaf index, so their signatures fit in a single statement.
+
+**From signatures to one proof per block.**
+
+1. Each validator signs its attestation and sends it on the network, with its own 2,404-byte signature.
+2. The aggregator of each committee collects the signatures of its committee, and proves them with one proof.
+3. The proposer merges the aggregators' proofs into one proof for the block.
+4. The attestations in the block carry no signature at all, only the proof. Every node checks that single proof.
+
+<AggregationFlow />
+
+**Why #5 matters here.** Inside the proof, every hash of every verification is computed again, and that's expensive for whoever builds the proof. Because a leanXMSS verification always takes exactly 186 Keccak permutations, the work to prove a signature is known in advance and the same for every signature. That's the reason behind the [fixed sum](#a-fixed-sum), and behind keeping chains short.
+
+:::note[Still a placeholder]
+The PQ Gasper draft spec defines what the proof functions do, not the actual STARK. Its reference version just puts the signatures end to end and checks them one by one, and it caps a proof at 1 MiB. The size and the cost of the real proof are still being worked out.
+:::
+
+Here is how leanXMSS with proofs does on each mandatory property:
+
+- **#1 - Keys that are practical to create and store.** Unchanged: a few seconds to create a key.
+- **#2 - Small public keys.** Unchanged: 32 bytes, the root and the public parameter.
+- **#3 - Small signatures.** Unchanged: 2,404 bytes for each signature on the network. Blocks don't carry them anymore, only the proof.
+- **#4 - One public key for a whole life.** Unchanged: 2³² leaves.
+- **#5 - Fast, predictable verification.** A node checks one proof per block instead of one signature per attestation.
+- **#6 - Aggregation.** The signatures of a committee, then of a whole block, are covered by a single proof.
+- **#7 - Secure against quantum computers.** A STARK, like leanXMSS, is built only from hash functions.
+
+:::tip[Mandatory properties]
+<PropertyTable upTo={11} />
+:::
+
+## Summary
+
+Every part of the signature from the top of this page now has a reason to be there:
+
+```text
+signature = leaf index (4 bytes)
+          ‖ ρ⁰ (16 bytes) ‖ 58 revealed values (928 bytes) ‖ path in bottom tree b (256 bytes)
+          ‖ ρ¹ (16 bytes) ‖ 58 revealed values (928 bytes) ‖ path in the top tree (256 bytes)
+          = 2,404 bytes
+```
+
+- **The leaf index** says which one-time key signed: a [leaf of a tree](#a-tree-of-one-time-keys), split between [a top tree and a bottom tree](#a-top-tree-and-bottom-trees).
+- **ρ⁰ and ρ¹** are the values [ground until the numbers add up to the target](#a-fixed-sum), one per layer.
+- **The revealed values** are one position on each of the [58 chains](#shorter-hashes-and-fewer-chains).
+- **The paths** let the verifier [climb](#a-tree-of-one-time-keys) from each leaf to the root of its tree.
+
+**Back to the name.** XMSS stands for *eXtended Merkle Signature Scheme*:
+
+- **Merkle signature scheme**: one-time keys gathered under a Merkle tree, whose root is the public key. Ralph Merkle proposed it in 1979, and it's what [a tree of one-time keys](#a-tree-of-one-time-keys) built.
+- **eXtended**: XMSS, published in 2011 and standardized in [RFC 8391](https://www.rfc-editor.org/rfc/rfc8391), extends it, mainly by putting labels in front of every hash, as in [labels on every hash](#labels-on-every-hash). That keeps the scheme safe under weaker assumptions about the hash function.
+- **lean**: leanXMSS is the version designed by the Lean Ethereum research effort. It stacks two layers of trees, uses one-time keys with the fixed sum in place of a checksum (the spec calls them WOTS⁺C), and picks every size for Ethereum validators.
+
+**leanXMSS next to BLS.**
+
+| | BLS | leanXMSS |
+| --- | --- | --- |
+| Security rests on | A hard problem on elliptic curves | A hash function, Keccak-256 |
+| Quantum computer | Broken | Not known to be broken |
+| Private key | 32 bytes | 32 bytes, the seed |
+| Public key | 48 bytes | 32 bytes, the root and P |
+| Signature | 96 bytes | 2,404 bytes |
+| Signatures per key | Unlimited | 2³², one message per leaf |
+| Verification | Two pairings | 186 Keccak permutations, always |
+| Aggregation | Built in | Through a STARK proof |
+
+**What it costs.** Keccak-256 works by running one fixed scrambling step, called a *permutation*, on every 136-byte block of its input, so work is counted in permutations ([leanXMSS spec](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/doc/lean_xmss/main.tex#L191-L195)):
+
+| Task | Permutations |
+| --- | --- |
+| Verifying a signature | 186: per layer, 1 for the digest, 68 for the chains, 8 for the leaf and 16 for the path |
+| Creating a key | 212 × 2¹⁶ - 1, about 14 million: per top key, 29 for the chain starts, 174 for the chains and 8 for the leaf, then the tree |
+| Building a bottom tree | The same, about 14 million, once per bottom tree |
+| Signing | About 2²⁰, one per value of ρ tried. The top half is ground once per bottom tree. |
+
+The signer gives up after 2³² values of ρ, but the chance of getting that far is below e<sup>-2048</sup>: it never happens.
+
+**How secure it is** ([leanXMSS spec](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/doc/lean_xmss/main.tex#L197-L231)):
+
+- **Proved:** if Keccak-256 behaves like an ideal random function, an attacker who computes q hashes forges a signature with probability at most q / 2¹²⁷. The proof is checked by a computer, in the Lean proof assistant, for the scheme exactly as specified, down to the bytes. A known attack shows the bound can't be much better: about 2¹²⁷ hashes.
+- **Not proved:** attacks that use Keccak's internal structure, and quantum attackers. Against a quantum computer, the authors expect about 2⁶⁴ steps that have to run one after another, the same level as the smallest standardized post-quantum signatures.
+- **Out of scope:** reusing a leaf. The proof assumes each leaf signs at most once, which is up to the signer, and which [PQ Gasper handles](#a-tree-of-one-time-keys) by giving every message a fixed leaf.
+
+**Check it yourself.** The panel below checks the signature of the spec's [known-answer test](https://github.com/leanEthereum/leanVM/blob/4af2cdddd7cd41b9df2cc7e123e314a91b0b4462/crates/signatures/tests/signatures/lean_xmss.rs#L22-L41), with the code that runs every widget from [Labels on every hash](#labels-on-every-hash) on. It runs the full 186-permutation check in your browser. Let a forger change one bit, and see at which step the check fails:
+
+<VerifyPanel />
+
+**Two last details.**
+
+- **Keccak-256 isn't SHA3-256.** leanXMSS uses Ethereum's Keccak-256, which differs from the standard SHA3-256 in a single padding byte: 0x01 instead of 0x06. The two give different hashes for the same input.
+- **RANDAO uses something else.** Today, a proposer adds randomness to the chain with its BLS signature of the epoch, which has exactly one valid value. A leanXMSS signer could pick among many valid values of ρ, and nudge the randomness. So PQ Gasper gives each validator a separate committed list of random values, a VRF tree, for this ([PQ Gasper spec](https://github.com/ethereum/consensus-specs/blob/4dabe73aec6cd75cfb7eaf03a8ccf89fbb22ffe9/specs/_features/pq/beacon-chain.md#L149-L154)).

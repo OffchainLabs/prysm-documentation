@@ -1,0 +1,139 @@
+/* Builds on LamportPanel.css and HashChainPanel.css. */
+.codeword-panel .cw-checks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem 1.2rem;
+	font-family: var(--site-font-mono);
+	font-size: 0.8rem;
+}
+.codeword-panel .cw-checks .ok {
+	color: var(--site-color-text-accent);
+	font-weight: 600;
+}
+.codeword-panel .cw-checks .bad {
+	color: var(--site-color-red);
+}
+
+.codeword-panel .cw-grid {
+	display: grid;
+	grid-template-columns: repeat(16, 2.4rem);
+	gap: 0.3rem;
+	width: max-content;
+	font-family: var(--site-font-mono);
+}
+.codeword-panel .cw-cell {
+	display: grid;
+	justify-items: center;
+	gap: 0.15rem;
+	padding: 0.2rem 0;
+	border-radius: 0.3rem;
+}
+.codeword-panel .cw-idx {
+	font-size: 0.6rem;
+	color: var(--site-color-gray-3);
+}
+.codeword-panel .cw-chain {
+	display: grid;
+	justify-items: center;
+	gap: 2px;
+}
+.codeword-panel .cw-chain i {
+	display: block;
+	width: 1.1rem;
+	height: 0.55rem;
+	border-radius: 2px;
+}
+.codeword-panel .cw-chain i.st-hidden {
+	background: var(--site-color-gray-5);
+}
+.codeword-panel .cw-chain i.st-rev {
+	background: var(--site-color-accent);
+}
+.codeword-panel .cw-chain i.st-calc {
+	background: color-mix(in srgb, var(--site-color-accent) 22%, transparent);
+	box-shadow: inset 0 0 0 1px var(--site-color-accent);
+}
+.codeword-panel .cw-chain b,
+.codeword-panel .cw-nochain b {
+	font-size: 0.78rem;
+	color: var(--site-color-white);
+}
+.codeword-panel .cw-forced {
+	border: 1px dashed var(--site-color-gray-3);
+	align-content: start;
+}
+.codeword-panel .cw-nochain {
+	display: grid;
+	justify-items: center;
+	font-size: 0.55rem;
+	line-height: 1.2;
+	color: var(--site-color-gray-3);
+	text-align: center;
+	padding-top: 0.35rem;
+}
+.codeword-panel .cw-bad {
+	border-color: var(--site-color-red);
+	background: color-mix(in srgb, var(--site-color-red) 14%, transparent);
+}
+.codeword-panel .cw-bad b {
+	color: var(--site-color-red);
+}
+.codeword-panel .k-forced {
+	border: 1px dashed var(--site-color-gray-3);
+}
+
+.codeword-panel .cw-bytes {
+	display: grid;
+	grid-template-columns: repeat(4, max-content);
+	gap: 0.4rem;
+	font-family: var(--site-font-mono);
+}
+.codeword-panel .cw-byte {
+	display: grid;
+	gap: 0.2rem;
+	padding: 0.3rem 0.4rem;
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 0.35rem;
+	background: var(--site-color-bg);
+}
+.codeword-panel .cw-bhead {
+	font-size: 0.68rem;
+	color: var(--site-color-gray-3);
+}
+.codeword-panel .cw-pairs {
+	display: flex;
+	gap: 0.25rem;
+}
+.codeword-panel .cw-p {
+	display: grid;
+	justify-items: center;
+	min-width: 1.9rem;
+	padding: 0.1rem 0;
+	border-radius: 0.2rem;
+}
+.codeword-panel .cw-p code {
+	font-size: 0.72rem;
+	background: none;
+	border: 0;
+	padding: 0;
+}
+.codeword-panel .cw-p small {
+	font-size: 0.58rem;
+	color: var(--site-color-gray-3);
+}
+.codeword-panel .cw-p b {
+	font-size: 0.8rem;
+	color: var(--site-color-white);
+}
+.codeword-panel .cw-pz {
+	outline: 1px dashed var(--site-color-gray-3);
+	outline-offset: -1px;
+}
+.codeword-panel .cw-pbad {
+	outline: 1px dashed var(--site-color-red);
+	outline-offset: -1px;
+	background: color-mix(in srgb, var(--site-color-red) 14%, transparent);
+}
+.codeword-panel .cw-pbad b {
+	color: var(--site-color-red);
+}
