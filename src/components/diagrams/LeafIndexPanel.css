@@ -1,0 +1,128 @@
+/* Builds on LamportPanel.css and HashChainPanel.css. */
+.leaf-index {
+	--li-hi: var(--site-color-accent);
+	--li-lo: #1a7f37;
+}
+[data-theme='dark'] .leaf-index {
+	--li-lo: #3fb950;
+}
+
+.leaf-index .li-msgs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+.leaf-index .li-msgs button {
+	padding: 0.3rem 0.6rem;
+	font-size: 0.8rem;
+}
+.leaf-index .li-msgs button[aria-pressed='true'] {
+	background: var(--site-color-accent);
+	border-color: var(--site-color-accent);
+	color: var(--site-color-black);
+}
+.leaf-index .li-msgs small {
+	opacity: 0.75;
+}
+.leaf-index .li-slot input {
+	font: 0.88rem var(--site-font-mono);
+	color: var(--site-color-white);
+	background: var(--site-color-bg);
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 0.4rem;
+	padding: 0.45rem 0.6rem;
+	width: 12rem;
+	max-width: 100%;
+}
+
+.leaf-index .li-bits {
+	display: flex;
+	flex-wrap: wrap;
+	width: max-content;
+	max-width: 100%;
+	padding: 0;
+	overflow: hidden;
+	font-size: 0.85rem;
+	letter-spacing: 0.04em;
+}
+.leaf-index .li-bits span {
+	padding: 0.25rem 0.5rem;
+}
+.leaf-index .li-hi {
+	background: color-mix(in srgb, var(--li-hi) 22%, transparent);
+	color: var(--li-hi);
+}
+.leaf-index .li-lo {
+	background: color-mix(in srgb, var(--li-lo) 22%, transparent);
+	color: var(--li-lo);
+}
+.leaf-index .li-hi-label {
+	color: var(--li-hi);
+}
+.leaf-index .li-lo-label {
+	color: var(--li-lo);
+}
+
+.leaf-index .li-svg {
+	display: block;
+	width: 100%;
+	min-width: 36rem;
+	height: auto;
+}
+.leaf-index .li-svg text {
+	font-family: var(--site-font-mono);
+	font-size: 12px;
+	fill: var(--site-color-gray-2);
+}
+.leaf-index .li-svg .li-start {
+	text-anchor: start;
+}
+.leaf-index .li-svg .li-end {
+	text-anchor: end;
+}
+.leaf-index .li-svg .li-mid {
+	text-anchor: middle;
+}
+.leaf-index .li-svg .li-dim {
+	fill: var(--site-color-gray-3);
+}
+.leaf-index .li-svg .li-strong {
+	font-weight: 600;
+	fill: var(--site-color-white);
+}
+.leaf-index .li-top {
+	fill: color-mix(in srgb, var(--li-hi) 14%, transparent);
+	stroke: var(--li-hi);
+	stroke-width: 1.5;
+}
+.leaf-index .li-bottom {
+	fill: var(--site-color-bg);
+	stroke: var(--site-color-gray-5);
+	stroke-width: 1.5;
+}
+.leaf-index .li-bottom.li-on {
+	fill: color-mix(in srgb, var(--li-lo) 14%, transparent);
+	stroke: var(--li-lo);
+}
+.leaf-index .li-hi-line {
+	stroke: var(--li-hi);
+	stroke-width: 2;
+	stroke-dasharray: 4 3;
+}
+.leaf-index .li-hi-dot {
+	fill: var(--li-hi);
+}
+.leaf-index .li-svg .li-hi-text {
+	fill: var(--li-hi);
+}
+.leaf-index .li-lo-line {
+	stroke: var(--li-lo);
+	stroke-width: 2;
+}
+.leaf-index .li-lo-dot {
+	fill: var(--li-lo);
+}
+.leaf-index .li-svg .li-lo-text {
+	fill: var(--li-lo);
+	font-weight: 600;
+}

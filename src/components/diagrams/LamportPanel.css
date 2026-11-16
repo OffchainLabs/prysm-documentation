@@ -1,0 +1,184 @@
+.lamport-panel {
+	margin: 1.5rem 0;
+	padding: 1rem 1.25rem;
+	border: 1px solid var(--site-color-gray-5);
+	border-radius: 1rem;
+	background: var(--site-color-bg-nav);
+	display: grid;
+	gap: 0.9rem;
+	min-width: 0;
+}
+.lamport-panel .lp-head {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 1rem;
+	align-items: baseline;
+	justify-content: space-between;
+}
+.lamport-panel .lp-head strong {
+	font-family: var(--prysm-display);
+	color: var(--site-color-white);
+}
+.lamport-panel .lp-label {
+	font-family: var(--site-font-mono);
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--site-color-gray-3);
+}
+.lamport-panel .lp-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem 0.75rem;
+	align-items: end;
+}
+.lamport-panel .lp-field {
+	display: grid;
+	gap: 0.25rem;
+}
+.lamport-panel .lp-bits {
+	display: flex;
+	gap: 0.35rem;
+}
+.lamport-panel button {
+	font: 600 0.88rem var(--site-font);
+	border-radius: 0.4rem;
+	padding: 0.45rem 0.9rem;
+	cursor: pointer;
+	white-space: nowrap;
+}
+.lamport-panel .lp-bits button {
+	font-family: var(--site-font-mono);
+	font-size: 1rem;
+	width: 2.5rem;
+	padding: 0.4rem 0;
+	background: var(--site-color-bg);
+	color: var(--site-color-white);
+	border: 1px solid var(--site-color-gray-5);
+}
+.lamport-panel .lp-bits button[aria-pressed='true'] {
+	background: var(--site-color-accent);
+	border-color: var(--site-color-accent);
+	color: var(--site-color-black);
+}
+.lamport-panel .lp-primary {
+	background: var(--site-color-accent);
+	color: var(--site-color-black);
+	border: 1px solid var(--site-color-accent);
+}
+.lamport-panel .lp-ghost {
+	background: transparent;
+	color: var(--site-color-text-accent);
+	border: 1px solid var(--site-color-accent);
+}
+.lamport-panel button:focus-visible {
+	outline: 2px solid var(--site-color-accent);
+	outline-offset: 2px;
+}
+
+.lamport-panel .lp-gridwrap {
+	overflow-x: auto;
+	padding-bottom: 0.25rem;
+}
+.lamport-panel .lp-grid {
+	display: grid;
+	grid-template-columns: 5.5rem repeat(4, 9rem);
+	gap: 0.4rem;
+	width: max-content;
+	font-family: var(--site-font-mono);
+	font-size: 0.74rem;
+}
+.lamport-panel .lp-hd {
+	color: var(--site-color-gray-3);
+	text-align: center;
+}
+.lamport-panel .lp-rl {
+	color: var(--site-color-gray-3);
+	align-self: center;
+	font-size: 0.7rem;
+}
+.lamport-panel .lp-cell {
+	border-radius: 0.35rem;
+	padding: 0.35rem 0.45rem;
+	display: grid;
+	gap: 0.2rem;
+	background: var(--site-color-bg);
+	border: 1px solid var(--site-color-gray-5);
+}
+.lamport-panel .lp-sec {
+	white-space: nowrap;
+	border-radius: 0.25rem;
+	padding: 0.1rem 0.25rem;
+	text-align: center;
+	background: var(--site-color-gray-5);
+	color: var(--site-color-white);
+}
+.lamport-panel .lp-cell.rev .lp-sec {
+	background: var(--site-color-accent);
+	color: var(--site-color-black);
+}
+.lamport-panel .lp-cell.both .lp-sec {
+	background: var(--site-color-red);
+	color: var(--site-color-black);
+}
+.lamport-panel .lp-hash {
+	white-space: nowrap;
+	color: var(--site-color-gray-3);
+	text-align: center;
+}
+
+.lamport-panel .lp-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem 1.1rem;
+	font-size: 0.82rem;
+	color: var(--site-color-gray-3);
+}
+.lamport-panel .lp-legend span {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.lamport-panel .lp-legend i {
+	width: 0.75rem;
+	height: 0.75rem;
+	border-radius: 0.15rem;
+	display: inline-block;
+}
+.lamport-panel .k-hidden {
+	background: var(--site-color-gray-5);
+}
+.lamport-panel .k-rev {
+	background: var(--site-color-accent);
+}
+.lamport-panel .k-both {
+	background: var(--site-color-red);
+}
+
+.lamport-panel .lp-status {
+	margin: 0;
+	font-family: var(--site-font-mono);
+	font-size: 0.78rem;
+	color: var(--site-color-gray-3);
+	overflow-wrap: anywhere;
+}
+.lamport-panel .lp-verdict {
+	border-radius: 0.5rem;
+	padding: 0.7rem 0.9rem;
+	display: grid;
+	gap: 0.2rem;
+	font-size: 0.92rem;
+	border: 1px solid;
+}
+.lamport-panel .lp-verdict.safe {
+	border-color: var(--site-color-accent);
+	background: color-mix(in srgb, var(--site-color-accent) 12%, transparent);
+}
+.lamport-panel .lp-verdict.bad {
+	border-color: var(--site-color-red);
+	background: color-mix(in srgb, var(--site-color-red) 14%, transparent);
+}
+.lamport-panel .lp-verdict strong {
+	font-family: var(--prysm-display);
+	color: var(--site-color-white);
+}
