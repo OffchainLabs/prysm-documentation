@@ -422,7 +422,7 @@
         {
           "name": "datadir",
           "usage": "Data directory for the databases.",
-          "default": "\"~/Library/Eth2\"",
+          "default": "\"~/.eth2\"",
           "type": "String",
           "takesValue": true
         },
@@ -442,7 +442,7 @@
         {
           "name": "restore-target-dir",
           "usage": "Target directory of the restored database",
-          "default": "\"~/Library/Eth2\"",
+          "default": "\"~/.eth2\"",
           "type": "String",
           "takesValue": true
         },
@@ -796,7 +796,7 @@
         {
           "name": "slasher-datadir",
           "usage": "Directory for the slasher database",
-          "default": "\"~/Library/Eth2\"",
+          "default": "\"~/.eth2\"",
           "type": "String",
           "takesValue": true
         },
@@ -1221,7 +1221,7 @@
             {
               "name": "restore-target-dir",
               "usage": "Target directory of the restored database",
-              "default": "\"~/Library/Eth2\"",
+              "default": "\"~/.eth2\"",
               "type": "altsrc.String",
               "takesValue": true
             }
