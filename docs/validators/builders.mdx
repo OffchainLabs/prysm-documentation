@@ -167,7 +167,7 @@ With <Flag name="builder-urls" bin="validator" />, append it to the URL instead:
 
 ## Gas limit
 
-Each network's config can schedule its gas limit from Gloas on, such as 200M gas on Sepolia, and your validators follow it. To use another value, set `gas_limit` in `default_config` or under a key, or use <Flag name="suggested-gas-limit" bin="validator" />. It's no longer under `builder`.
+Each network's config can schedule its gas limit from Gloas on, such as 200M gas on Sepolia, and your validators follow it. To use another value, set `gas_limit` in `default_config` or under a key, or use <Flag name="suggested-gas-limit" bin="validator" />. It's no longer under `builder`. The flag wins over the file: it replaces `gas_limit` in `default_config` and under every key.
 
 ## Beacon node settings
 
