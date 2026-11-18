@@ -1259,8 +1259,8 @@
 		"caution": "An existing file at that path is overwritten without asking. Restart both clients if the secret changes."
 	},
 	"disable-partial-data-columns": {
-		"explain": "Partial data columns are on by default: the node gossips PeerDAS data columns cell by cell instead of as whole columns, so it can send and receive the cells it has, and builds cells from blobs already in the execution client's mempool when the execution client supports it. This flag falls back to gossiping whole columns. `--partial-data-columns`, which turned the feature on in earlier releases, is deprecated and has no effect.",
-		"example": "--disable-partial-data-columns",
+		"explain": "Partial data columns are off by default (this flag defaults to `true`), so the node gossips PeerDAS data columns as whole columns. Set `--disable-partial-data-columns=false` to gossip them cell by cell instead: the node can then send and receive the cells it has, and builds cells from blobs already in the execution client's mempool when the execution client supports it. `--partial-data-columns` is deprecated and has no effect.",
+		"example": "--disable-partial-data-columns=false",
 		"related": [
 			"supernode",
 			"data-column-batch-limit"

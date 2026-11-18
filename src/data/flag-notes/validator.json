@@ -168,7 +168,7 @@
 		"explain": "Registered on the validator for symmetry with the beacon node, where it sets the HTTP API timeout. The validator client does not read it; its calls to a beacon node REST API use a fixed 30-second timeout."
 	},
 	"disable-ephemeral-log-file": {
-		"explain": "By default the validator also writes debug-level logs to `<datadir>/logs/validator.log`, kept for about 24 hours (at most 250 MB), which is useful for bug reports. This flag turns that file off.",
+		"explain": "By default the validator also writes debug-level logs to `<datadir>/logs/validator.log`, which is useful for bug reports. The file rotates at 250 MB and keeps one backup, so it holds at most about 500 MB of the most recent logs. This flag turns that file off.",
 		"related": [
 			"log-file",
 			"datadir"
@@ -381,7 +381,7 @@
 		"caution": "Registrations are only sent for validators that have a fee recipient. From the Gloas fork on, this flag has no effect; builders are configured with version 2 proposer settings."
 	},
 	"suggested-gas-limit": {
-		"explain": "Default gas limit (in gas units) for all validators. Before the Gloas fork, it's sent to builders with the registrations. From Gloas on, it's signed into the proposer preferences and overrides the network gas limit schedule; remove it to follow the schedule. Per-key gas limits from a proposer settings file, a proposer settings URL or the Keymanager API take precedence. It doesn't change the gas limit of locally built blocks before Gloas, which your execution client decides.",
+		"explain": "Default gas limit (in gas units) for all validators. Before the Gloas fork, it's sent to builders with the registrations. From Gloas on, it's signed into the proposer preferences and overrides the network gas limit schedule; remove it to follow the schedule. It also replaces the per-key gas limits from a proposer settings file or URL, whatever the file version. A gas limit set for a key through the Keymanager API applies until the validator client restarts. It doesn't change the gas limit of locally built blocks before Gloas, which your execution client decides.",
 		"example": "--suggested-gas-limit=60000000",
 		"related": [
 			"enable-builder",
@@ -1218,7 +1218,7 @@
 		]
 	},
 	"web generate-auth-token::wallet-dir": {
-		"explain": "Only used when `--keymanager-token-file` is empty. Since that flag has a default, the token is normally written to the `--keymanager-token-file` path, not into this directory.",
+		"explain": "Without `--keymanager-token-file`, the token is written to `auth-token` in this directory.",
 		"related": [
 			"wallet-dir",
 			"keymanager-token-file"

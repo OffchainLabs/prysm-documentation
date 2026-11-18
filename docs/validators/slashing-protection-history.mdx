@@ -59,7 +59,7 @@ INFO historycmd: Successfully wrote <EXPORT_DIR>/slashing_protection.json. You c
 </When>
 
 ```text
-INFO historycmd: Slashing protection JSON successfully imported into <VALIDATOR_DATADIR>
+INFO historycmd: Slashing protection JSON successfully imported path=<VALIDATOR_DATADIR>
 ```
 
 `<VALIDATOR_DATADIR>` is the validator's <Flag name="datadir" bin="validator" />, the folder with `validator.db` (the validator logs it at startup as `Checking DB databasePath=...`). If the export says `No slashing protection data was found in your database`, you pointed it at the wrong folder; older setups keep the database in `<WALLET_DIR>/direct/`.

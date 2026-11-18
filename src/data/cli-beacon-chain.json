@@ -23,8 +23,8 @@
       "flags": [
         {
           "name": "api-timeout",
-          "usage": "Specifies the timeout value for API requests in seconds.",
-          "default": "10s",
+          "usage": "Specifies the timeout value for API requests (for example 30s). Zero means no timeout.",
+          "default": "0s",
           "type": "Duration",
           "takesValue": true
         },
@@ -326,7 +326,7 @@
         {
           "name": "disable-partial-data-columns",
           "usage": "Disables cell-level dissemination for PeerDAS data columns, falling back to full column gossip.",
-          "default": "false",
+          "default": "true",
           "type": "Bool",
           "takesValue": false
         },
@@ -541,7 +541,7 @@
         },
         {
           "name": "min-builder-to-local-difference",
-          "usage": "An absolute value in Gwei that the builder bid has to have in order for this beacon node to use the builder's block. Anything less than this value and the beacon will revert to local building.",
+          "usage": "Minimum amount in Gwei by which the builder bid must exceed the local block value for the beacon node to use the builder's block. Otherwise, it builds locally.",
           "default": "0",
           "type": "Uint64",
           "takesValue": true
@@ -841,7 +841,7 @@
         },
         {
           "name": "disable-ephemeral-log-file",
-          "usage": "Disables the creation of a debug log file that keeps 24 hours of logs.",
+          "usage": "Disables the debug log file written to <datadir>/logs. This file is rotated at 250 MB with one backup kept, so it holds at most ~500 MB of the most recent logs.",
           "default": "false",
           "type": "Bool",
           "takesValue": false

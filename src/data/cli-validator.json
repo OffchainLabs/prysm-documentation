@@ -154,14 +154,14 @@
         },
         {
           "name": "api-timeout",
-          "usage": "Specifies the timeout value for API requests in seconds.",
-          "default": "10s",
+          "usage": "Specifies the timeout value for API requests (for example 30s). Zero means no timeout.",
+          "default": "0s",
           "type": "Duration",
           "takesValue": true
         },
         {
           "name": "disable-ephemeral-log-file",
-          "usage": "Disables the creation of a debug log file that keeps 24 hours of logs.",
+          "usage": "Disables the debug log file written to <datadir>/logs. This file is rotated at 250 MB with one backup kept, so it holds at most ~500 MB of the most recent logs.",
           "default": "false",
           "type": "Bool",
           "takesValue": false
@@ -494,8 +494,7 @@
           "aliases": [
             "validator-api-bearer-file"
           ],
-          "usage": "Path to auth token file used for validator apis.",
-          "default": "\"~/Library/Eth2Validators/prysm-wallet-v2/auth-token\"",
+          "usage": "Path to auth token file used for validator apis. Defaults to auth-token in the wallet directory.",
           "type": "String",
           "takesValue": true
         },
@@ -1524,8 +1523,7 @@
               "aliases": [
                 "validator-api-bearer-file"
               ],
-              "usage": "Path to auth token file used for validator apis.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2/auth-token\"",
+              "usage": "Path to auth token file used for validator apis. Defaults to auth-token in the wallet directory.",
               "type": "altsrc.String",
               "takesValue": true
             },

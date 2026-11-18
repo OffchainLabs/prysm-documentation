@@ -93,7 +93,7 @@ Replace `<VALIDATOR_PUBKEY_…>` with your validators' public keys (`0x` followe
 | `builder.enabled` | Register this key with builders. Has no effect unless the beacon node is connected to builders. |
 | `builder.gas_limit` | Gas limit sent in the registration. Leave it out unless you have a reason: Prysm then uses its built-in default, which follows network upgrades. |
 
-`builder.enabled` and `builder.gas_limit` are for [MEV-Boost](/validators/mev-boost/) and stop applying at the Gloas fork. Åfter that, builders are configured in a version 2 file, and the gas limit moves out of `builder`. See [Use builders after Gloas (ePBS)](/validators/builders/).
+`builder.enabled` and `builder.gas_limit` are for [MEV-Boost](/validators/mev-boost/) and stop applying at the Gloas fork. After that, builders are configured in a version 2 file, and the gas limit moves out of `builder`. See [Use builders after Gloas (ePBS)](/validators/builders/).
 
 Add <Flag name="proposer-settings-file" bin="validator" /> to the validator client:
 

@@ -357,7 +357,7 @@
             },
             {
               "name": "fork",
-              "usage": "Name of the BeaconState schema to use in output encoding [phase0,altair,bellatrix,capella,deneb,electra,fulu]",
+              "usage": "Name of the BeaconState schema to use in output encoding [phase0,altair,bellatrix,capella,deneb,electra,fulu,gloas]",
               "default": "phase0",
               "type": "Generic",
               "takesValue": true
