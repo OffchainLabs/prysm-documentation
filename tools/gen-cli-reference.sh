@@ -36,8 +36,11 @@ for bin in beacon-chain validator prysmctl; do
   # The unknown flag guarantees the binary exits instead of starting a node
   # should the dump hook ever fail to fire.
   PRYSM_DOCS_DUMP=1 "$WORK/$bin" --docs-dump-guard > "$WORK/$bin.json"
-  # Replace the machine-specific home directory in default paths.
-  sed "s#$HOME#~#g" "$WORK/$bin.json" > "$OUT/cli-$bin.json"
+  # Replace the home directory with ~ and macOS default paths with Linux ones.
+  sed -e "s#$HOME#~#g" \
+      -e 's#~/Library/Eth2Validators#~/.eth2validators#g' \
+      -e 's#~/Library/Eth2#~/.eth2#g' \
+      "$WORK/$bin.json" > "$OUT/cli-$bin.json"
 done
 printf '{ "version": "%s" }\n' "$VERSION" > "$OUT/cli-meta.json"
 echo "Wrote CLI reference for Prysm $VERSION to $OUT"
