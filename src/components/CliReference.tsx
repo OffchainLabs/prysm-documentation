@@ -67,6 +67,7 @@ const groupTitles: Record<string, string> = {
 	features: 'Feature flags',
 	merge: 'Fee recipient',
 	debug: 'Debugging and profiling',
+	deprecated: 'Deprecated',
 	rpc: 'RPC and APIs',
 	proposer: 'Proposer settings',
 	'remote signer': 'Remote signer (Web3Signer)',
@@ -91,7 +92,12 @@ const cleanDefault = (d?: string) => {
 	if (d === undefined || d === '' || d === '""' || d === '[]') return undefined;
 	return d.replace(/^"(.*)"$/, '$1');
 };
-const typeLabel = (f: Flag) => (f.type === 'Bool' ? 'boolean' : f.type.replace(/Slice$/, ' list').toLowerCase());
+const typeLabel = (f: Flag) => {
+	const t = f.type.replace(/^altsrc\./, '');
+	if (t === 'Bool') return 'boolean';
+	if (t === 'Generic') return 'string';
+	return t.replace(/Slice$/, ' list').toLowerCase();
+};
 
 /** Usage strings are plain text written for a terminal; keep line breaks meaningful. */
 const usageHtml = (u: string) =>
@@ -161,6 +167,19 @@ function FlagName({ flag, link }: { flag: Flag; link: boolean }) {
 	);
 }
 
+function Aliases({ flag }: { flag: Flag }) {
+	const aliases = flag.aliases ?? [];
+	if (aliases.length === 0) return null;
+	return (
+		<span className="cli-alias">
+			alias{' '}
+			{aliases.map((a) => (
+				<code key={a}>{a.length === 1 ? `-${a}` : `--${a}`}</code>
+			))}
+		</span>
+	);
+}
+
 function Default({ value }: { value?: string }) {
 	const d = cleanDefault(value);
 	if (d === undefined) return null;
@@ -184,6 +203,10 @@ export default function CliReference({ binary }: { binary: Bin }) {
 	}
 	if (commands.length > 0) brokenLinks.collectAnchor('subcommands');
 	for (const c of commands) brokenLinks.collectAnchor(c.id);
+
+	// pushState (a <Flag> link from another page) does not update :target.
+	const [target, setTarget] = useState('');
+	useEffect(() => setTarget(decodeURIComponent(location.hash.slice(1))), [location.hash]);
 
 	useEffect(() => {
 		const q = new URLSearchParams(location.search).get('q');
@@ -260,18 +283,16 @@ export default function CliReference({ binary }: { binary: Bin }) {
 					<h2 id={g.id}>{g.title}</h2>
 					<dl>
 						{g.flags.map(({ flag: f, note }, fi) => (
-							<div key={f.name} className="cli-flag" id={f.name} hidden={!groupHits[gi][fi]}>
+							<div
+								key={f.name}
+								className={f.name === target ? 'cli-flag cli-target' : 'cli-flag'}
+								id={f.name}
+								hidden={!groupHits[gi][fi]}
+							>
 								<dt>
 									<FlagName flag={f} link />
 									{deprecatedRe.test(f.usage) && <span className="cli-tag cli-tag-warn">deprecated</span>}
-									{(f.aliases ?? []).length > 0 && (
-										<span className="cli-alias">
-											alias{' '}
-											{(f.aliases ?? []).map((a) => (
-												<code key={a}>{a.length === 1 ? `-${a}` : `--${a}`}</code>
-											))}
-										</span>
-									)}
+									<Aliases flag={f} />
 								</dt>
 								<dd>
 									<p dangerouslySetInnerHTML={{ __html: usageHtml(f.usage) }} />
@@ -306,6 +327,7 @@ export default function CliReference({ binary }: { binary: Bin }) {
 											<dt>
 												<FlagName flag={f} link={false} />
 												{deprecatedRe.test(f.usage) && <span className="cli-tag cli-tag-warn">deprecated</span>}
+												<Aliases flag={f} />
 											</dt>
 											<dd>
 												<p dangerouslySetInnerHTML={{ __html: usageHtml(f.usage) }} />

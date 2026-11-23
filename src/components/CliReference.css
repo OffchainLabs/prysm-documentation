@@ -117,7 +117,8 @@
 	border-top: 1px solid var(--site-color-hairline-light);
 	scroll-margin-top: 9rem;
 }
-.cli-ref .cli-flag:target {
+.cli-ref .cli-flag:target,
+.cli-ref .cli-flag.cli-target {
 	background: color-mix(in srgb, var(--site-color-accent) 10%, transparent);
 	box-shadow:
 		-0.75rem 0 0 color-mix(in srgb, var(--site-color-accent) 10%, transparent),
@@ -194,12 +195,12 @@
 	font-size: 0.8rem;
 	color: var(--site-color-gray-3);
 }
-.cli-ref .cli-default {
+.cli-ref .cli-flag dd .cli-default {
 	display: inline-block;
 	max-width: 100%;
 	max-height: 4.5em;
 	overflow: auto;
-	vertical-align: top;
+	vertical-align: middle;
 }
 .cli-ref .cli-empty {
 	margin: 2rem 0;
