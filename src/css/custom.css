@@ -152,12 +152,17 @@ article header h1 {
 	border: 1px solid color-mix(in srgb, var(--site-color-accent) 22%, transparent);
 	padding: 0.1em 0.35em;
 	vertical-align: baseline;
+	-webkit-box-decoration-break: clone;
+	box-decoration-break: clone;
 }
 .prysm-flag {
 	text-decoration: none !important;
 }
 /* Never break a flag name across lines. */
 .prysm-flag code {
+	overflow-wrap: anywhere;
+}
+.prysm-flag-name {
 	white-space: nowrap;
 }
 .prysm-flag:hover code {
