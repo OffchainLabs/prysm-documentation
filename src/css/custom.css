@@ -152,14 +152,13 @@ article header h1 {
 	border: 1px solid color-mix(in srgb, var(--site-color-accent) 22%, transparent);
 	padding: 0.1em 0.35em;
 	vertical-align: baseline;
-	/* A wrapped code span gets its own border and padding on each line. */
 	-webkit-box-decoration-break: clone;
 	box-decoration-break: clone;
 }
 .prysm-flag {
 	text-decoration: none !important;
 }
-/* Never break a flag name across lines; a long value after `=` may wrap. */
+/* Never break a flag name across lines. */
 .prysm-flag code {
 	overflow-wrap: anywhere;
 }
