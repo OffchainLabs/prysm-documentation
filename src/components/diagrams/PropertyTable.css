@@ -7,6 +7,9 @@
 	width: max-content;
 	margin: 0;
 	overflow: visible;
+	/* Collapsed borders do not move with the sticky column. */
+	border-collapse: separate;
+	border-spacing: 0;
 }
 .property-table th {
 	vertical-align: bottom;
@@ -17,7 +20,8 @@
 	color: inherit;
 }
 .property-table td:first-child {
-	white-space: nowrap;
+	min-width: 9rem;
+	max-width: 40vw;
 }
 .property-table .pt-mark {
 	text-align: center;
