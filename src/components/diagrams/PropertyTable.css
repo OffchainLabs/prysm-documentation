@@ -7,7 +7,7 @@
 	width: max-content;
 	margin: 0;
 	overflow: visible;
-	/* Collapsed borders stay behind when the sticky column scrolls, and let cells show through. */
+	/* Collapsed borders do not move with the sticky column. */
 	border-collapse: separate;
 	border-spacing: 0;
 }
@@ -19,7 +19,6 @@
 .property-table th a {
 	color: inherit;
 }
-/* One line on wide screens; on a phone it wraps, so the steps stay visible beside it. */
 .property-table td:first-child {
 	min-width: 9rem;
 	max-width: 40vw;
