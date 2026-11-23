@@ -204,8 +204,7 @@ export default function CliReference({ binary }: { binary: Bin }) {
 	if (commands.length > 0) brokenLinks.collectAnchor('subcommands');
 	for (const c of commands) brokenLinks.collectAnchor(c.id);
 
-	// A client-side navigation (a <Flag> link from another page) uses pushState,
-	// which does not update :target, so mark the flag from the hash as well.
+	// pushState (a <Flag> link from another page) does not update :target.
 	const [target, setTarget] = useState('');
 	useEffect(() => setTarget(decodeURIComponent(location.hash.slice(1))), [location.hash]);
 
