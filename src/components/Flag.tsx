@@ -38,7 +38,7 @@ export default function Flag({ name, bin = 'beacon-chain', value }: { name: stri
 	return (
 		<Link className="prysm-flag" to={`/reference/cli/${bin}/#${anchor}`}>
 			<code>
-				--{flagName}
+				<span className="prysm-flag-name">--{flagName}</span>
 				{value !== undefined && `=${value}`}
 			</code>
 		</Link>

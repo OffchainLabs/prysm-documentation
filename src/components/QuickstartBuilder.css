@@ -253,7 +253,8 @@
 }
 .qs .qs-code pre {
 	margin: 0;
-	padding: 0.9rem 5rem 0.9rem 1rem;
+	/* The top strip holds the Copy button: right padding only shows at the end of a scrolled line. */
+	padding: 2.4rem 1rem 0.9rem;
 	border-radius: 0.6rem;
 	background: #0e1c26;
 	border: 1px solid #1d3240;
