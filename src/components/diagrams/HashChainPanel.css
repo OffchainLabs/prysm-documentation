@@ -103,6 +103,9 @@
 .chain-panel.cp-static {
 	justify-items: center;
 }
+.chain-panel.cp-static .lp-gridwrap {
+	max-width: 100%;
+}
 .chain-panel.cp-static .cp-node {
 	min-width: 5.5rem;
 }
@@ -194,7 +197,6 @@
 .chain-panel .cp-path code {
 	font-size: 0.8rem;
 	overflow-wrap: anywhere;
-	word-break: break-all;
 }
 .chain-panel .cp-path mark {
 	background: var(--site-color-accent);

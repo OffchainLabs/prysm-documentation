@@ -177,7 +177,7 @@ function LandingTree({ b, k }: { b: number; k: number }) {
 			</text>
 			<line className="li-hi-line" x1={tx} y1="110" x2="450" y2="170" />
 			<circle className="li-hi-dot" cx={tx} cy="110" r="5" />
-			<text className={`li-hi-text ${right ? 'li-end' : 'li-start'}`} x={right ? tx - 10 : tx + 10} y="130">
+			<text className={`li-hi-text ${right ? 'li-start' : 'li-end'}`} x={right ? tx + 10 : tx - 10} y="130">
 				top key {fmt(b)} signs the root of tree {fmt(b)}
 			</text>
 			{centers.map((cx, i) => {

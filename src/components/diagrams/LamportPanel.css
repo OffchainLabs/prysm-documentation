@@ -38,6 +38,7 @@
 }
 .lamport-panel .lp-bits {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.35rem;
 }
 .lamport-panel button {
@@ -52,6 +53,12 @@
 	font-size: 1rem;
 	width: 2.5rem;
 	padding: 0.4rem 0;
+	background: var(--site-color-bg);
+	color: var(--site-color-white);
+	border: 1px solid var(--site-color-gray-5);
+}
+.lamport-panel .li-msgs button,
+.lamport-panel .ad-kinds button {
 	background: var(--site-color-bg);
 	color: var(--site-color-white);
 	border: 1px solid var(--site-color-gray-5);

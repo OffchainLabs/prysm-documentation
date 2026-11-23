@@ -9,7 +9,7 @@ import './AggregationFlow.css';
 
 const V = { x: 16, w: 132, h: 30 };
 const A = { x: 250, w: 190, h: 64 };
-const P = { x: 530, w: 160, h: 76 };
+const P = { x: 530, w: 150, h: 76 };
 const N = { x: 770, w: 120, h: 76 };
 const COMMITTEES = [
 	{ y: 14, agg: 34 },

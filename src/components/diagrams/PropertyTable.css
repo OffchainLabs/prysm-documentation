@@ -7,6 +7,9 @@
 	width: max-content;
 	margin: 0;
 	overflow: visible;
+	/* Collapsed borders stay behind when the sticky column scrolls, and let cells show through. */
+	border-collapse: separate;
+	border-spacing: 0;
 }
 .property-table th {
 	vertical-align: bottom;
@@ -16,8 +19,10 @@
 .property-table th a {
 	color: inherit;
 }
+/* One line on wide screens; on a phone it wraps, so the steps stay visible beside it. */
 .property-table td:first-child {
-	white-space: nowrap;
+	min-width: 9rem;
+	max-width: 40vw;
 }
 .property-table .pt-mark {
 	text-align: center;
