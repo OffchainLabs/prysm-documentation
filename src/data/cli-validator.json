@@ -27,14 +27,14 @@
         {
           "name": "datadir",
           "usage": "Data directory for the databases.",
-          "default": "\"~/Library/Eth2\"",
+          "default": "\"~/.eth2\"",
           "type": "String",
           "takesValue": true
         },
         {
           "name": "wallet-dir",
           "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-          "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+          "default": "\"~/.eth2validators/prysm-wallet-v2\"",
           "type": "String",
           "takesValue": true
         },
@@ -638,7 +638,7 @@
             {
               "name": "wallet-dir",
               "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "default": "\"~/.eth2validators/prysm-wallet-v2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -728,7 +728,7 @@
             {
               "name": "wallet-dir",
               "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "default": "\"~/.eth2validators/prysm-wallet-v2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -814,7 +814,7 @@
             {
               "name": "wallet-dir",
               "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "default": "\"~/.eth2validators/prysm-wallet-v2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -875,7 +875,7 @@
             {
               "name": "wallet-dir",
               "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "default": "\"~/.eth2validators/prysm-wallet-v2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -987,7 +987,7 @@
             {
               "name": "wallet-dir",
               "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "default": "\"~/.eth2validators/prysm-wallet-v2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -1000,7 +1000,7 @@
             {
               "name": "backup-dir",
               "usage": "Path to a directory where accounts will be backed up into a zip file.",
-              "default": "\"~/Library/Eth2Validators\"",
+              "default": "\"~/.eth2validators\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -1061,7 +1061,7 @@
             {
               "name": "wallet-dir",
               "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "default": "\"~/.eth2validators/prysm-wallet-v2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -1134,7 +1134,7 @@
             {
               "name": "wallet-dir",
               "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "default": "\"~/.eth2validators/prysm-wallet-v2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -1288,7 +1288,7 @@
             {
               "name": "datadir",
               "usage": "Data directory for the databases.",
-              "default": "\"~/Library/Eth2\"",
+              "default": "\"~/.eth2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -1350,7 +1350,7 @@
             {
               "name": "datadir",
               "usage": "Data directory for the databases.",
-              "default": "\"~/Library/Eth2\"",
+              "default": "\"~/.eth2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
@@ -1424,7 +1424,7 @@
             {
               "name": "restore-target-dir",
               "usage": "Target directory of the restored database",
-              "default": "\"~/Library/Eth2\"",
+              "default": "\"~/.eth2\"",
               "type": "altsrc.String",
               "takesValue": true
             }
@@ -1441,7 +1441,7 @@
                 {
                   "name": "datadir",
                   "usage": "Data directory for the databases.",
-                  "default": "\"~/Library/Eth2\"",
+                  "default": "\"~/.eth2\"",
                   "type": "altsrc.String",
                   "takesValue": true
                 }
@@ -1454,7 +1454,7 @@
                 {
                   "name": "datadir",
                   "usage": "Data directory for the databases.",
-                  "default": "\"~/Library/Eth2\"",
+                  "default": "\"~/.eth2\"",
                   "type": "altsrc.String",
                   "takesValue": true
                 }
@@ -1494,7 +1494,7 @@
             {
               "name": "wallet-dir",
               "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "default": "\"~/.eth2validators/prysm-wallet-v2\"",
               "type": "altsrc.String",
               "takesValue": true
             },

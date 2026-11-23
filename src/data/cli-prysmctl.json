@@ -545,7 +545,7 @@
             {
               "name": "wallet-dir",
               "usage": "Path to a wallet directory on-disk for Prysm validator accounts.",
-              "default": "\"~/Library/Eth2Validators/prysm-wallet-v2\"",
+              "default": "\"~/.eth2validators/prysm-wallet-v2\"",
               "type": "altsrc.String",
               "takesValue": true
             },
